@@ -219,6 +219,7 @@ const Agenda: FC = () => {
   if (!artist) return <Spinner loading>{null as any}</Spinner>;
 
   const selectedDate = cursor.format('YYYY-MM-DD');
+  const releaseDate = artist.content.actionPlanSchedule?.releaseDate;
   const dayEvents = visibleEvents
     .filter((event) => event.date === selectedDate)
     .sort((a, b) => (a.start_time || '23:59').localeCompare(b.start_time || '23:59'));
@@ -317,9 +318,11 @@ const Agenda: FC = () => {
               const key = day.format('YYYY-MM-DD');
               const eventsForDay = byDate[key] || [];
               const outsideMonth = day.month() !== cursor.month();
-              return <button type="button" key={key} className={`agenda-month-day${outsideMonth ? ' is-outside' : ''}`} onClick={() => { setCursor(day); setCalendarView('day'); }}>
+              const isReleaseDay = key === releaseDate;
+              return <button type="button" key={key} className={`agenda-month-day${outsideMonth ? ' is-outside' : ''}${isReleaseDay ? ' is-release-day' : ''}`} onClick={() => { setCursor(day); setCalendarView('day'); }}>
                 <b>{day.date()}</b>
-                {eventsForDay.slice(0, 2).map((event) => <span key={event.id} style={{ '--event-color': typeColor(event.type) } as React.CSSProperties}>{calendarTitle(event.title, 20)}</span>)}
+                {isReleaseDay && <em>Dia D</em>}
+                {eventsForDay.slice(0, 2).map((event) => <span key={event.id} style={{ '--event-color': typeColor(event.type) } as React.CSSProperties}>{calendarTitle(event.title, 20)}{event.recurrence_rule === 'weekly' ? ' · semanal' : ''}</span>)}
                 {eventsForDay.length > 2 && <small>+{eventsForDay.length - 2}</small>}
               </button>;
             })}

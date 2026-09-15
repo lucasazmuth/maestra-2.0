@@ -1,7 +1,9 @@
 import { FC, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { FiCheck, FiX } from 'react-icons/fi';
 import type { Strategy } from '@maestra/core/interfaces/maestra';
 import { suggestScores } from '@maestra/core/wizard/motores';
-import { explanationFor, PRIORITY_INFO } from '@maestra/core/wizard/prioridade';
+import { PRIORITY_INFO } from '@maestra/core/wizard/prioridade';
 import { STRATEGY_BY_ID } from '@maestra/core/constants/strategyBank';
 import './priorityScale.scss';
 
@@ -18,6 +20,10 @@ const percent = (scores: Record<number, number>, count: number) => count
   ? Math.round(Array.from({ length: count }, (_, i) => scores[i] || 0).reduce((a, b) => a + b, 0) / count * 10)
   : 0;
 
+const SCALE = Array.from({ length: 11 }, (_, index) => index);
+const scoreColor = (score: number) => score <= 3 ? '#d94c4c' : score <= 6 ? '#c78316' : '#3361ff';
+const scoreWord = (score?: number) => score == null ? 'Escolha uma nota' : score === 0 ? 'Não ajuda em nada' : score <= 3 ? 'Ajuda pouco' : score <= 6 ? 'Ajuda' : score <= 9 ? 'Ajuda bastante' : 'Ajuda muito';
+
 export const PriorityScale: FC<Props> = ({ strategies, objectives, onConfirm, onProgress }) => {
   const canonical = suggestScores(strategies, objectives);
   const [list, setList] = useState(strategies);
@@ -28,7 +34,10 @@ export const PriorityScale: FC<Props> = ({ strategies, objectives, onConfirm, on
     resumed ? manual && firstPending !== -1 ? 'manual' : 'rank' : 'choose'
   );
   const [index, setIndex] = useState(Math.max(0, firstPending));
+  const [objectiveIndex, setObjectiveIndex] = useState(0);
+  const [hoverScore, setHoverScore] = useState<number | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
+  const [minimized, setMinimized] = useState(false);
   const progressRef = useRef(onProgress);
   progressRef.current = onProgress;
   const pending = useRef<Strategy[] | null>(null);
@@ -61,6 +70,7 @@ export const PriorityScale: FC<Props> = ({ strategies, objectives, onConfirm, on
     })));
     setIndex(0);
     setSelected([]);
+    setMinimized(false);
     setMode(manual ? 'manual' : 'rank');
   };
   const scored = list.map(s => ({
@@ -81,68 +91,87 @@ export const PriorityScale: FC<Props> = ({ strategies, objectives, onConfirm, on
       <h3>Como você quer priorizar?</h3>
       <p>{list.length} estratégias para os seus objetivos.</p>
       <div className="priority-v3__actions">
-        <button type="button" onClick={() => start(false)}>Priorizar com a Nyta</button>
-        <button type="button" onClick={() => start(true)}>Priorizar por conta própria</button>
+        <button type="button" className="priority-v3__nyta-action" onClick={() => start(false)}>
+          <span>Me ajuda, Nyta</span><small>Ela analisa e já te entrega a ordem pronta</small>
+        </button>
+        <button type="button" className="priority-v3__manual-action" onClick={() => start(true)}>
+          <span>Eu prefiro priorizar por conta própria</span><small>Você decide a importância de cada uma, no seu ritmo</small>
+        </button>
       </div>
-    </> : mode === 'manual' ? <>
-      <p>Estratégia {index + 1} de {list.length}</p>
-      <h3>{list[index].title}</h3>
-      {list[index].description && <p>{list[index].description}</p>}
-      {objectives.map((objective, i) => {
-        const strategy = list[index];
-        const suggestion = canonical[strategy.id]?.byObjective[i] ?? 5;
-        const value = strategy.objectiveScores?.[i] ?? suggestion;
-        return <label className="priority-v3__rating" key={i}>
-          <span>{objective} <strong>{value}/10</strong></span>
-          <input type="range" min="1" max="10" step="1" value={value}
-            aria-label={objective}
-            onChange={e => {
-              const scores = { ...strategy.objectiveScores, [i]: Number(e.target.value) };
-              update(list.map(s => s.id === strategy.id ? { ...s, objectiveScores: scores, artistScores: scores } : s));
-            }} />
-          <small>Sugestão da Nyta: {suggestion}/10. {explanationFor(strategy.bankId || '', objective)}</small>
-        </label>;
-      })}
-      <p>Você: {scored[index].finalScore}% · Nyta: {scored[index].canonicalPercent}%</p>
-      <div className="priority-v3__actions">
-        <button type="button" disabled={!index} onClick={() => setIndex(index - 1)}>Anterior</button>
-        <button type="button" onClick={() => {
-          update(list.map((s, i) => i === index ? { ...s, priorityReviewed: true, artistScores: { ...s.objectiveScores } } : s));
-          index + 1 < list.length ? setIndex(index + 1) : setMode('rank');
-        }}>{index + 1 < list.length ? 'Concordo, próxima' : 'Escolher estratégias'}</button>
-      </div>
-    </> : <>
-      <h3>Escolha até {limit} estratégias</h3>
-      <p aria-live="polite">{selected.length} de {limit} escolhidas</p>
-      {ranked.map(s => {
-        const info = PRIORITY_INFO[s.bankId || ''];
-        const checked = selected.includes(s.id);
-        return <article className="priority-v3__strategy" key={s.id}>
-          <label className="priority-v3__selection">
-            <input type="checkbox" checked={checked} disabled={!checked && selected.length >= limit}
-              onChange={() => setSelected(checked ? selected.filter(id => id !== s.id) : [...selected, s.id])} />
-            <span>{s.title}</span><strong>{s.finalScore}%</strong>
-          </label>
-          {s.description && <p>{s.description}</p>}
-          {info?.recomendada && <p className="priority-v3__recommendation">Recomendada pela Nyta: {info.motivo_recomendada}</p>}
-          <details>
-            <summary>Impacto nos seus objetivos</summary>
-            {objectives.map((objective, i) => <p key={i}>
-              <strong>{objective}: {s.objectiveScores?.[i]}/10</strong><br />
-              {explanationFor(s.bankId || '', objective)}
-            </p>)}
-            {s.artistScores && <p>Você: {s.finalScore}% · Nyta: {s.canonicalPercent}%</p>}
-          </details>
-        </article>;
-      })}
-      <div className="priority-v3__actions">
-        <button type="button" onClick={() => setMode('choose')}>Refazer priorização</button>
-        <button type="button" disabled={!selected.length} onClick={() => {
-          confirmed.current = true;
-          pending.current = null;
-          onConfirm(scored, selected);
-        }}>Gerar plano de ação</button>
-      </div>
-    </>}
+    </> : mode === 'manual' ? (() => {
+      const strategy = list[index];
+      const currentScore = strategy.objectiveScores?.[objectiveIndex];
+      const shownScore = hoverScore ?? currentScore;
+      const answered = index * objectives.length + objectiveIndex;
+      const pick = (score: number) => {
+        const scores = { ...strategy.objectiveScores, [objectiveIndex]: score };
+        const completedStrategy = objectiveIndex + 1 === objectives.length;
+        update(list.map((item) => item.id === strategy.id ? { ...item, objectiveScores: scores, artistScores: scores, priorityReviewed: completedStrategy || item.priorityReviewed } : item));
+        setHoverScore(null);
+      };
+      const previous = () => {
+        if (objectiveIndex > 0) setObjectiveIndex((value) => value - 1);
+        else if (index > 0) { setIndex((value) => value - 1); setObjectiveIndex(objectives.length - 1); }
+      };
+      const next = () => {
+        if (objectiveIndex + 1 < objectives.length) setObjectiveIndex((value) => value + 1);
+        else if (index + 1 < list.length) { setIndex((value) => value + 1); setObjectiveIndex(0); }
+        else setMode('rank');
+      };
+      return <>
+        <div className="priority-v3__progress"><span>Estratégia {index + 1} de {list.length}</span><span>{answered + 1} de {list.length * objectives.length}</span></div>
+        <div className="priority-v3__progress-line"><i style={{ width: `${(answered / Math.max(list.length * objectives.length, 1)) * 100}%` }} /></div>
+        <section className="priority-v3__question">
+          <h3>{strategy.title}</h3>
+          <span className="priority-v3__eyebrow">Objetivo {objectiveIndex + 1} de {objectives.length}</span>
+          <p>Ajuda a conquistar <strong>{objectives[objectiveIndex]}</strong>?</p>
+          <div className="priority-v3__scale" onMouseLeave={() => setHoverScore(null)}>
+            {SCALE.map((score) => <button key={score} type="button" aria-label={`Nota ${score}`} onMouseEnter={() => setHoverScore(score)} onClick={() => pick(score)} style={{ height: 22 + score * 4, background: shownScore != null && score <= shownScore ? scoreColor(shownScore) : undefined }}>{score}</button>)}
+          </div>
+          <div className="priority-v3__scale-legend"><span>0 · não ajuda</span><span>10 · ajuda muito</span></div>
+          <div className="priority-v3__score-readout" style={{ color: shownScore == null ? undefined : scoreColor(shownScore) }}><strong>{shownScore ?? '–'}</strong><span>{scoreWord(shownScore)}</span></div>
+          <div className="priority-v3__question-actions">
+            <button type="button" onClick={previous} disabled={index === 0 && objectiveIndex === 0}>Anterior</button>
+            <button type="button" className="priority-v3__continue" onClick={next} disabled={typeof currentScore !== 'number'}>Continuar</button>
+          </div>
+        </section>
+      </>;
+    })() : minimized ? <>
+      <h3>Sua ordem de prioridade está pronta</h3>
+      <p>{selected.length ? `${selected.length} estratégia${selected.length === 1 ? '' : 's'} selecionada${selected.length === 1 ? '' : 's'} até agora.` : 'Reabra para escolher as estratégias que viram tarefas.'}</p>
+      <div className="priority-v3__actions"><button type="button" className="priority-v3__nyta-action" onClick={() => setMinimized(false)}>Ver ordem de prioridade</button></div>
+    </> : createPortal(
+      <div className="priority-v3__overlay" role="dialog" aria-modal="true" aria-label="Sua ordem de prioridade">
+        <div className="priority-v3__modal">
+          <button type="button" className="priority-v3__close" onClick={() => setMinimized(true)} aria-label="Fechar" title="Fechar"><FiX size={19} /></button>
+          <header>
+            <h2>Sua ordem de prioridade está pronta</h2>
+            <p>Da mais importante para a menos. Selecione até {limit} estratégias para transformar em tarefas agora; as outras ficam guardadas para depois.</p>
+          </header>
+          <div className="priority-v3__rank-list">
+            {ranked.map((strategy, position) => {
+              const checked = selected.includes(strategy.id);
+              const info = PRIORITY_INFO[strategy.bankId || ''];
+              return <button type="button" key={strategy.id} className={`priority-v3__rank-item${checked ? ' is-selected' : ''}`}
+                aria-pressed={checked} disabled={!checked && selected.length >= limit}
+                onClick={() => setSelected(checked ? selected.filter(id => id !== strategy.id) : [...selected, strategy.id])}>
+                <span className="priority-v3__rank-position">{String(position + 1).padStart(2, '0')}</span>
+                <span className="priority-v3__rank-check">{checked && <FiCheck size={14} />}</span>
+                <span className="priority-v3__rank-copy"><strong>{strategy.title}</strong>{info?.recomendada && <small>Recomendada pela Nyta</small>}</span>
+                <span className="priority-v3__rank-score">{strategy.finalScore}%</span>
+              </button>;
+            })}
+          </div>
+          <footer>
+            <span aria-live="polite"><strong>{selected.length}</strong> de {limit} selecionadas</span>
+            <button type="button" className="priority-v3__link" onClick={() => setSelected(selected.length === Math.min(limit, ranked.length) ? [] : ranked.slice(0, limit).map(strategy => strategy.id))}>{selected.length ? 'Limpar seleção' : 'Selecionar recomendadas'}</button>
+            <div className="priority-v3__modal-actions">
+              <button type="button" onClick={() => { setSelected([]); setMode('choose'); }}>Refazer priorização</button>
+              <button type="button" className="priority-v3__confirm" disabled={!selected.length} onClick={() => { confirmed.current = true; pending.current = null; onConfirm(scored, selected); }}>Gerar plano de ação</button>
+            </div>
+          </footer>
+        </div>
+      </div>, document.body
+    )}
   </section>;
 };

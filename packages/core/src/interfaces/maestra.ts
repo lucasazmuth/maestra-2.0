@@ -75,6 +75,32 @@ export interface ActionTask {
   deadline?: string; // YYYY-MM-DD
   status: TaskStatus;
   comments?: TaskComment[];
+  // Metadados calculados pelo motor de cronograma v1. Ausentes em planos legados.
+  schedule?: {
+    anchor: 'lancamento' | 'inicio' | 'propria';
+    order: number;
+    tight?: boolean;
+    continuous?: boolean;
+    recurrence?: 'weekly';
+    strategyId?: string;
+  };
+}
+
+export interface ScheduleStrategyState {
+  accepted?: boolean;
+  ownDate?: string;
+  path?: string;
+  adjusted?: boolean;
+  // Data escolhida manualmente por posição canônica da tarefa. O motor reaplica os deslocamentos
+  // após recalcular a âncora para que o ajuste sobreviva a reload e a edição em outra superfície.
+  manualDates?: Record<number, string>;
+}
+
+export interface ActionPlanSchedule {
+  version: 'v1';
+  releaseDate?: string;
+  startDate?: string;
+  strategies: Record<string, ScheduleStrategyState>;
 }
 
 export interface Strategy {
@@ -353,6 +379,8 @@ export interface ArtistContent {
   // Alimentam o cronograma sugerido em cascata por prioridade (engines.seedScheduledPlan).
   planStart?: string; // YYYY-MM-DD
   planMonths?: number;
+  // Cronograma determinístico v1. Só é criado para novos planejamentos.
+  actionPlanSchedule?: ActionPlanSchedule;
   revenueGoals?: any[];
   executiveSummary?: string;
   spotifyProfile?: SpotifyProfile;
@@ -672,6 +700,7 @@ export interface AgendaEvent {
   // source distingue evento criado na Agenda ('manual') do gerado por tarefa ('action_plan').
   task_id?: string | null;
   source?: 'manual' | 'action_plan' | string;
+  recurrence_rule?: 'weekly' | null;
   created_at?: string;
   updated_at?: string;
 }

@@ -5,6 +5,7 @@ import { FiArrowUp, FiCheck } from 'react-icons/fi';
 
 import * as wizardAi from '@maestra/core/services/wizardAi';
 import { supabase } from '@maestra/core/lib/supabase';
+import { syncActionPlanTaskEvent } from '@maestra/core/services/db/events';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import { WIZARD_TOTAL_STEPS } from '@maestra/core/constants/maestra';
 import { NytaBubble, NytaCardRow, TypingIndicator, UserBubble, WidgetSlot } from './ChatMessage';
@@ -23,6 +24,7 @@ import {
   seedValues,
 } from '@maestra/core/wizard/dados';
 import * as engine from '@maestra/core/wizard/motores';
+import { defaultSchedule, CRONOGRAMA_TEXTS } from '@maestra/core/services/cronograma';
 import { SWOT_INTERNAL, SWOT_OPPORTUNITIES, SWOT_THREATS } from '@maestra/core/wizard/swot';
 import {
   FinalSummaryCard,
@@ -48,6 +50,7 @@ import {
   VisionPorQuemChoice,
   VisionReviewCard,
   VisionSubstantivoChoice,
+  ScheduleApprovalCard,
 } from './widgets';
 import type {
   Artist,
@@ -955,6 +958,30 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
             }}
           />
         );
+      case 'schedule': {
+        const today = new Date().toISOString().slice(0, 10);
+        return (
+          <ScheduleApprovalCard
+            strategies={(draft.strategies || []).filter((strategy) => strategy.tasks.length)}
+            schedule={draft.actionPlanSchedule || defaultSchedule(today)}
+            onConfirm={(schedule, strategies) => {
+              pushUser('Cronograma aprovado');
+              void persist({ actionPlanSchedule: schedule, strategies }, 8).then(() => Promise.all(
+                strategies.flatMap((strategy) => strategy.tasks.map((task) => syncActionPlanTaskEvent({
+                  artistId: artist.id,
+                  taskId: task.id,
+                  title: task.description,
+                  strategyTitle: strategy.title,
+                  deadline: task.deadline,
+                  completed: task.status === 'done',
+                  recurrence: task.schedule?.recurrence,
+                })))
+              )).catch(() => message.warning('Cronograma salvo, mas a Agenda será atualizada na próxima abertura.'));
+            }}
+            texts={CRONOGRAMA_TEXTS}
+          />
+        );
+      }
       case 'final': {
         const concluded = (draft.step ?? 0) >= WIZARD_TOTAL_STEPS;
         return (

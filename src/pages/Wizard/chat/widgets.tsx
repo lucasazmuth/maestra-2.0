@@ -1,4 +1,5 @@
 import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import { App, DatePicker, Input, Select } from 'antd';
 import dayjs from 'dayjs';
@@ -26,6 +27,7 @@ import { generateObjectives } from '@maestra/core/wizard/motores';
 import { stripEmDash } from '@maestra/core/wizard/limpar';
 import type {
   ActionTask,
+  ActionPlanSchedule,
   ArtistGender,
   ArtistIdentity,
   ArtistStage,
@@ -37,12 +39,142 @@ import type {
   Strategy,
   SwotAnalysis,
 } from '@maestra/core/interfaces/maestra';
+import { scheduleBankFor, scheduleStrategy } from '@maestra/core/services/cronograma';
 
 // Widgets interativos renderizados dentro do chat da Nyta. Cada um coleta uma resposta
 // estruturada e devolve via callback — o orquestrador (NytaChat) ecoa a resposta como
 // mensagem do usuário e persiste no draft.
 
 const uid = () => Math.random().toString(36).slice(2, 10);
+
+// O cronograma não é texto gerado pela IA: o card só coleta as âncoras e aplica o motor
+// determinístico do núcleo. Assim o mesmo resultado pode ser reproduzido no aplicativo nativo.
+export const ScheduleApprovalCard: FC<{
+  strategies: Strategy[];
+  schedule: ActionPlanSchedule;
+  texts: { aceite: string; apertadas: string; continua: string; ancora_mudou: string; caminho_apoio: string };
+  onConfirm: (schedule: ActionPlanSchedule, strategies: Strategy[]) => void;
+}> = ({ strategies, schedule: initial, texts, onConfirm }) => {
+  const today = dayjs().format('YYYY-MM-DD');
+  const [schedule, setSchedule] = useState<ActionPlanSchedule>(initial);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [view, setView] = useState<'timeline' | 'list'>('timeline');
+  const [editorOpen, setEditorOpen] = useState(false);
+  const calculated = useMemo(() => strategies.map((strategy) => scheduleStrategy(strategy, schedule, today)), [strategies, schedule, today]);
+  const update = (patch: Partial<ActionPlanSchedule>) => setSchedule((current) => ({ ...current, ...patch,
+    strategies: Object.fromEntries(Object.entries(current.strategies).map(([id, state]) => {
+      const source = strategies.find(strategy => strategy.id === id);
+      const anchor = source ? scheduleBankFor(source)?.ancora : undefined;
+      const affected = (patch.releaseDate !== undefined && anchor === 'lancamento') || (patch.startDate !== undefined && anchor === 'inicio');
+      return [id, affected ? { ...state, accepted: false, manualDates: {}, adjusted: false } : state];
+    })),
+  }));
+  const updateState = (strategyId: string, patch: Record<string, unknown>) => setSchedule((current) => ({
+    ...current,
+    strategies: { ...current.strategies, [strategyId]: { ...current.strategies[strategyId], ...patch } },
+  }));
+  const moveTask = (strategyId: string, order: number, date?: string) => {
+    if (!date) return;
+    const previous = schedule.strategies[strategyId]?.manualDates || {};
+    updateState(strategyId, { manualDates: { ...previous, [order]: date }, adjusted: true, accepted: false });
+  };
+  const accepted = calculated.every((strategy) => schedule.strategies[strategy.id]?.accepted);
+  const gantt = useMemo(() => {
+    const dates = (calculated[activeIndex]?.tasks || []).map(task => task.deadline).filter(Boolean) as string[];
+    if (!dates.length) dates.push(today);
+    const ordered = dates.map((date) => dayjs(date)).sort((a, b) => a.valueOf() - b.valueOf());
+    const start = ordered[0].startOf('month');
+    const end = ordered[ordered.length - 1].endOf('month');
+    const span = Math.max(1, end.diff(start, 'day'));
+    const position = (date?: string) => date ? Math.max(0, Math.min(100, dayjs(date).diff(start, 'day') / span * 100)) : 0;
+    const monthCount = Math.max(1, end.diff(start, 'month') + 1);
+    return {
+      start,
+      end,
+      position,
+      months: Array.from({ length: monthCount }, (_, index) => start.add(index, 'month')),
+      width: Math.max(620, monthCount * 150),
+    };
+  }, [calculated, activeIndex, today]);
+
+  return (
+    <div className='nyta-card schedule-studio'>
+      <header className='schedule-studio__intro'>
+        <div><small>Última etapa</small><h2>Monte seu cronograma</h2><p>Revise uma estratégia por vez. A Nyta já organizou as datas para você.</p></div>
+        <strong><b>{calculated.filter(strategy => schedule.strategies[strategy.id]?.accepted).length}</b><small>de {calculated.length} prontas</small></strong>
+      </header>
+      <details className='schedule-studio__dates'>
+      <summary><span><small>Começo do plano</small><b>{schedule.startDate ? dayjs(schedule.startDate).format('DD MMM YYYY') : 'A definir'}</b></span><i aria-hidden>→</i><span><small>Próximo lançamento</small><b>{schedule.releaseDate ? dayjs(schedule.releaseDate).format('DD MMM YYYY') : 'A definir'}</b></span><em>Editar</em></summary>
+      <div className='schedule-studio__date-fields'>
+        <label style={{ display: 'grid', gap: 6, fontWeight: 700 }}>Próximo lançamento (Dia D)
+          <DatePicker allowClear={false} value={schedule.releaseDate ? dayjs(schedule.releaseDate) : null} onChange={(value) => update({ releaseDate: value?.format('YYYY-MM-DD') })} format='DD/MM/YYYY' />
+        </label>
+        <label style={{ display: 'grid', gap: 6, fontWeight: 700 }}>Início do plano
+          <DatePicker allowClear={false} value={schedule.startDate ? dayjs(schedule.startDate) : null} onChange={(value) => update({ startDate: value?.format('YYYY-MM-DD') })} format='DD/MM/YYYY' />
+        </label>
+      </div>
+      </details>
+      <div className='schedule-studio__workspace'>
+      <nav className='schedule-studio__strategy-nav' aria-label='Estratégias do cronograma'>
+        <span>Suas estratégias</span>
+        {calculated.map((strategy, index) => <button type='button' key={strategy.id} className={`${activeIndex === index ? 'is-active' : ''}${schedule.strategies[strategy.id]?.accepted ? ' is-done' : ''}`} onClick={() => setActiveIndex(index)}><i>{schedule.strategies[strategy.id]?.accepted ? <FiCheck size={13} /> : index + 1}</i><span>{strategy.title}</span></button>)}
+      </nav>
+      <main className='schedule-studio__active'>
+      <div style={{ display: 'grid', gap: 14 }}>
+        {calculated.slice(activeIndex, activeIndex + 1).map((strategy) => {
+          const definition = scheduleBankFor(strategy)!;
+          const state = schedule.strategies[strategy.id] || {};
+          const tight = strategy.tasks.filter((task) => task.schedule?.tight).length;
+          const ready = !!definition && !!(definition.ancora === 'propria' ? state.ownDate : definition.ancora === 'inicio' ? schedule.startDate : schedule.releaseDate) && (!definition.caminho || !!state.path);
+          return <section key={strategy.id} className='schedule-studio__strategy'>
+            <div className='schedule-studio__strategy-head'>
+              <div><small>Estratégia {activeIndex + 1} de {calculated.length}</small><strong>{strategy.title}</strong><div>{definition.ancora === 'lancamento' ? 'Planejada a partir do lançamento' : definition.ancora === 'inicio' ? 'Planejada a partir do início do plano' : 'Planejada a partir da data escolhida'}</div></div>
+              <span className='schedule-studio__status'>{state.accepted ? <><FiCheck size={14} /> Aprovada</> : `${strategy.tasks.length} tarefas`}</span>
+            </div>
+            {definition.pergunta_propria && <label style={{ display: 'grid', gap: 6, marginTop: 14, fontSize: 13, fontWeight: 700 }}>{definition.pergunta_propria}
+              <DatePicker value={state.ownDate ? dayjs(state.ownDate) : null} onChange={(value) => updateState(strategy.id, { ownDate: value?.format('YYYY-MM-DD'), accepted: false, manualDates: {}, adjusted: false })} format='DD/MM/YYYY' />
+            </label>}
+            {definition.caminho && <label style={{ display: 'grid', gap: 6, marginTop: 14, fontSize: 13, fontWeight: 700 }}>Como você quer seguir?
+              <Select value={state.path} placeholder='Escolha um caminho' options={definition.caminho.opcoes.map((option) => ({ value: option.rotulo, label: option.rotulo }))} onChange={(path) => updateState(strategy.id, { path, accepted: false, manualDates: {}, adjusted: false })} />
+              <small style={{ color: '#71809e', fontWeight: 400 }}>{texts.caminho_apoio}</small>
+            </label>}
+            {ready && <div className='schedule-studio__overview'><div><span>Primeira tarefa</span><strong>{strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort()[0] ? dayjs(strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort()[0]).format('DD MMM') : 'A definir'}</strong></div><div className='schedule-studio__overview-line' aria-hidden='true'>{strategy.tasks.map((task, index) => task.deadline && <i key={index} style={{ left: `${gantt.position(task.deadline)}%` }} />)}</div><div><span>Último início</span><strong>{strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort().at(-1) ? dayjs(strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort().at(-1)).format('DD MMM') : 'A definir'}</strong></div></div>}
+            <button type='button' className='schedule-studio__open-editor' onClick={() => setEditorOpen(true)}>Quero revisar ou ajustar as datas <span>{strategy.tasks.length} tarefas</span></button>
+            {editorOpen && createPortal(<div className='schedule-editor' role='dialog' aria-modal='true' aria-labelledby='scheduleEditorTitle'>
+            <section className='schedule-editor__panel'>
+            <header className='schedule-editor__header'><div><small>Estratégia {activeIndex + 1} de {calculated.length}</small><h2 id='scheduleEditorTitle'>{strategy.title}</h2><p>Confira quando cada tarefa começa. Clique em uma data para ajustar.</p></div><button type='button' onClick={() => setEditorOpen(false)} aria-label='Fechar cronograma' title='Fechar'><span className='schedule-editor__close-icon' aria-hidden='true' /></button></header>
+            <div className='schedule-editor__body'>
+            <div className='schedule-studio__toolbar'><span>{strategy.tasks.length} tarefas · {definition.ancora === 'lancamento' ? 'Organizadas pelo lançamento' : definition.ancora === 'inicio' ? 'Organizadas pelo início do plano' : 'Organizadas pela data escolhida'}</span><div role='group' aria-label='Visualização'><button type='button' aria-pressed={view === 'timeline'} onClick={() => setView('timeline')}>Gantt</button><button type='button' aria-pressed={view === 'list'} onClick={() => setView('list')}>Lista</button></div></div>
+            {view === 'timeline' ? <div className='schedule-gantt' aria-label='Cronograma em Gantt'>
+              <div className='schedule-gantt__content' style={{ width: 300 + gantt.width }}>
+                <div className='schedule-gantt__corner'>Tarefas</div>
+                <div className='schedule-gantt__months' style={{ width: gantt.width }}>{gantt.months.map(month => <span key={month.format('YYYY-MM')} style={{ width: gantt.width / gantt.months.length }}>{month.format('MMM YYYY')}</span>)}</div>
+                {strategy.tasks.map((task, index) => <div className='schedule-gantt__row' key={task.id}>
+                  <div className='schedule-gantt__task'><small>{String(index + 1).padStart(2, '0')}</small><span>{task.description}</span>{task.schedule?.continuous && <b>Semanal</b>}{task.schedule?.tight && <b className='is-tight'>Apertada</b>}</div>
+                  <div className='schedule-gantt__timeline' style={{ width: gantt.width }}>
+                    {gantt.months.map(month => <i key={month.format('YYYY-MM')} style={{ width: gantt.width / gantt.months.length }} />)}
+                    {task.schedule?.continuous && <span className='schedule-gantt__recurrence' style={{ left: `${gantt.position(task.deadline)}%` }} />}
+                    <DatePicker allowClear={false} inputReadOnly aria-label={`Início: ${task.description}`} className={`schedule-gantt__marker${task.schedule?.tight ? ' is-tight' : ''}`} value={task.deadline ? dayjs(task.deadline) : null} onChange={(value) => moveTask(strategy.id, task.schedule?.order || 0, value?.format('YYYY-MM-DD'))} format='DD MMM' style={{ left: `${gantt.position(task.deadline)}%` }} />
+                  </div>
+                </div>)}
+              </div>
+            </div> : <div className='schedule-list'>{strategy.tasks.map((task, index) => <label key={task.id}><span><small>{String(index + 1).padStart(2, '0')}</small>{task.description}</span><DatePicker allowClear={false} aria-label={`Início: ${task.description}`} size='small' value={task.deadline ? dayjs(task.deadline) : null} onChange={(value) => moveTask(strategy.id, task.schedule?.order || 0, value?.format('YYYY-MM-DD'))} format='DD/MM' /></label>)}</div>}
+            <p className='schedule-studio__note'>{texts.aceite}</p>
+            </div>
+            <footer className='schedule-editor__footer'><span>{tight ? `${tight} tarefa${tight === 1 ? '' : 's'} apertada${tight === 1 ? '' : 's'}` : 'Datas prontas para aprovação'}</span><button type='button' onClick={() => setEditorOpen(false)}>Concluir revisão</button></footer>
+            </section>
+            </div>, document.body)}
+            {tight > 0 && <p style={{ color: '#9a6400', margin: '12px 0 0', fontSize: 13 }}>{texts.apertadas.replace('{n}', String(tight))}</p>}
+            <footer className='schedule-studio__footer'><button type='button' disabled={activeIndex === 0} onClick={() => setActiveIndex(value => value - 1)}>Anterior</button><button type='button' className='schedule-studio__approve' disabled={!ready} onClick={() => { updateState(strategy.id, { accepted: true }); if (activeIndex + 1 < calculated.length) setActiveIndex(value => value + 1); }}>{activeIndex + 1 < calculated.length ? (state.accepted ? 'Continuar' : 'Tudo certo, continuar') : (state.accepted ? 'Concluir' : 'Tudo certo, concluir')}</button></footer>
+          </section>;
+        })}
+      </div>
+      </main>
+      </div>
+      {accepted && <button type='button' className='schedule-studio__save' onClick={() => onConfirm(schedule, calculated)}>Salvar cronograma na Agenda</button>}
+    </div>
+  );
+};
 
 // Revela listas longas (estratégias, SWOT, oportunidades/ameaças) item por item em vez de tudo de
 // uma vez. Sem isso, um card com 20+ itens nasce já com a altura final, e o `ResizeObserver` do

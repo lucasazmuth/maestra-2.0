@@ -122,6 +122,7 @@ export type WidgetSpec =
   | { kind: 'swotBoard' }
   | { kind: 'strategies' }
   | { kind: 'priority' }
+  | { kind: 'schedule' }
   | { kind: 'final' }
   | { kind: 'retry' };
 
@@ -281,8 +282,16 @@ export function nextBeat(draft: ArtistContent): Beat {
   if (step === 7)
     return { stage: 'priority', say: SAY.priorityIntro(), widget: { kind: 'priority' } };
 
-  // STEP 8 — Resumo + conclusão (e revisita pós-conclusão). As tarefas já nasceram na seleção do
-  // modal de prioridades (etapa 7); não há mais etapa de cronograma/datas.
+  // STEP 8 — Cronograma v1. Só planos ainda não concluídos passam por este portão;
+  // planejamentos antigos já persistidos no passo 9 continuam abrindo o resumo normalmente.
+  if (step === 8 && !draft.actionPlanSchedule)
+    return {
+      stage: 'schedule',
+      say: ['Agora vamos colocar o seu plano no tempo. Eu preparo as datas, e você aprova cada estratégia antes de ela entrar na sua agenda.'],
+      widget: { kind: 'schedule' },
+    };
+
+  // Resumo + conclusão (e revisita pós-conclusão).
   if (!draft.executiveSummary)
     return { stage: 'final.prepare', say: SAY.preparing(), widget: null, prepare: 'summary' };
   return { stage: 'final', say: [], widget: { kind: 'final' } };

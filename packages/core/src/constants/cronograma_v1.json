@@ -1,0 +1,3193 @@
+{
+ "versao": "v1",
+ "data": "2026-09-14",
+ "convencoes": {
+  "dia": "dia em que a tarefa começa; lancamento e propria contam dias ANTES da data (negativo = depois); inicio conta dias DEPOIS do início do plano",
+  "continua": "sem dia; começa após a tarefa anterior da cadeia e vira recorrência semanal"
+ },
+ "perguntas_gerais": [
+  {
+   "id": "lancamento",
+   "nome": "Lançamento (Dia D)",
+   "pergunta": "Qual a data do seu próximo lançamento? Se ainda não tem data fechada, me diz o mês que eu marco o dia 15 e a gente ajusta depois.",
+   "apoio": "O ideal é trabalhar com 180 dias de antecedência. É o tempo de cuidar da produção, do material e da divulgação sem correria. Se o seu lançamento está mais perto que isso, tudo bem, eu encaixo o que cabe e te mostro o que fica apertado. Se você ainda não tem lançamento previsto, eu sugiro uma data daqui a 180 dias e você muda quando quiser.",
+   "fallback_dias": 180
+  },
+  {
+   "id": "inicio",
+   "nome": "Início do plano",
+   "pergunta": "Quando você quer começar a executar o plano?",
+   "apoio": "Não precisa ser amanhã. Mas quanto antes você começa, mais cedo as coisas passam a andar. Se preferir, eu marco a partir de hoje.",
+   "fallback": "hoje"
+  }
+ ],
+ "textos_nyta": {
+  "caminho_apoio": "As duas opções funcionam, mas a assessoria profissional traz mais chance de resultado. Contratar custa dinheiro e poupa tempo. Fazer por conta própria custa tempo e necessita dedicação no aprendizado. Analise se você tem as forças necessárias para tocar por conta própria e se esse investimento cabe no seu orçamento. Lembre-se de considerar o impacto dessa estratégia nos seus objetivos.",
+  "aceite": "Aqui está o cronograma dessa estratégia. Se fizer sentido, é só aceitar. Se alguma data não cabe, arrasta que eu reorganizo as seguintes.",
+  "apertadas": "Ficaram {n} tarefas apertadas, porque o lançamento está mais perto do que o preparo pede. Nada foi cortado. Mantenha o acompanhamento da sua agenda para não deixar nada passar.",
+  "continua": "Essa tarefa é contínua. Ela vai aparecer toda semana no seu calendário a partir de {data}.",
+  "ancora_mudou": "Você mudou a data do lançamento. Reorganizei tudo que dependia dela. Dá uma olhada no que ficou apertado."
+ },
+ "estrategias": [
+  {
+   "id": "#1",
+   "titulo": "Criar uma programação estruturada de lançamentos fonográficos",
+   "categoria": "Lançamentos fonográficos",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Organizar o banco de músicas, identificando as prontas e em produção (dica: use a Maestra)",
+     "dia": 180,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Definir o conceito artístico do projeto, a partir da verdade do artista, refletida em visão, missão e valores",
+     "dia": 170,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Avaliar incluir feats nos lançamentos e, se fizer sentido, escolher os artistas para convidar",
+     "dia": 160,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Definir o que vai ser lançado nos próximos 12 meses (singles, EP ou álbum)",
+     "dia": 150,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Montar um cronograma com a data prevista de cada lançamento",
+     "dia": 140,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Apresentar o projeto às distribuidoras identificadas como de interesse",
+     "dia": 120,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Preparar plano de marketing do lançamento",
+     "dia": 70,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Produzir o conteúdo promocional planejado",
+     "dia": 56,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Enviar o pitching para a distribuidora com quatro semanas de antecedência, contendo a master, ISRC, capa, fotos, release e plano de marketing",
+     "dia": 28,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Conferir cadastros e metadados de cada lançamento (perfis de artista nas plataformas, ISRC/ISWC, filiação como intérprete e músico) antes do Dia D",
+     "dia": 7,
+     "continua": false
+    }
+   ],
+   "ancora": "lancamento"
+  },
+  {
+   "id": "#3",
+   "titulo": "Trabalhar a edição das obras: contratar editora ou constituir editora própria com administração",
+   "categoria": "Distribuição, edição e direitos",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Entender como funciona uma editora musical e o que ela arrecada",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Listar todas as suas obras (dica: use o catálogo da Maestra)",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Consultar um contador sobre incluir a atividade de edição na empresa e efetuar a inclusão, se necessário",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Se for editora própria: filiar a uma associação de arrecadação",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Pesquisar editoras que fazem contrato de administração",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Apresentar o catálogo às editoras de interesse",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Avaliar os termos de contratos propostos com apoio jurídico",
+     "dia": 40,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Assinar o contrato",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Analisar os relatórios de repasse",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Manter o relacionamento com a editora, a fim de prospectar oportunidades de sincronização e gravação por outros artistas",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio",
+   "caminho": {
+    "pergunta": "Você vai constituir a sua própria editora ou contratar uma editora com administração?",
+    "substitui_tarefa": null,
+    "opcoes": [
+     {
+      "rotulo": "Editora própria",
+      "tarefas_exclusivas": [
+       3,
+       4
+      ]
+     },
+     {
+      "rotulo": "Editora com administração",
+      "tarefas_exclusivas": [
+       5,
+       6,
+       7,
+       8
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "id": "#4",
+   "titulo": "Prospectar oportunidades de sincronização",
+   "categoria": "Distribuição, edição e direitos",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Entender o que é sincronização e que tipo de música tem demanda",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Organizar o catálogo com as músicas disponíveis para sync (dica: use a Maestra)",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Checar se os direitos das obras estão registrados",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Preparar uma pasta com as músicas, versões instrumentais e informações para sync",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Mapear produtoras, agências de publicidade e supervisores musicais do seu nicho",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Cadastrar as músicas em plataformas e bibliotecas de sincronização",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Apresentar o catálogo aos contatos mapeados",
+     "dia": 40,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Atualizar a editora e a distribuidora dos próximos lançamentos, para possíveis conexões",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Negociar cada licenciamento com atenção aos direitos envolvidos",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Registrar cada licenciamento fechado e manter o catálogo atualizado",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#6",
+   "titulo": "Definir a documentação de referências de branding do projeto (coordenação entre conceito e desdobramentos visuais)",
+   "categoria": "Branding e material promocional",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Fazer brainstorm de conceito do projeto",
+     "dia": 173,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Afunilar as possibilidades até fechar o conceito (lembre-se do posicionamento almejado)",
+     "dia": 173,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Criar um moodboard visual (recortes de imagens) que represente o conceito",
+     "dia": 173,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Definir o tom de voz do projeto",
+     "dia": 170,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Pesquisar imagens de referência para a capa",
+     "dia": 168,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Pesquisar tipologias de referência para a logo",
+     "dia": 165,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Pesquisar imagens de referência para direção de arte das fotos de divulgação",
+     "dia": 160,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Pesquisar imagens de referência para figurino e visagismo",
+     "dia": 157,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Pesquisar imagens de referência de cenografia",
+     "dia": 158,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Consolidar o documento de coordenação de branding com o briefing para os demais profissionais",
+     "dia": 150,
+     "continua": false
+    }
+   ],
+   "ancora": "lancamento"
+  },
+  {
+   "id": "#8",
+   "titulo": "Produzir novo material promocional baseado em uma coordenação estruturada de branding",
+   "categoria": "Branding e material promocional",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Listar tudo que precisa de material novo (fotos, release, bio, PDF, vídeo)",
+     "dia": 90,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Pesquisar fotógrafos alinhados à nova identidade",
+     "dia": 80,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Fechar o fotógrafo e marcar o ensaio",
+     "dia": 70,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Realizar o ensaio de fotos",
+     "dia": 55,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Selecionar e tratar as melhores imagens",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Escrever a bio curta e a bio longa a partir do posicionamento definido",
+     "dia": 35,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Escrever o release (avaliar aspas de jornalista ou personalidade)",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Montar o PDF de apresentação com fotos, bio e informações do show",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Editar o vídeo de venda do show",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Organizar o material numa pasta pronta para envio (e manter atualizada)",
+     "dia": 7,
+     "continua": false
+    }
+   ],
+   "ancora": "lancamento"
+  },
+  {
+   "id": "#9",
+   "titulo": "Criar media kit criativo para lançamentos estratégicos",
+   "categoria": "Branding e material promocional",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir o conceito do media kit (o que quer provocar)",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Reunir as melhores fotos, vídeos e números",
+     "dia": 50,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Escrever o texto curto de apresentação",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Definir o formato (PDF, vídeo, objeto físico criativo)",
+     "dia": 40,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Produzir o media kit",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Revisar e aprovar a versão final",
+     "dia": 21,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Mapear os influenciadores e veículos que vão receber",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Personalizar o envio para cada destinatário",
+     "dia": 14,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Enviar nos períodos de lançamento, alinhado ao plano de marketing",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Acompanhar quem recebeu, respondeu e publicou",
+     "dia": -14,
+     "continua": false
+    }
+   ],
+   "ancora": "lancamento"
+  },
+  {
+   "id": "#10",
+   "titulo": "Estruturar a gestão das redes sociais",
+   "categoria": "Redes sociais e canais próprios",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir quais redes são prioritárias para o seu público",
+     "dia": 3,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Definir as editorias de conteúdo, a partir do posicionamento",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Pesquisar profissionais de social media / marketing digital para avaliar contratação",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Montar o cronograma de postagens do mês",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Definir a verba mensal para tráfego pago e os conteúdos a serem impulsionados",
+     "dia": 17,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Planejar a produção do conteúdo",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Contratar os profissionais necessários para a produção do conteúdo",
+     "dia": 23,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Executar as postagens mantendo o acompanhamento do cronograma",
+     "dia": null,
+     "continua": true
+    },
+    {
+     "n": 9,
+     "texto": "Analisar o desempenho dos posts",
+     "dia": null,
+     "continua": true
+    },
+    {
+     "n": 10,
+     "texto": "Ajustar os conteúdos de acordo com as análises realizadas",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#12",
+   "titulo": "Criar site com área de captação de contatos e trabalhar gestão de comunidade, avaliando modelos de remuneração recorrente",
+   "categoria": "Redes sociais e canais próprios",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Criar site (mesmo que simples) com área de cadastro",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Fazer campanha de inscrições (avaliar oferta de recompensa)",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Escolher onde criar a comunidade (WhatsApp, Telegram, plataforma de assinatura)",
+     "dia": 51,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Definir o que a comunidade vai receber de especial, alinhado ao seu posicionamento",
+     "dia": 54,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Definir se vai ter mensalidade e qual valor",
+     "dia": 59,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Configurar a plataforma escolhida",
+     "dia": 62,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Criar as regras e a mensagem de boas-vindas",
+     "dia": 69,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Divulgar a comunidade nas redes e nos shows",
+     "dia": 72,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Criar um cronograma de conteúdo e encontros exclusivos",
+     "dia": 86,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Acompanhar crescimento, retenção e receita recorrente",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#14",
+   "titulo": "Mapear, organizar e ativar a base de contatos atual e de interesse de network",
+   "categoria": "Redes sociais e canais próprios",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Reunir todos os contatos que você já tem (celular, e-mail, redes)",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Criar uma planilha única de contatos",
+     "dia": 7,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Classificar cada contato por tipo (jornalista, contratante, músico, fã)",
+     "dia": 12,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Identificar os contatos mais estratégicos para o momento do projeto",
+     "dia": 17,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Listar os contatos de interesse que você ainda não tem",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Mapear como chegar nesses contatos novos",
+     "dia": 25,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Definir um fluxo de comunicação para cada tipo (o quê e com que frequência)",
+     "dia": 32,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Criar listas de transmissão ou grupos segmentados",
+     "dia": 37,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Enviar a primeira comunicação de cada grupo",
+     "dia": 40,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Manter o contato regular conforme o fluxo definido",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#15",
+   "titulo": "Trabalhar imprensa e mídia nos lançamentos",
+   "categoria": "Imprensa, mídia e rádio",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Decidir se vai contratar assessoria ou fazer por conta própria",
+     "dia": 90,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Se for contratar: pesquisar assessorias com atuação no seu nicho e pedir cases",
+     "dia": 80,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Escolher a assessoria e fechar para o período do lançamento",
+     "dia": 70,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Se for por conta própria: mapear veículos e jornalistas de interesse",
+     "dia": 80,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Levantar o contato de cada um",
+     "dia": 70,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Preparar o release e o kit de imprensa do lançamento",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Enviar o material com antecedência",
+     "dia": 21,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Fazer follow-up com quem não respondeu",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Registrar a cobertura num documento de clipping",
+     "dia": -15,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Manter relacionamento com os contatos entre lançamentos",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "lancamento",
+   "caminho": {
+    "pergunta": "Você vai contratar uma assessoria de imprensa ou fazer por conta própria?",
+    "substitui_tarefa": 1,
+    "opcoes": [
+     {
+      "rotulo": "Contratar assessoria",
+      "tarefas_exclusivas": [
+       2,
+       3
+      ]
+     },
+     {
+      "rotulo": "Por conta própria",
+      "tarefas_exclusivas": [
+       4,
+       5
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "id": "#17",
+   "titulo": "Prospectar participações em podcasts e canais do YouTube",
+   "categoria": "Imprensa, mídia e rádio",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Listar podcasts e canais do YouTube alinhados ao seu público",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Observar quais já receberam artistas do seu perfil",
+     "dia": 3,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Levantar o contato de cada um",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Preparar um pitch curto de apresentação",
+     "dia": 8,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Escolher o gancho (lançamento, história, pauta)",
+     "dia": 8,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Propor a participação aos contatos mapeados",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Fazer follow-up com quem não respondeu",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Agendar e preparar as participações confirmadas",
+     "dia": 18,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Participar e divulgar nas suas redes",
+     "dia": 23,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Registrar os contatos e manter relacionamento para novas participações",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#18",
+   "titulo": "Trabalhar rádio no seu nicho",
+   "categoria": "Imprensa, mídia e rádio",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Decidir se vai contratar divulgador ou fazer por conta própria",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Se contratar: pesquisar divulgadores do nicho e pedir resultados anteriores",
+     "dia": 40,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Fechar com o divulgador e alinhar as metas",
+     "dia": 35,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Se for por conta própria: mapear rádios estratégicas do segmento",
+     "dia": 40,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Levantar o contato das rádios e programadores",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Preparar a música e o material de envio",
+     "dia": 21,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Enviar a música propondo execução ou parceria",
+     "dia": 14,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Fazer follow-up",
+     "dia": -7,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Acompanhar em quais rádios a música entrou",
+     "dia": -21,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Manter relacionamento com as rádios para os próximos lançamentos",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "lancamento",
+   "caminho": {
+    "pergunta": "Você vai contratar um divulgador de rádio ou fazer por conta própria?",
+    "substitui_tarefa": 1,
+    "opcoes": [
+     {
+      "rotulo": "Contratar divulgador",
+      "tarefas_exclusivas": [
+       2,
+       3
+      ]
+     },
+     {
+      "rotulo": "Por conta própria",
+      "tarefas_exclusivas": [
+       4,
+       5
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "id": "#19",
+   "titulo": "Criar programação estruturada de conteúdo para o YouTube",
+   "categoria": "YouTube e podcast próprio",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir o objetivo do canal, a partir do posicionamento do projeto",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Definir os tipos de conteúdo (clipes, bastidores, ao vivo)",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Levantar o que o seu acervo já permite publicar",
+     "dia": 8,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Montar um cronograma de publicação realista",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Padronizar capas e títulos com a identidade do projeto",
+     "dia": 13,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Produzir os primeiros conteúdos",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Otimizar título, descrição e tags de cada vídeo",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Publicar conforme o cronograma",
+     "dia": null,
+     "continua": true
+    },
+    {
+     "n": 9,
+     "texto": "Divulgar os vídeos nas outras redes",
+     "dia": 23,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Analisar as métricas e ajustar a programação",
+     "dia": 50,
+     "continua": false
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#20",
+   "titulo": "Lançar podcast (ou videocast) próprio",
+   "categoria": "YouTube e podcast próprio",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir o tema e o formato do podcast, alinhados ao posicionamento",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Definir uma frequência que caiba na sua rotina (semanal, quinzenal)",
+     "dia": 2,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Listar os primeiros convidados ou pautas",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Definir o equipamento e o local de gravação",
+     "dia": 8,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Criar a identidade do podcast (nome, capa), coerente com o branding",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Gravar o episódio piloto",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Escolher onde hospedar (Spotify, YouTube)",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Editar e publicar o primeiro episódio",
+     "dia": 28,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Divulgar e aproveitar cortes nas redes",
+     "dia": 28,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Manter a frequência e avaliar os resultados a cada mês",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#22",
+   "titulo": "Participar de eventos, congressos e showcases do mercado",
+   "categoria": "Network, mercado e reconhecimento",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Listar os eventos, congressos e showcases do mercado no ano",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Marcar as datas e prazos de credenciamento no calendário",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Escolher os mais estratégicos para o momento do projeto",
+     "dia": 50,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Preparar o elevator pitch (apresentação de 60 segundos)",
+     "dia": 55,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Garantir inscrição ou credenciamento",
+     "dia": 50,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Mapear na programação os conteúdos de interesse",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Procurar os palestrantes após os painéis para apresentação e troca de contatos",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Acessar rodadas de negócio e meet-ups",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Fazer follow-up na semana seguinte ao evento",
+     "dia": -7,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Interagir digitalmente com a cena entre os eventos",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "propria",
+   "pergunta_propria": "Qual evento do mercado você quer priorizar primeiro? Me diz a data dele que eu organizo o preparo até lá.",
+   "apoio_propria": "Não precisa ser o maior evento do ano. Considere os eventos que reúnem quem contrata no seu nicho. Se ainda não sabe qual, me diz uma data aproximada e a gente troca depois."
+  },
+  {
+   "id": "#48",
+   "titulo": "Fazer pesquisa para compreender o seu público",
+   "categoria": "Network, mercado e reconhecimento",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir o que você quer descobrir sobre o seu público (perfil, hábitos, motivações)",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Levantar os dados que já existem (Spotify for Artists, YouTube Studio, redes sociais)",
+     "dia": 3,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Montar um questionário curto e enviar para a sua base (redes, comunidade, shows)",
+     "dia": 7,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Conversar com fãs nos shows e nas redes para ouvir as motivações",
+     "dia": 14,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Observar o público de artistas parecidos com você",
+     "dia": 21,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Identificar onde o seu público está e como descobre música nova",
+     "dia": 25,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Organizar as informações num perfil de fã (persona)",
+     "dia": 35,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Cruzar o perfil do fã com o seu posicionamento e ajustar o que precisar",
+     "dia": 40,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Usar o perfil pra orientar conteúdo, lançamentos e escolha de shows",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Atualizar a pesquisa a cada semestre",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#49",
+   "titulo": "Inscrever o projeto em premiações, pitchings e showcases",
+   "categoria": "Network, mercado e reconhecimento",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Listar premiações, pitchings e showcases do seu nicho",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Levantar regras, prazos e formatos de inscrição",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Marcar tudo no calendário",
+     "dia": 7,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Escolher os mais estratégicos para o momento do projeto",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Preparar o material de inscrição (vídeo, bio, release, números)",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Inscrever o projeto dentro dos prazos",
+     "dia": 35,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Se selecionado: preparar a apresentação ou o show",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Participar e fazer contatos no evento",
+     "dia": 75,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Comunicar a participação ou o prêmio nas redes e na imprensa",
+     "dia": 77,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Registrar contatos e resultados para as próximas edições",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#23",
+   "titulo": "Montar o show e realizar o show de lançamento com registro audiovisual",
+   "categoria": "Show e palco",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Fechar o repertório do show, alinhado ao conceito do projeto",
+     "dia": 90,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Definir o roteiro e a ordem das músicas",
+     "dia": 80,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Marcar os ensaios com a banda ou equipe",
+     "dia": 70,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Ensaiar até o show estar pronto para o palco",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Escolher a data e o espaço do show de lançamento",
+     "dia": 90,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Contratar a equipe técnica (som, luz)",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Contratar o registro em áudio, vídeo e foto",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Preparar e executar a divulgação do show",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Realizar o show com o registro completo",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Editar o material para vídeo de venda e conteúdo de redes",
+     "dia": -10,
+     "continua": false
+    }
+   ],
+   "ancora": "propria",
+   "pergunta_propria": "Qual a data do show de lançamento? Se ainda não tem, me diz o mês que eu marco e a gente ajusta.",
+   "apoio_propria": "O show costuma funcionar melhor de 7 a 15 dias depois do lançamento, quando a música já circulou um pouco e o assunto ainda está quente para a imprensa. Se preferir lançar e fazer o show no mesmo dia, também funciona, só o preparo fica mais concentrado."
+  },
+  {
+   "id": "#24",
+   "titulo": "Trabalhar a presença de palco com marcações de roteiro",
+   "categoria": "Show e palco",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Identificar o que você quer melhorar no palco (grave um show e assista)",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Decidir se vai trabalhar com profissional ou por conta própria",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Se for com profissional: pesquisar preparadores, diretores de show ou coreógrafos",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Ver trabalhos anteriores, pedir orçamento e fechar",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Marcar as sessões de trabalho",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Definir as marcações de roteiro do show",
+     "dia": 25,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Ensaiar a performance com as marcações",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Gravar um ensaio para avaliar a evolução",
+     "dia": 40,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Ajustar os pontos fracos identificados",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Aplicar no próximo show e manter a rotina de avaliação",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio",
+   "caminho": {
+    "pergunta": "Você vai trabalhar a presença de palco com um profissional ou por conta própria?",
+    "substitui_tarefa": 2,
+    "opcoes": [
+     {
+      "rotulo": "Com profissional",
+      "tarefas_exclusivas": [
+       3,
+       4,
+       5
+      ]
+     },
+     {
+      "rotulo": "Por conta própria",
+      "tarefas_exclusivas": []
+     }
+    ]
+   }
+  },
+  {
+   "id": "#29",
+   "titulo": "Prospectar shows em órgãos públicos, como prefeituras, fundações e SESCs",
+   "categoria": "Venda de shows e circulação",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Listar prefeituras, SESC, SESI e órgãos da região geográfica de seu interesse",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Entender como cada um contrata (edital, chamamento, convite)",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Providenciar os cadastros e a documentação exigidos",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Preparar material de venda adequado ao setor público",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Levantar os contatos das secretarias de cultura",
+     "dia": 25,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Enviar proposta e material aos contatos",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Mapear editais e chamamentos abertos",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Inscrever o projeto nos editais correspondentes",
+     "dia": 40,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Fazer follow-up e acompanhar os resultados",
+     "dia": 50,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Registrar contatos e resultados pra manter presença constante",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#30",
+   "titulo": "Prospectar shows corporativos (shows fechados para convidados, contratados por empresas)",
+   "categoria": "Venda de shows e circulação",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Listar tipos de empresas e eventos corporativos do seu perfil",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Mapear agências de eventos corporativos",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Preparar material de venda voltado ao corporativo",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Definir a faixa de cachê para esse mercado",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Levantar contatos de RH, marketing e agências",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Avaliar investimento em tráfego pago",
+     "dia": 25,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Ativar fluxo de e-mails para os contatos mapeados",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Apresentar ou enviar o material de venda",
+     "dia": 35,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Fazer follow-up",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Realizar pesquisa de satisfação pós-venda e pedir indicações após cada evento",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#31",
+   "titulo": "Prospectar shows particulares (casamentos, aniversários etc.)",
+   "categoria": "Venda de shows e circulação",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir o produto para eventos particulares (show voltado ao entretenimento)",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Definir diferencial personalizado, como momento especial dos noivos",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Preparar material de venda para esse público",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Criar site com vídeos e depoimentos",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Definir a faixa de cachê por tipo de evento",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Mapear cerimonialistas e produtores de eventos",
+     "dia": 35,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Avaliar investimento em tráfego pago",
+     "dia": 40,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Apresentar o serviço aos contatos mapeados",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Fazer follow-up",
+     "dia": 55,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Pedir indicação e depoimento aos clientes satisfeitos",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#32",
+   "titulo": "Prospectar shows em casas de show e teatros",
+   "categoria": "Venda de shows e circulação",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Listar casas de show e teatros do seu perfil e região",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Entender o modelo de cada um (cachê, bilheteria, parceria)",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Preparar material de venda com o vídeo do show",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Levantar os contatos dos programadores",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Apresentar o show aos programadores",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Fazer follow-up",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Negociar as condições e fechar a data",
+     "dia": 40,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Divulgar o show",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Realizar o show e repercutir nas redes",
+     "dia": 90,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Manter o relacionamento para prospectar novas datas",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#33",
+   "titulo": "Prospectar shows em festivais e junto a produtores de eventos",
+   "categoria": "Venda de shows e circulação",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Listar os festivais e produtores do seu nicho",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Marcar os prazos de inscrição e curadoria no calendário",
+     "dia": 3,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Preparar material de venda voltado a festivais",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Levantar os contatos de produtores e curadores",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Inscrever o projeto nos festivais com chamada aberta",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Apresentar o projeto aos produtores",
+     "dia": 25,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Fazer follow-up",
+     "dia": 35,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Acompanhar os resultados das curadorias",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Negociar e confirmar as participações",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Registrar contatos e manter relacionamento para as próximas edições",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#N5",
+   "titulo": "Planejar turnê de circulação",
+   "categoria": "Venda de shows e circulação",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Identificar as praças onde o seu público já existe ou pode existir (dados de streaming e redes)",
+     "dia": 180,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Definir a rota e o período da circulação (praças próximas agrupadas)",
+     "dia": 170,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Mapear editais e programas de circulação (Sesc, fundações, patrocínios de circulação)",
+     "dia": 160,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Levantar casas, festivais e produtores locais em cada praça",
+     "dia": 150,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Montar o orçamento da turnê (deslocamento, hospedagem, equipe, cachês)",
+     "dia": 140,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Definir o formato do show para a estrada (equipe e ficha técnica viáveis)",
+     "dia": 130,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Inscrever o projeto nos editais de circulação e prospectar as datas",
+     "dia": 120,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Fechar as datas e a logística",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Planejar a divulgação local em cada praça (rádio, imprensa, parceiros)",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Realizar a turnê, registrar e avaliar praça por praça",
+     "dia": 0,
+     "continua": false
+    }
+   ],
+   "ancora": "propria",
+   "pergunta_propria": "Em que período você quer fazer a turnê? Me diz o mês em que ela começa que eu monto o preparo de trás para frente.",
+   "apoio_propria": "Uma turnê pede cerca de seis meses de preparo, entre editais de circulação, datas e logística. Se o seu prazo é menor, eu encaixo o que cabe e te mostro o que fica apertado."
+  },
+  {
+   "id": "#34",
+   "titulo": "Procurar empresário/a",
+   "categoria": "Empresariamento e estrutura",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir o que você espera de um empresário (papéis e limites)",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Organizar a apresentação do projeto e os números (dica: use a Maestra)",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Listar empresários e escritórios que cuidam de artistas do seu porte",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Pesquisar a reputação e o elenco de cada um",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Apresentar o projeto aos mais alinhados",
+     "dia": 25,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Conversar pra avaliar sintonia e visão de carreira",
+     "dia": 35,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Avaliar a proposta de cada um (percentual, escopo, prazo)",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Alinhar expectativas e responsabilidades",
+     "dia": 55,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Formalizar a parceria em contrato, com apoio jurídico",
+     "dia": 65,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Definir a rotina de trabalho e os rituais de alinhamento",
+     "dia": 75,
+     "continua": false
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#35",
+   "titulo": "Contratar assistente de produção / produtor executivo",
+   "categoria": "Empresariamento e estrutura",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Listar as atividades e tarefas que você precisa delegar",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Definir o perfil (assistente de produção ou produtor executivo)",
+     "dia": 3,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Definir carga horária e forma de pagamento",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Divulgar a vaga ou pedir indicações na cena",
+     "dia": 7,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Selecionar e entrevistar os candidatos",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Escolher e formalizar a contratação",
+     "dia": 25,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Apresentar o plano estratégico e os processos do projeto",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Treinar nas ferramentas e rotinas",
+     "dia": 35,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Definir os pontos de acompanhamento semanais",
+     "dia": 40,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Delegar oficialmente as tarefas do plano com prazos",
+     "dia": 45,
+     "continua": false
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#36",
+   "titulo": "Organizar a parte burocrática e operacional",
+   "categoria": "Empresariamento e estrutura",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Consultar contador para constituir empresa",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Definir os processos financeiros de contas a pagar e a receber",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Definir os processos de contratações de receitas e despesas",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Mapear os contratos recorrentes necessários (contrato de show, de agenciamento, de distribuição, edição etc.)",
+     "dia": 25,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Avaliar contratação de BPO (suporte terceirizado de operação financeira)",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Escolher assessoria jurídica especializada para confecção dos contratos-padrão",
+     "dia": 35,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Efetuar o registro das obras e das marcas necessárias com suporte profissional",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Criar e acompanhar o checklist de produção dos shows e ações contratados",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Gerar relatórios de acompanhamento para mapeamento e resolução dos gargalos",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#37",
+   "titulo": "Inscrever o projeto em editais alinhados com o posicionamento",
+   "categoria": "Captação de recursos",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Listar os editais abertos compatíveis com o projeto",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Criar um calendário fixo de editais recorrentes",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Ler as regras e marcar os prazos num calendário",
+     "dia": 7,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Avaliar se vai inscrever por conta própria ou com profissional de captação",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Reunir a documentação base",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Adaptar o projeto ao formato de cada edital escolhido",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Preparar os textos de acordo com o edital",
+     "dia": 35,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Inscrever o projeto dentro do prazo",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Acompanhar os resultados",
+     "dia": null,
+     "continua": true
+    },
+    {
+     "n": 10,
+     "texto": "Revisar o calendário a cada 3 meses e manter a ativação contínua",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#38",
+   "titulo": "Criar projeto incentivado para captação de patrocínio",
+   "categoria": "Captação de recursos",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir o conceito e o escopo do projeto incentivado",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Montar o orçamento do projeto",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Definir as contrapartidas (acessibilidade, social, cultural)",
+     "dia": 25,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Avaliar fazer por conta própria ou com produtor especializado em projetos incentivados",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Inscrever o projeto na lei de incentivo correspondente",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Acompanhar a aprovação",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Montar o material de venda do projeto para patrocinadores",
+     "dia": 120,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Mapear marcas com perfil de investimento alinhado e levantar os contatos",
+     "dia": 135,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Apresentar o projeto às marcas",
+     "dia": 150,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Fazer follow-up, negociar e formalizar o patrocínio",
+     "dia": 180,
+     "continua": false
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#39",
+   "titulo": "Criar campanha de financiamento coletivo",
+   "categoria": "Captação de recursos",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir o objetivo e calcular a meta de arrecadação",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Escolher a plataforma de crowdfunding",
+     "dia": 55,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Definir as recompensas por faixa de valor",
+     "dia": 50,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Produzir o vídeo e o texto da campanha",
+     "dia": 40,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Montar a página da campanha",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Preparar o plano de divulgação (antes, durante e reta final)",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Aquecer a base antes do lançamento",
+     "dia": 14,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Lançar a campanha",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Divulgar e atualizar os apoiadores durante toda a campanha",
+     "dia": -1,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Entregar as recompensas e prestar contas ao fim",
+     "dia": -45,
+     "continua": false
+    }
+   ],
+   "ancora": "propria",
+   "pergunta_propria": "Quando você quer lançar a campanha? Me diz a data que eu monto o preparo de trás para frente. Se a campanha é para bancar um lançamento, ela precisa terminar antes de a produção começar.",
+   "apoio_propria": "O preparo da ação leva cerca de dois meses antes de a campanha ir ao ar, e ela costuma ficar aberta de 30 a 45 dias. Conta esse tempo todo antes de definir a data da entrega."
+  },
+  {
+   "id": "#40",
+   "titulo": "Mapear marcas alinhadas e prospectar ativações publicitárias",
+   "categoria": "Marcas, influenciadores e creators",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir o que você oferece a uma marca (contrapartidas e ativações)",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Listar marcas alinhadas aos seus valores e público",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Preparar um material de venda específico para marcas",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Levantar os contatos de marketing de cada marca",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Desenhar uma proposta de parceria para cada uma",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Apresentar a proposta aos contatos",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Fazer follow-up",
+     "dia": 40,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Negociar os termos",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Formalizar a parceria em contrato",
+     "dia": 55,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Entregar as contrapartidas e reportar os resultados",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#41a",
+   "titulo": "Ativar influenciadores para divulgar o trabalho",
+   "categoria": "Marcas, influenciadores e creators",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir o público que você quer atingir",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Listar influenciadores que falam com esse público",
+     "dia": 55,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Analisar o engajamento real de cada um",
+     "dia": 50,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Definir o formato da parceria (permuta, pago, orgânico)",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Preparar o media kit para envio",
+     "dia": 40,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Apresentar a proposta aos influenciadores",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Combinar conteúdo e data com quem topar",
+     "dia": 21,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Enviar o material",
+     "dia": 7,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Acompanhar as publicações",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Medir o resultado de cada ativação",
+     "dia": -14,
+     "continua": false
+    }
+   ],
+   "ancora": "lancamento"
+  },
+  {
+   "id": "#41b",
+   "titulo": "Atuar como influenciador junto a marcas",
+   "categoria": "Marcas, influenciadores e creators",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir o seu nicho de conteúdo como creator",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Organizar as redes para esse posicionamento",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Montar um media kit com números e perfil do público",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Definir a tabela de valores por entregável",
+     "dia": 25,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Decidir se vai por conta própria ou via agência",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Se for via agência: pesquisar e fechar com uma especializada",
+     "dia": 35,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Listar marcas que combinam com o seu conteúdo",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Apresentar-se às marcas",
+     "dia": 50,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Negociar e fechar as primeiras publis",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Entregar o conteúdo e reportar os resultados",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio",
+   "caminho": {
+    "pergunta": "Você vai se apresentar às marcas por conta própria ou por meio de uma agência?",
+    "substitui_tarefa": 5,
+    "opcoes": [
+     {
+      "rotulo": "Via agência",
+      "tarefas_exclusivas": [
+       6
+      ]
+     },
+     {
+      "rotulo": "Por conta própria",
+      "tarefas_exclusivas": []
+     }
+    ]
+   }
+  },
+  {
+   "id": "#42",
+   "titulo": "Fazer parcerias com outros artistas da cena",
+   "categoria": "Parcerias artísticas",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Listar artistas que combinam com o seu trabalho",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Priorizar por afinidade e troca de público",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Mapear como chegar em cada um",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Definir o tipo de parceria (feat, abertura, show conjunto, turnê)",
+     "dia": 12,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Preparar a proposta ou convite",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Apresentar a ideia aos artistas",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Combinar os detalhes com quem topar",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Formalizar o combinado (divisão de direitos, custos e divulgação)",
+     "dia": 40,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Realizar a parceria",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Divulgar em conjunto e manter a relação pra novas trocas",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#N2",
+   "titulo": "Ativar parcerias de composição",
+   "categoria": "Parcerias artísticas",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir o que você busca na parceria (letra, melodia, produção, gênero)",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Listar compositores e artistas com afinidade",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Ouvir o trabalho de cada um e escolher com quem tentar",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Fazer o convite propondo uma sessão de composição",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Realizar as sessões",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Combinar a divisão de direitos autorais antes de finalizar",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Registrar as obras com a divisão correta",
+     "dia": 35,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Selecionar o que entra no repertório e nos lançamentos",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Manter as parcerias que funcionaram",
+     "dia": null,
+     "continua": true
+    },
+    {
+     "n": 10,
+     "texto": "Ampliar a rede de coautores ao longo do tempo",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#43",
+   "titulo": "Criar a Lojinha do/da [nome do artista]",
+   "categoria": "Produtos e educação",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir os produtos (camiseta, vinil, acessórios), alinhados ao conceito do projeto",
+     "dia": 120,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Pesquisar fornecedores ou parceiros de licenciamento",
+     "dia": 110,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Pedir orçamentos e amostras",
+     "dia": 100,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Definir os preços de cada produto",
+     "dia": 90,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Escolher onde vender (loja online, nos shows)",
+     "dia": 85,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Montar a loja online ou o ponto de venda",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Produzir um estoque inicial enxuto (ou sob demanda)",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Fotografar os produtos com a identidade do projeto",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Divulgar a lojinha nas redes, na comunidade e nos shows",
+     "dia": 7,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Controlar estoque, vendas e reposição",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "lancamento"
+  },
+  {
+   "id": "#54",
+   "titulo": "Lançar cursos, aulas ou mentorias",
+   "categoria": "Produtos e educação",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Listar o que você sabe ensinar e o que já te perguntam",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Escolher o formato (aula individual, curso online, mentoria, workshop)",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Definir o público-alvo (fãs, músicos iniciantes, profissionais)",
+     "dia": 7,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Montar o conteúdo e o programa",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Definir preço e forma de pagamento",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Escolher a plataforma ou o espaço",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Produzir o material (vídeos, apostilas, exercícios)",
+     "dia": 25,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Divulgar nas redes, na comunidade e no site",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Realizar as primeiras turmas ou sessões",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Coletar feedback e melhorar a próxima edição",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#55",
+   "titulo": "Atuar como palestrante",
+   "categoria": "Produtos e educação",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir os temas que você domina e que interessam a um público",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Estruturar uma palestra-base (roteiro, duração, mensagem central)",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Preparar material de apresentação do palestrante (bio, temas, vídeo)",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Definir o cachê por tipo de evento",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Mapear eventos, escolas, empresas e festivais que contratam palestrantes",
+     "dia": 25,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Levantar os contatos",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Apresentar-se e enviar o material",
+     "dia": 35,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Fazer follow-up",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Realizar as primeiras palestras e registrar em vídeo",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Usar o registro pra prospectar as próximas",
+     "dia": null,
+     "continua": true
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#50",
+   "titulo": "Prospectar bookers e agentes internacionais para turnê no exterior",
+   "categoria": "Internacionalização",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir os mercados internacionais onde o seu som conversa",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Pesquisar bookers e agentes que trabalham esses mercados",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Preparar o material de venda em inglês (e no idioma local, se necessário)",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Ter o vídeo de show pronto e legendado",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Apresentar o projeto",
+     "dia": 40,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Fazer follow-up",
+     "dia": 50,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Negociar as condições da turnê (cachês, logística, vistos)",
+     "dia": 70,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Fechar as datas e organizar a viagem",
+     "dia": 120,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Divulgar nas redes sociais",
+     "dia": 150,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Repercutir a turnê no Brasil",
+     "dia": 180,
+     "continua": false
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#51",
+   "titulo": "Inscrever o projeto em festivais internacionais e editais de mobilidade",
+   "categoria": "Internacionalização",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Listar festivais internacionais alinhados ao seu perfil",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Mapear editais de mobilidade",
+     "dia": 5,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Marcar prazos de inscrição no calendário",
+     "dia": 10,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Preparar o material em inglês (bio, release, vídeo, ficha técnica)",
+     "dia": 15,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Inscrever o projeto nos festivais com chamada aberta",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Inscrever o projeto nos editais de mobilidade",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Se selecionado: organizar logística, vistos e passagens",
+     "dia": 90,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Participar e fazer contatos com programadores presentes",
+     "dia": 120,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Registrar contatos e resultados para as próximas edições",
+     "dia": 125,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Repercutir nas redes sociais",
+     "dia": 125,
+     "continua": false
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#53",
+   "titulo": "Criar evento, festival ou label próprios",
+   "categoria": "Empreendimentos próprios",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir o conceito do evento, alinhado ao posicionamento",
+     "dia": 180,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Definir formato, porte e periodicidade",
+     "dia": 170,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Montar o orçamento (produção, cachês, estrutura, divulgação)",
+     "dia": 160,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Definir o modelo de receita (bilheteria, patrocínio, edital, bar)",
+     "dia": 150,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Escolher local e data",
+     "dia": 140,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Convidar artistas parceiros",
+     "dia": 120,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Buscar patrocínio ou edital para viabilizar",
+     "dia": 110,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Contratar produção e estrutura técnica",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Divulgar e vender ingressos",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Realizar, registrar e avaliar pra próxima edição",
+     "dia": 0,
+     "continua": false
+    }
+   ],
+   "ancora": "propria",
+   "pergunta_propria": "Quando você quer fazer a primeira edição do seu evento? Me diz o mês que eu marco uma data e a gente ajusta. Um evento leva uns seis meses de preparo.",
+   "apoio_propria": "Seis meses é o preparo de uma primeira edição pequena. Se a ideia é maior, ou depende de patrocínio, leva mais tempo."
+  },
+  {
+   "id": "#N1",
+   "titulo": "Buscar formação artística complementar",
+   "categoria": "Estrutura ao redor da arte",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Identificar o que você quer desenvolver tecnicamente",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Pesquisar professores, escolas ou cursos nessa área",
+     "dia": 7,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Avaliar formato (presencial, online, intensivo) e custo",
+     "dia": 14,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Escolher e fechar",
+     "dia": 20,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Montar uma rotina de estudo e prática",
+     "dia": 25,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Aplicar o aprendizado nos ensaios e no repertório",
+     "dia": 30,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Gravar e comparar sua evolução ao longo do tempo",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Pedir feedback ao professor e ajustar o foco",
+     "dia": 90,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Manter a constância por pelo menos um ciclo (6 meses)",
+     "dia": null,
+     "continua": true
+    },
+    {
+     "n": 10,
+     "texto": "Avaliar os resultados e definir o próximo passo",
+     "dia": 180,
+     "continua": false
+    }
+   ],
+   "ancora": "inicio"
+  },
+  {
+   "id": "#N3",
+   "titulo": "Trabalhar com produtor musical com boa capacidade técnica e alinhado ao seu estilo musical",
+   "categoria": "Estrutura ao redor da arte",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir o que você espera da produção (referências sonoras do seu gênero)",
+     "dia": 180,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Listar produtores com experiência no seu estilo",
+     "dia": 170,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Ouvir trabalhos anteriores e conversar com os mais alinhados",
+     "dia": 160,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Pedir orçamentos e prazos",
+     "dia": 150,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Escolher o produtor e o estúdio e formalizar (contrato, prazos, direitos)",
+     "dia": 140,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Preparar as músicas e as referências antes do estúdio",
+     "dia": 130,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Realizar a pré-produção e os ensaios",
+     "dia": 120,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Gravar",
+     "dia": 100,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Acompanhar mixagem e masterização",
+     "dia": 75,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Receber os arquivos finais (master, ISRC) e organizar no catálogo (dica: use a Maestra)",
+     "dia": 45,
+     "continua": false
+    }
+   ],
+   "ancora": "lancamento"
+  },
+  {
+   "id": "#N6",
+   "titulo": "Produzir o conteúdo audiovisual para os lançamentos",
+   "categoria": "Conteúdo audiovisual",
+   "tarefas": [
+    {
+     "n": 1,
+     "texto": "Definir, para cada lançamento do cronograma, quais peças audiovisuais vão existir (clipe, visualizer, lyric video, session, bastidores)",
+     "dia": 120,
+     "continua": false
+    },
+    {
+     "n": 2,
+     "texto": "Definir o conceito visual de cada peça a partir do documento de branding",
+     "dia": 110,
+     "continua": false
+    },
+    {
+     "n": 3,
+     "texto": "Montar o orçamento e decidir o que será produzido por conta própria e o que será contratado",
+     "dia": 100,
+     "continua": false
+    },
+    {
+     "n": 4,
+     "texto": "Pesquisar e fechar diretor, videomaker ou produtora alinhados ao conceito",
+     "dia": 90,
+     "continua": false
+    },
+    {
+     "n": 5,
+     "texto": "Planejar a produção (roteiro, locação, figurino, equipe, datas)",
+     "dia": 80,
+     "continua": false
+    },
+    {
+     "n": 6,
+     "texto": "Realizar a gravação",
+     "dia": 60,
+     "continua": false
+    },
+    {
+     "n": 7,
+     "texto": "Acompanhar edição, cor e finalização",
+     "dia": 45,
+     "continua": false
+    },
+    {
+     "n": 8,
+     "texto": "Produzir os cortes e versões para cada rede (vertical, teaser, trecho)",
+     "dia": 21,
+     "continua": false
+    },
+    {
+     "n": 9,
+     "texto": "Publicar conforme o plano de marketing do lançamento",
+     "dia": 0,
+     "continua": false
+    },
+    {
+     "n": 10,
+     "texto": "Analisar o desempenho e alimentar o planejamento do próximo lançamento",
+     "dia": -14,
+     "continua": false
+    }
+   ],
+   "ancora": "lancamento"
+  }
+ ]
+}
