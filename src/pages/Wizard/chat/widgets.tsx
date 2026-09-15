@@ -99,9 +99,12 @@ export const ScheduleApprovalCard: FC<{
 
   return (
     <div className='nyta-card schedule-studio'>
-      <div className='wiz-card-title'>Seu cronograma</div>
+      <header className='schedule-studio__intro'>
+        <div><small>Última etapa</small><h2>Monte seu cronograma</h2><p>Revise uma estratégia por vez. A Nyta já organizou as datas para você.</p></div>
+        <strong><b>{calculated.filter(strategy => schedule.strategies[strategy.id]?.accepted).length}</b><small>de {calculated.length} prontas</small></strong>
+      </header>
       <details className='schedule-studio__dates'>
-      <summary><span>Início {schedule.startDate ? dayjs(schedule.startDate).format('DD/MM/YYYY') : 'a definir'}</span><span>Lançamento {schedule.releaseDate ? dayjs(schedule.releaseDate).format('DD/MM/YYYY') : 'a definir'}</span><span>Editar datas</span></summary>
+      <summary><span><small>Começo do plano</small><b>{schedule.startDate ? dayjs(schedule.startDate).format('DD MMM YYYY') : 'A definir'}</b></span><i aria-hidden>→</i><span><small>Próximo lançamento</small><b>{schedule.releaseDate ? dayjs(schedule.releaseDate).format('DD MMM YYYY') : 'A definir'}</b></span><em>Editar</em></summary>
       <div className='schedule-studio__date-fields'>
         <label style={{ display: 'grid', gap: 6, fontWeight: 700 }}>Próximo lançamento (Dia D)
           <DatePicker allowClear={false} value={schedule.releaseDate ? dayjs(schedule.releaseDate) : null} onChange={(value) => update({ releaseDate: value?.format('YYYY-MM-DD') })} format='DD/MM/YYYY' />
@@ -111,10 +114,12 @@ export const ScheduleApprovalCard: FC<{
         </label>
       </div>
       </details>
-      <nav className='schedule-studio__progress' aria-label='Estratégias do cronograma'>
-        <span>{calculated.filter(strategy => schedule.strategies[strategy.id]?.accepted).length} de {calculated.length} aprovadas</span>
-        <span>Estratégia {activeIndex + 1} de {calculated.length}</span>
+      <div className='schedule-studio__workspace'>
+      <nav className='schedule-studio__strategy-nav' aria-label='Estratégias do cronograma'>
+        <span>Suas estratégias</span>
+        {calculated.map((strategy, index) => <button type='button' key={strategy.id} className={`${activeIndex === index ? 'is-active' : ''}${schedule.strategies[strategy.id]?.accepted ? ' is-done' : ''}`} onClick={() => setActiveIndex(index)}><i>{schedule.strategies[strategy.id]?.accepted ? <FiCheck size={13} /> : index + 1}</i><span>{strategy.title}</span></button>)}
       </nav>
+      <main className='schedule-studio__active'>
       <div style={{ display: 'grid', gap: 14 }}>
         {calculated.slice(activeIndex, activeIndex + 1).map((strategy) => {
           const definition = scheduleBankFor(strategy)!;
@@ -122,9 +127,9 @@ export const ScheduleApprovalCard: FC<{
           const tight = strategy.tasks.filter((task) => task.schedule?.tight).length;
           const ready = !!definition && !!(definition.ancora === 'propria' ? state.ownDate : definition.ancora === 'inicio' ? schedule.startDate : schedule.releaseDate) && (!definition.caminho || !!state.path);
           return <section key={strategy.id} className='schedule-studio__strategy'>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
-              <div><strong>{strategy.title}</strong><div style={{ color: '#71809e', fontSize: 13, marginTop: 4 }}>{definition.ancora === 'lancamento' ? 'Ancorada no lançamento' : definition.ancora === 'inicio' ? 'Ancorada no início do plano' : 'Ancorada em uma data própria'}</div></div>
-              <span className='schedule-studio__status'>{state.accepted ? 'Aprovada' : `${strategy.tasks.length} tarefas`}</span>
+            <div className='schedule-studio__strategy-head'>
+              <div><small>Estratégia {activeIndex + 1} de {calculated.length}</small><strong>{strategy.title}</strong><div>{definition.ancora === 'lancamento' ? 'Planejada a partir do lançamento' : definition.ancora === 'inicio' ? 'Planejada a partir do início do plano' : 'Planejada a partir da data escolhida'}</div></div>
+              <span className='schedule-studio__status'>{state.accepted ? <><FiCheck size={14} /> Aprovada</> : `${strategy.tasks.length} tarefas`}</span>
             </div>
             {definition.pergunta_propria && <label style={{ display: 'grid', gap: 6, marginTop: 14, fontSize: 13, fontWeight: 700 }}>{definition.pergunta_propria}
               <DatePicker value={state.ownDate ? dayjs(state.ownDate) : null} onChange={(value) => updateState(strategy.id, { ownDate: value?.format('YYYY-MM-DD'), accepted: false, manualDates: {}, adjusted: false })} format='DD/MM/YYYY' />
@@ -134,7 +139,7 @@ export const ScheduleApprovalCard: FC<{
               <small style={{ color: '#71809e', fontWeight: 400 }}>{texts.caminho_apoio}</small>
             </label>}
             {ready && <div className='schedule-studio__overview'><div><span>Primeira tarefa</span><strong>{strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort()[0] ? dayjs(strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort()[0]).format('DD MMM') : 'A definir'}</strong></div><div className='schedule-studio__overview-line' aria-hidden='true'>{strategy.tasks.map((task, index) => task.deadline && <i key={index} style={{ left: `${gantt.position(task.deadline)}%` }} />)}</div><div><span>Último início</span><strong>{strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort().at(-1) ? dayjs(strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort().at(-1)).format('DD MMM') : 'A definir'}</strong></div></div>}
-            <button type='button' className='schedule-studio__open-editor' onClick={() => setEditorOpen(true)}>Ver e ajustar cronograma <span>{strategy.tasks.length} tarefas</span></button>
+            <button type='button' className='schedule-studio__open-editor' onClick={() => setEditorOpen(true)}>Quero revisar ou ajustar as datas <span>{strategy.tasks.length} tarefas</span></button>
             {editorOpen && createPortal(<div className='schedule-editor' role='dialog' aria-modal='true' aria-labelledby='scheduleEditorTitle'>
             <section className='schedule-editor__panel'>
             <header className='schedule-editor__header'><div><small>Estratégia {activeIndex + 1} de {calculated.length}</small><h2 id='scheduleEditorTitle'>{strategy.title}</h2><p>Confira quando cada tarefa começa. Clique em uma data para ajustar.</p></div><button type='button' onClick={() => setEditorOpen(false)} aria-label='Fechar cronograma' title='Fechar'><FiX size={20} /></button></header>
@@ -160,9 +165,11 @@ export const ScheduleApprovalCard: FC<{
             </section>
             </div>, document.body)}
             {tight > 0 && <p style={{ color: '#9a6400', margin: '12px 0 0', fontSize: 13 }}>{texts.apertadas.replace('{n}', String(tight))}</p>}
-            <footer className='schedule-studio__footer'><button type='button' disabled={activeIndex === 0} onClick={() => setActiveIndex(value => value - 1)}>Anterior</button><button type='button' className='schedule-studio__approve' disabled={!ready} onClick={() => { updateState(strategy.id, { accepted: true }); if (activeIndex + 1 < calculated.length) setActiveIndex(value => value + 1); }}>{state.accepted ? 'Aprovada' : 'Aprovar estratégia'}{activeIndex + 1 < calculated.length ? ' e continuar' : ''}</button></footer>
+            <footer className='schedule-studio__footer'><button type='button' disabled={activeIndex === 0} onClick={() => setActiveIndex(value => value - 1)}>Anterior</button><button type='button' className='schedule-studio__approve' disabled={!ready} onClick={() => { updateState(strategy.id, { accepted: true }); if (activeIndex + 1 < calculated.length) setActiveIndex(value => value + 1); }}>{activeIndex + 1 < calculated.length ? (state.accepted ? 'Continuar' : 'Tudo certo, continuar') : (state.accepted ? 'Concluir' : 'Tudo certo, concluir')}</button></footer>
           </section>;
         })}
+      </div>
+      </main>
       </div>
       {accepted && <button type='button' className='schedule-studio__save' onClick={() => onConfirm(schedule, calculated)}>Salvar cronograma na Agenda</button>}
     </div>
