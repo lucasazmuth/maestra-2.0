@@ -7,14 +7,14 @@ const strategies: Strategy[] = Array.from({length: 12}, (_, i) => ({
 }));
 const objectives = ['Resultados digitais', 'Agenda de shows', 'Sustentabilidade financeira'];
 
-it('limita a escolha a dez e entrega percentual sem pré-selecionar', () => {
+it('abre o modal de seleção, limita a dez e entrega percentual sem pré-selecionar', () => {
   const onConfirm = jest.fn();
   render(<PriorityScale strategies={strategies} objectives={objectives} onConfirm={onConfirm} />);
   fireEvent.click(screen.getByText('Me ajuda, Nyta'));
-  const boxes = screen.getAllByRole('checkbox') as HTMLInputElement[];
-  expect(boxes.every(box => !box.checked)).toBe(true);
-  boxes.slice(0, 10).forEach(box => fireEvent.click(box));
-  expect(boxes[10].disabled).toBe(true);
+  expect(screen.getByRole('dialog', { name: 'Sua ordem de prioridade' })).toBeTruthy();
+  const choices = screen.getAllByRole('button', { name: /Estratégia \d+/ });
+  choices.slice(0, 10).forEach(choice => fireEvent.click(choice));
+  expect(choices[10]).toBeDisabled();
   fireEvent.click(screen.getByText('Gerar plano de ação'));
   expect(onConfirm.mock.calls[0][1]).toHaveLength(10);
   expect(onConfirm.mock.calls[0][0][0].finalScore).toBe(87);
@@ -46,7 +46,7 @@ it('não grava autosave depois da confirmação', () => {
   const view = render(<PriorityScale strategies={strategies.slice(0,1)} objectives={objectives}
     onConfirm={jest.fn()} onProgress={onProgress} />);
   fireEvent.click(screen.getByText('Me ajuda, Nyta'));
-  fireEvent.click(screen.getByRole('checkbox'));
+  fireEvent.click(screen.getByRole('button', { name: /Estratégia 0/ }));
   fireEvent.click(screen.getByText('Gerar plano de ação'));
   act(() => jest.runAllTimers());
   view.unmount();

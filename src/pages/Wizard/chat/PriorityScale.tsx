@@ -1,4 +1,6 @@
 import { FC, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { FiCheck, FiX } from 'react-icons/fi';
 import type { Strategy } from '@maestra/core/interfaces/maestra';
 import { suggestScores } from '@maestra/core/wizard/motores';
 import { explanationFor, PRIORITY_INFO } from '@maestra/core/wizard/prioridade';
@@ -36,6 +38,7 @@ export const PriorityScale: FC<Props> = ({ strategies, objectives, onConfirm, on
   const [hoverScore, setHoverScore] = useState<number | null>(null);
   const [advancing, setAdvancing] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
+  const [minimized, setMinimized] = useState(false);
   const progressRef = useRef(onProgress);
   progressRef.current = onProgress;
   const pending = useRef<Strategy[] | null>(null);
@@ -68,6 +71,7 @@ export const PriorityScale: FC<Props> = ({ strategies, objectives, onConfirm, on
     })));
     setIndex(0);
     setSelected([]);
+    setMinimized(false);
     setMode(manual ? 'manual' : 'rank');
   };
   const scored = list.map(s => ({
@@ -128,38 +132,42 @@ export const PriorityScale: FC<Props> = ({ strategies, objectives, onConfirm, on
           <div className="priority-v3__score-readout" style={{ color: shownScore == null ? undefined : scoreColor(shownScore) }}><strong>{shownScore ?? '–'}</strong><span>{scoreWord(shownScore)}</span></div>
         </section>
       </>;
-    })() : <>
-      <h3>Escolha até {limit} estratégias</h3>
-      <p aria-live="polite">{selected.length} de {limit} escolhidas</p>
-      {ranked.map(s => {
-        const info = PRIORITY_INFO[s.bankId || ''];
-        const checked = selected.includes(s.id);
-        return <article className="priority-v3__strategy" key={s.id}>
-          <label className="priority-v3__selection">
-            <input type="checkbox" checked={checked} disabled={!checked && selected.length >= limit}
-              onChange={() => setSelected(checked ? selected.filter(id => id !== s.id) : [...selected, s.id])} />
-            <span>{s.title}</span><strong>{s.finalScore}%</strong>
-          </label>
-          {s.description && <p>{s.description}</p>}
-          {info?.recomendada && <p className="priority-v3__recommendation">Recomendada pela Nyta: {info.motivo_recomendada}</p>}
-          <details>
-            <summary>Impacto nos seus objetivos</summary>
-            {objectives.map((objective, i) => <p key={i}>
-              <strong>{objective}: {s.objectiveScores?.[i]}/10</strong><br />
-              {explanationFor(s.bankId || '', objective)}
-            </p>)}
-            {s.artistScores && <p>Você: {s.finalScore}% · Nyta: {s.canonicalPercent}%</p>}
-          </details>
-        </article>;
-      })}
-      <div className="priority-v3__actions">
-        <button type="button" onClick={() => setMode('choose')}>Refazer priorização</button>
-        <button type="button" disabled={!selected.length} onClick={() => {
-          confirmed.current = true;
-          pending.current = null;
-          onConfirm(scored, selected);
-        }}>Gerar plano de ação</button>
-      </div>
-    </>}
+    })() : minimized ? <>
+      <h3>Sua ordem de prioridade está pronta</h3>
+      <p>{selected.length ? `${selected.length} estratégia${selected.length === 1 ? '' : 's'} selecionada${selected.length === 1 ? '' : 's'} até agora.` : 'Reabra para escolher as estratégias que viram tarefas.'}</p>
+      <div className="priority-v3__actions"><button type="button" className="priority-v3__nyta-action" onClick={() => setMinimized(false)}>Ver ordem de prioridade</button></div>
+    </> : createPortal(
+      <div className="priority-v3__overlay" role="dialog" aria-modal="true" aria-label="Sua ordem de prioridade">
+        <div className="priority-v3__modal">
+          <button type="button" className="priority-v3__close" onClick={() => setMinimized(true)} aria-label="Fechar" title="Fechar"><FiX size={19} /></button>
+          <header>
+            <h2>Sua ordem de prioridade está pronta</h2>
+            <p>Da mais importante para a menos. Selecione até {limit} estratégias para transformar em tarefas agora; as outras ficam guardadas para depois.</p>
+          </header>
+          <div className="priority-v3__rank-list">
+            {ranked.map((strategy, position) => {
+              const checked = selected.includes(strategy.id);
+              const info = PRIORITY_INFO[strategy.bankId || ''];
+              return <button type="button" key={strategy.id} className={`priority-v3__rank-item${checked ? ' is-selected' : ''}`}
+                aria-pressed={checked} disabled={!checked && selected.length >= limit}
+                onClick={() => setSelected(checked ? selected.filter(id => id !== strategy.id) : [...selected, strategy.id])}>
+                <span className="priority-v3__rank-position">{String(position + 1).padStart(2, '0')}</span>
+                <span className="priority-v3__rank-check">{checked && <FiCheck size={14} />}</span>
+                <span className="priority-v3__rank-copy"><strong>{strategy.title}</strong>{info?.recomendada && <small>Recomendada pela Nyta</small>}</span>
+                <span className="priority-v3__rank-score">{strategy.finalScore}%</span>
+              </button>;
+            })}
+          </div>
+          <footer>
+            <span aria-live="polite"><strong>{selected.length}</strong> de {limit} selecionadas</span>
+            <button type="button" className="priority-v3__link" onClick={() => setSelected(selected.length === Math.min(limit, ranked.length) ? [] : ranked.slice(0, limit).map(strategy => strategy.id))}>{selected.length ? 'Limpar seleção' : 'Selecionar recomendadas'}</button>
+            <div className="priority-v3__modal-actions">
+              <button type="button" onClick={() => { setSelected([]); setMode('choose'); }}>Refazer priorização</button>
+              <button type="button" className="priority-v3__confirm" disabled={!selected.length} onClick={() => { confirmed.current = true; pending.current = null; onConfirm(scored, selected); }}>Gerar plano de ação</button>
+            </div>
+          </footer>
+        </div>
+      </div>, document.body
+    )}
   </section>;
 };
