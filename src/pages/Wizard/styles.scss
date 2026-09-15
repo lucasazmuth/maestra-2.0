@@ -1571,9 +1571,20 @@
 .schedule-studio__overview strong { margin-top: 4px; font-size: 20px; color: var(--wz-ink); }
 .schedule-studio__overview-line { flex: 1; height: 2px; background: var(--wz-line); position: relative; }
 .schedule-studio__overview-line i { position: absolute; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: #438a7c; transform: translateX(-50%); }
-.schedule-studio__task-details { border-top: 1px solid var(--wz-line); border-bottom: 1px solid var(--wz-line); }
-.schedule-studio__task-details > summary { padding: 16px 0; color: var(--wz-ink); font-size: 13px; cursor: pointer; }
+.schedule-studio__open-editor { display: flex; align-items: center; justify-content: space-between; width: 100%; margin: 4px 0 8px; padding: 15px 0; border: 0; border-top: 1px solid var(--wz-line); border-bottom: 1px solid var(--wz-line); background: transparent; color: var(--wz-blue); font-size: 13px; font-weight: 700; cursor: pointer; text-align: left; }
+.schedule-studio__open-editor span { color: var(--wz-muted); font-size: 11px; font-weight: 500; }
 .schedule-studio__note { font-size: 12px; line-height: 1.6; color: var(--wz-muted); }
+.schedule-editor { position: fixed; inset: 0; z-index: var(--z-overlay, 1000); display: grid; place-items: center; padding: 24px; background: rgba(27, 42, 72, .42); backdrop-filter: blur(4px); box-sizing: border-box; }
+.schedule-editor__panel { display: flex; flex-direction: column; width: min(1180px, 100%); height: min(820px, 94vh); overflow: hidden; border: 1px solid var(--wz-line); border-radius: 10px; background: var(--wz-surface); box-shadow: 0 28px 80px rgba(30, 49, 86, .2); }
+.schedule-editor__header { display: flex; justify-content: space-between; gap: 24px; padding: 22px 24px 18px; border-bottom: 1px solid var(--wz-line); }
+.schedule-editor__header small { color: var(--wz-muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.schedule-editor__header h2 { max-width: 850px; margin: 5px 0; color: var(--wz-ink); font-size: 20px; line-height: 1.35; white-space: normal; overflow-wrap: anywhere; }
+.schedule-editor__header p { margin: 0; color: var(--wz-muted); font-size: 13px; }
+.schedule-editor__header > button { flex: 0 0 36px; width: 36px; height: 36px; border: 1px solid var(--wz-line); border-radius: 50%; background: var(--wz-surface); color: var(--wz-muted); cursor: pointer; }
+.schedule-editor__body { flex: 1; min-height: 0; overflow: hidden; padding: 0 24px 16px; }
+.schedule-editor__body .schedule-gantt { height: calc(100% - 84px); max-height: none; }
+.schedule-editor__footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 24px; border-top: 1px solid var(--wz-line); color: var(--wz-muted); font-size: 12px; }
+.schedule-editor__footer button { padding: 11px 18px; border: 0; border-radius: 6px; background: var(--wz-blue); color: white; font-weight: 700; cursor: pointer; }
 .schedule-gantt { max-height: 520px; overflow: auto; border: 1px solid var(--wz-line); border-radius: 8px; background: var(--wz-surface); }
 .schedule-gantt__content { display: grid; grid-template-columns: 300px 1fr; min-width: 100%; }
 .schedule-gantt__corner, .schedule-gantt__months { position: sticky; top: 0; z-index: 4; height: 44px; background: #f7f9fd; border-bottom: 1px solid var(--wz-line); box-sizing: border-box; }
@@ -1608,7 +1619,7 @@
 .schedule-studio__footer { display: flex; justify-content: space-between; gap: 12px; padding-top: 20px; }
 .schedule-studio__footer .schedule-studio__approve { background: var(--wz-blue); color: white; border-color: var(--wz-blue); }
 .schedule-studio button:disabled { opacity: .45; cursor: default; }
-@media (max-width: 640px) { .schedule-studio.nyta-card { padding: 4px 0 20px; } .schedule-studio__toolbar { flex-wrap: wrap; } .schedule-gantt__content { grid-template-columns: 210px 1fr; } .schedule-gantt__corner, .schedule-gantt__task { width: 210px; } .schedule-gantt__task { grid-template-columns: 22px minmax(0, 1fr); } }
+@media (max-width: 640px) { .schedule-studio.nyta-card { padding: 4px 0 20px; } .schedule-studio__toolbar { flex-wrap: wrap; } .schedule-gantt__content { grid-template-columns: 210px 1fr; } .schedule-gantt__corner, .schedule-gantt__task { width: 210px; } .schedule-gantt__task { grid-template-columns: 22px minmax(0, 1fr); } .schedule-editor { align-items: end; padding: 0; } .schedule-editor__panel { width: 100%; height: 94vh; border-radius: 10px 10px 0 0; } .schedule-editor__header { padding: 18px 16px 14px; } .schedule-editor__header h2 { font-size: 17px; } .schedule-editor__body { padding: 0 14px 12px; } .schedule-editor__footer { padding: 12px 16px; } }
 
 .nyta-card-actions {
   display: flex;
