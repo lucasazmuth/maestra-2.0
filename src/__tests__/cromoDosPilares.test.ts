@@ -32,7 +32,7 @@ describe('menu do método no painel', () => {
 
   it('troca a seção dentro do dashboard sem navegar', () => {
     expect(menuTsx).toContain('onClick={() => onSelect(item.chave)}');
-    expect(dashboardTsx).toContain("useState<SecaoDoPainel>('visao-geral')");
+    expect(dashboardTsx).toContain('useState<SecaoDoPainel>(() => secaoDaUrl(location.search))');
     expect(dashboardTsx).toContain('pilarAtivo ?');
   });
 
@@ -47,8 +47,9 @@ describe('menu do método no painel', () => {
     (nome) => expect(dashboardCss).toContain(nome),
   );
 
-  it('tem painéis internos para diagnóstico, execução e planejamento', () => {
-    expect(dashboardTsx).toContain("pilar.chave === 'diagnostico'");
+  it('tem o relatório completo e painéis internos para execução e planejamento', () => {
+    expect(dashboardTsx).toContain("<DiagnosticReport");
+    expect(dashboardTsx).toContain("hideHero={false}");
     expect(dashboardTsx).toContain("pilar.chave === 'execucao'");
     expect(dashboardTsx).toContain("pilar.chave === 'planejamento'");
   });
