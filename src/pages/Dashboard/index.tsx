@@ -1,6 +1,6 @@
 import { FC, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FiArrowRight, FiCheck, FiFileText, FiLifeBuoy, FiStar } from 'react-icons/fi';
 
 import { useArtist } from '@maestra/core/hooks/useArtist';
@@ -12,6 +12,7 @@ import { Spinner } from '../../components/spinner/spinner';
 import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
 import { PillarCards, type SecaoDoPainel } from '../../components/dashboard/PillarCards';
 import { PlatformReviewModal } from '../../components/PlatformReviewModal';
+import { DiagnosticReport, type Chartmetric } from '../ArtistCreate/DiagnosticReport';
 
 // A home do artista, e a porta do método.
 //
@@ -26,6 +27,11 @@ import { PlatformReviewModal } from '../../components/PlatformReviewModal';
 
 const fmtNumber = (value?: number | null) =>
   typeof value === 'number' ? value.toLocaleString('pt-BR') : '—';
+
+const secaoDaUrl = (search: string): SecaoDoPainel => {
+  const aba = new URLSearchParams(search).get('aba');
+  return aba === 'diagnostico' || aba === 'execucao' || aba === 'planejamento' ? aba : 'visao-geral';
+};
 
 /** Um cartão do rodapé. Os três levam a algum lugar, então os três são alvo de clique e de foco. */
 const Atalho: FC<{ icone: ReactNode; titulo: string; texto: string; aoAbrir: () => void }> = ({
@@ -48,13 +54,35 @@ const PainelDoMetodo: FC<{
   pilar: Pilar;
   artist: Artist;
   aoAbrir: () => void;
-}> = ({ pilar, artist, aoAbrir }) => {
+  podeRefazer: boolean;
+}> = ({ pilar, artist, aoAbrir, podeRefazer }) => {
   const content = artist.content || {};
   const strategies = content.strategies || [];
   const tasks = strategies.flatMap((strategy) => strategy.tasks || []).filter((task) => task.status !== 'archived');
   const pending = tasks.filter((task) => task.status !== 'done').slice(0, 5);
   const objectives = content.objectives || [];
   const real = content.realIndex;
+
+  if (pilar.chave === 'diagnostico' && real) {
+    return (
+      <section className='method-view method-view-diagnostico method-view-report' aria-label='Relatório completo do Diagnóstico REAL'>
+        <DiagnosticReport
+          realIndex={real}
+          chartmetric={content.chartmetricProfile as Chartmetric | null}
+          artistId={artist.id}
+          vinculo={(content as any)?.titularidade?.vinculo}
+          artistName={artist.name}
+          artistImage={content.spotifyProfile?.image ?? null}
+          noSpotify={!content.spotifyProfile?.spotify_artist_id}
+          enableStickyCta={false}
+          showPlanningCta={false}
+          hideHero={false}
+          onRedo={aoAbrir}
+          redoLocked={!podeRefazer}
+        />
+      </section>
+    );
+  }
 
   return (
     <section className={`method-view method-view-${pilar.chave}`} aria-labelledby={`method-${pilar.chave}`}>
@@ -126,12 +154,13 @@ const PainelDoMetodo: FC<{
 
 const Dashboard: FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { artist, loading } = useArtist();
   const journey = useJourneyState(artist);
   const capabilities = useArtistCapabilities(artist);
   // A avaliação abre daqui, com estado próprio: o `reviewOpen` do Layout é privado dele.
   const [avaliando, setAvaliando] = useState(false);
-  const [secao, setSecao] = useState<SecaoDoPainel>('visao-geral');
+  const [secao, setSecao] = useState<SecaoDoPainel>(() => secaoDaUrl(location.search));
 
   if (loading && !artist) {
     return <Spinner loading>{null as any}</Spinner>;
@@ -163,9 +192,10 @@ const Dashboard: FC = () => {
         <PainelDoMetodo
           pilar={pilarAtivo}
           artist={artist}
+          podeRefazer={capabilities.manageTasks}
           aoAbrir={() => {
             const rota = pilarAtivo.chave === 'diagnostico'
-              ? `/artists/${artist.id}/diagnostico`
+              ? capabilities.manageTasks ? `/artists/${artist.id}/diagnostico/refazer` : '/planos'
               : pilarAtivo.chave === 'execucao'
                 ? `/artists/${artist.id}/action-plan`
                 : `/artists/${artist.id}/perfil`;
