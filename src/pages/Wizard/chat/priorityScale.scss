@@ -8,6 +8,20 @@
     &:last-child { background: var(--wz-blue); color: white; }
     &:disabled { opacity: .45; cursor: default; }
   }
+  &__nyta-action {
+    border-color: #7b4dff !important;
+    background: #7b4dff !important;
+    color: #fff !important;
+    box-shadow: 0 8px 18px rgba(123, 77, 255, .22);
+    &:hover { background: #6840df !important; }
+  }
+  &__manual-action {
+    border-color: transparent !important;
+    background: transparent !important;
+    color: var(--wz-muted) !important;
+    box-shadow: none !important;
+    &:hover { color: var(--wz-ink) !important; text-decoration: underline; }
+  }
   &__rating { display: grid; gap: 10px; margin: 24px 0; }
   &__rating span { display: flex; justify-content: space-between; gap: 12px; }
   &__rating small { color: var(--wz-muted); line-height: 1.5; }
