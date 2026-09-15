@@ -88,8 +88,12 @@ export const PriorityScale: FC<Props> = ({ strategies, objectives, onConfirm, on
       <h3>Como você quer priorizar?</h3>
       <p>{list.length} estratégias para os seus objetivos.</p>
       <div className="priority-v3__actions">
-        <button type="button" className="priority-v3__nyta-action" onClick={() => start(false)}>Priorizar com a Nyta</button>
-        <button type="button" className="priority-v3__manual-action" onClick={() => start(true)}>Priorizar por conta própria</button>
+        <button type="button" className="priority-v3__nyta-action" onClick={() => start(false)}>
+          <span>Me ajuda, Nyta</span><small>Ela analisa e já te entrega a ordem pronta</small>
+        </button>
+        <button type="button" className="priority-v3__manual-action" onClick={() => start(true)}>
+          <span>Eu prefiro priorizar por conta própria</span><small>Você decide a importância de cada uma, no seu ritmo</small>
+        </button>
       </div>
     </> : mode === 'manual' ? (() => {
       const strategy = list[index];

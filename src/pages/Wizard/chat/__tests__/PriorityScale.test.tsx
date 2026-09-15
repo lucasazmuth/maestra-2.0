@@ -10,7 +10,7 @@ const objectives = ['Resultados digitais', 'Agenda de shows', 'Sustentabilidade 
 it('limita a escolha a dez e entrega percentual sem pré-selecionar', () => {
   const onConfirm = jest.fn();
   render(<PriorityScale strategies={strategies} objectives={objectives} onConfirm={onConfirm} />);
-  fireEvent.click(screen.getByText('Priorizar com a Nyta'));
+  fireEvent.click(screen.getByText('Me ajuda, Nyta'));
   const boxes = screen.getAllByRole('checkbox') as HTMLInputElement[];
   expect(boxes.every(box => !box.checked)).toBe(true);
   boxes.slice(0, 10).forEach(box => fireEvent.click(box));
@@ -25,7 +25,7 @@ it('persiste as notas manuais no desmonte e retoma a próxima estratégia', () =
   const onProgress = jest.fn();
   const view = render(<PriorityScale strategies={strategies.slice(0,2)} objectives={objectives}
     onConfirm={jest.fn()} onProgress={onProgress} />);
-  fireEvent.click(screen.getByText('Priorizar por conta própria'));
+  fireEvent.click(screen.getByText('Eu prefiro priorizar por conta própria'));
   fireEvent.click(screen.getByRole('button', { name: 'Nota 1' }));
   act(() => jest.advanceTimersByTime(360));
   fireEvent.click(screen.getByRole('button', { name: 'Nota 1' }));
@@ -45,7 +45,7 @@ it('não grava autosave depois da confirmação', () => {
   const onProgress = jest.fn();
   const view = render(<PriorityScale strategies={strategies.slice(0,1)} objectives={objectives}
     onConfirm={jest.fn()} onProgress={onProgress} />);
-  fireEvent.click(screen.getByText('Priorizar com a Nyta'));
+  fireEvent.click(screen.getByText('Me ajuda, Nyta'));
   fireEvent.click(screen.getByRole('checkbox'));
   fireEvent.click(screen.getByText('Gerar plano de ação'));
   act(() => jest.runAllTimers());
