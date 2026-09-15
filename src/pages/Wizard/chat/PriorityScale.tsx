@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { FiCheck, FiX } from 'react-icons/fi';
 import type { Strategy } from '@maestra/core/interfaces/maestra';
 import { suggestScores } from '@maestra/core/wizard/motores';
-import { explanationFor, PRIORITY_INFO } from '@maestra/core/wizard/prioridade';
+import { PRIORITY_INFO } from '@maestra/core/wizard/prioridade';
 import { STRATEGY_BY_ID } from '@maestra/core/constants/strategyBank';
 import './priorityScale.scss';
 

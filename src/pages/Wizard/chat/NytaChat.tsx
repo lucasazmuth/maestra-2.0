@@ -24,7 +24,7 @@ import {
   seedValues,
 } from '@maestra/core/wizard/dados';
 import * as engine from '@maestra/core/wizard/motores';
-import { defaultSchedule, scheduleStrategy, CRONOGRAMA_TEXTS } from '@maestra/core/services/cronograma';
+import { defaultSchedule, CRONOGRAMA_TEXTS } from '@maestra/core/services/cronograma';
 import { SWOT_INTERNAL, SWOT_OPPORTUNITIES, SWOT_THREATS } from '@maestra/core/wizard/swot';
 import {
   FinalSummaryCard,
