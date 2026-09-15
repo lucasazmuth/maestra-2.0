@@ -7,10 +7,7 @@ import { COR, COR_BARRA, RAIO, SOMBRA } from '@maestra/core/constants/design';
 import type { Artist } from '@maestra/core/interfaces/maestra';
 
 import { FotoDoArtista } from '@/casca/FotoDoArtista';
-import {
-  AgendaIcon, CatalogoIcon, DiagnosticoIcon, EquipeIcon,
-  MarketingIcon, MoreIcon, PlanejamentoIcon, PlanoAcaoIcon,
-} from '@/icones';
+import { AgendaIcon, CatalogoIcon, EquipeIcon, MarketingIcon, MoreIcon } from '@/icones';
 
 // A ilha de navegação, célula a célula igual à da web.
 //
@@ -24,20 +21,21 @@ import {
 //   quem diz de quem é a tela, já que o cabeçalho no celular não repete o nome;
 // · a Nyta NÃO fica aqui: o atalho dela é o botão do cabeçalho;
 // · "Mais" abre um painel de duas colunas, com as células no mesmo formato das da ilha.
+//
+// SÓ FERRAMENTAS. Diagnóstico REAL, Plano de Ação e Plano estratégico saíram da ilha e do "Mais":
+// eles são o MÉTODO, e o método mora nos três cartões da home (`casca/painel/CartaoDePilar`), onde
+// cada um diz em que pé está. A foto continua sendo o caminho de volta para lá.
 
 type Icone = ComponentType<{ size?: number; color?: string }>;
 type Item = { icone: Icone; rotulo: string; rota: string };
 
 const ABAS: Item[] = [
-  { icone: PlanoAcaoIcon, rotulo: 'Plano', rota: 'plano' },
   { icone: CatalogoIcon, rotulo: 'Músicas', rota: 'catalogo' },
   { icone: AgendaIcon, rotulo: 'Agenda', rota: 'agenda' },
+  { icone: EquipeIcon, rotulo: 'Equipe', rota: 'equipe' },
 ];
 
 const MAIS: Item[] = [
-  { icone: DiagnosticoIcon, rotulo: 'Diagnóstico REAL', rota: 'diagnostico' },
-  { icone: PlanejamentoIcon, rotulo: 'Plano estratégico', rota: 'perfil' },
-  { icone: EquipeIcon, rotulo: 'Equipe', rota: 'equipe' },
   { icone: MarketingIcon, rotulo: 'Marketing', rota: 'marketing' },
 ];
 

@@ -37,14 +37,14 @@ beforeEach(() => {
 });
 
 describe('barra de abas', () => {
-  it('leva às três abas do dia a dia, mesmo num perfil sem diagnóstico', async () => {
+  it('leva às três ferramentas do dia a dia, mesmo num perfil sem diagnóstico', async () => {
     const tela = await montar();
     const usuario = userEvent.setup();
 
     for (const [rotulo, destino] of [
-      ['Plano', '/artista/a-2/plano'],
       ['Músicas', '/artista/a-2/catalogo'],
       ['Agenda', '/artista/a-2/agenda'],
+      ['Equipe', '/artista/a-2/equipe'],
     ]) {
       await usuario.press(tela.getByLabelText(rotulo));
       expect(mockPush).toHaveBeenCalledWith(destino);
@@ -63,8 +63,19 @@ describe('barra de abas', () => {
 
     await userEvent.setup().press(tela.getByLabelText('Mais'));
 
-    for (const rotulo of ['Diagnóstico REAL', 'Plano estratégico', 'Equipe', 'Marketing']) {
-      expect(tela.getByText(rotulo)).toBeTruthy();
+    expect(tela.getByText('Marketing')).toBeTruthy();
+  });
+
+  // ⚠️ A BARRA É SÓ DE FERRAMENTAS, e é fácil desfazer isto sem querer: basta alguém "devolver" um
+  // atalho para o Diagnóstico ou para o Plano por achar que faltou. Eles não faltam — são o
+  // MÉTODO, e o método mora nos três cartões da home, onde cada um diz em que pé está. Repetidos
+  // aqui, devolvem a dúvida que os cartões existem para resolver.
+  it('não leva aos módulos do método: eles moram nos cartões da home', async () => {
+    const tela = await montar();
+    await userEvent.setup().press(tela.getByLabelText('Mais'));
+
+    for (const doMetodo of ['Diagnóstico REAL', 'Plano estratégico', 'Plano']) {
+      expect(tela.queryByText(doMetodo)).toBeNull();
     }
   });
 
@@ -84,18 +95,18 @@ describe('barra de abas', () => {
     const usuario = userEvent.setup();
 
     await usuario.press(tela.getByLabelText('Mais'));
-    await usuario.press(tela.getByText('Equipe'));
+    await usuario.press(tela.getByText('Marketing'));
 
-    expect(mockPush).toHaveBeenCalledWith('/artista/a-2/equipe');
+    expect(mockPush).toHaveBeenCalledWith('/artista/a-2/marketing');
     expect(tela.queryByText('Marketing')).toBeNull();
   });
 
   // Dois itens acesos ao mesmo tempo não dizem qual é a tela atual — a web apaga a aba quando o
   // "Mais" abre, e a barra aqui tem que fazer o mesmo.
   it('com o "Mais" aberto, a aba da tela atual apaga', async () => {
-    mockCaminho = '/artista/a-2/plano';
+    mockCaminho = '/artista/a-2/catalogo';
     const tela = await montar();
-    const aceso = () => tela.getByText('Plano').props.style.flat().some(
+    const aceso = () => tela.getByText('Músicas').props.style.flat().some(
       (e: { color?: string } | undefined) => e?.color === COR.primaria,
     );
 

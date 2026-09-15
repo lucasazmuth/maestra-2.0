@@ -148,9 +148,13 @@ export const SOMBRA_DO_BOTAO = {
 /**
  * O painel do artista (a home) — a única tela do produto com cartões escuros.
  *
- * O hero da próxima tarefa e os quatro cartões de números são azul-noite sobre o fundo claro;
- * é o contraste que separa "o que fazer agora" e "onde eu estou" do resto da página, que é
- * branca. Os valores saem de `.music-hero`/`.music-stat-grid`/`.release-board` e companhia, em
+ * Os três pilares do método e os quatro cartões de números são azul-noite sobre o fundo claro; é
+ * o contraste que separa "por onde eu entro" e "onde eu estou" do resto da página, que é branca.
+ * O navy nasceu no herói da próxima tarefa, que abria esta tela até a reestruturação de 2026;
+ * quando ele saiu, os pilares herdaram a mesma paleta em vez de estrear uma segunda (ver
+ * `COR_PILARES`).
+ *
+ * Os valores saem de `.music-hero`/`.music-stat-grid`/`.release-board` e companhia, em
  * `src/styles/gsap-reference.css`, e das cores inline de `src/pages/Dashboard/index.tsx`.
  * `src/__tests__/cromoDoPainel.test.ts` falha se lá mudarem sem mudar aqui.
  */
@@ -163,22 +167,13 @@ export const COR_PAINEL = {
   pilulaContorno: 'rgba(255, 255, 255, .13)',
   pilulaFundo: 'rgba(255, 255, 255, .08)',
   pilulaTexto: '#eaf0ff',
-  pilulaNumero: 'rgba(51, 97, 255, .32)',
-  pilulaPrazo: '#ffe083',
   cartaoDeNumero: '#202c46',
   rotuloDeNumero: '#d7e0f4',
   linha: '#edf1f5',
   tituloDoCartao: '#5b6f94',
   acaoDoCartao: '#7286aa',
-  promoDe: '#151f37',
-  promoAte: '#44324e',
-  promoRotulo: '#9aaac7',
   promoTexto: '#65789d',
-  /** O contador de estratégias do cartão claro — o roxo, não o azul de ação. */
-  promoNumeroRoxo: '#8833ff',
-  faixaTitulo: '#60739a',
   faixaLegenda: '#9aa9c0',
-  botaoSuave: '#eef2ff',
   rodapeIcone: '#aab8d0',
   rodapeTitulo: '#607399',
   rodapeTexto: '#9aa8bf',
@@ -187,6 +182,34 @@ export const COR_PAINEL = {
   velado: 'rgba(255, 255, 255, .72)',
   seta: 'rgba(255, 255, 255, .78)',
   disco: 'rgba(255, 255, 255, .2)',
+} as const;
+
+/**
+ * Os três pilares da home: onde estou, execução, para onde ir.
+ *
+ * O fundo deles NÃO tem paleta própria: é o navy do herói do painel (`COR_PAINEL.heroDe/heroAte` e
+ * o brilho `heroBrilho`), o mesmo que abria o Dashboard antes desta reestruturação. Os três
+ * cartões são o herói agora, e um segundo escuro no produto seria um segundo sistema.
+ *
+ * O que muda de um cartão para outro é só a cor do ANEL, e ela é sempre LINHA. É por isso que o
+ * roxo da marca pode aparecer aqui: como contorno do anel do planejamento, nunca como campo. A
+ * regra vem do mesmo lugar que a do herói do diagnóstico (ver `COR_DIAGNOSTICO`).
+ *
+ * `src/__tests__/cromoDosPilares.test.ts` amarra estes valores à folha da web.
+ */
+export const COR_PILARES = {
+  /** Verde do REAL, o mesmo acento que o produto já usa para o diagnóstico. */
+  anelDiagnostico: '#2ec47a',
+  /** Azul de ação: o Plano é onde se age. */
+  anelExecucao: '#3361ff',
+  /** Roxo institucional, e só como linha. */
+  anelPlanejamento: '#9a4fd1',
+  /** A régua de progresso sobre o navy. */
+  regua: 'rgba(255, 255, 255, .14)',
+  reguaCheia: '#7fb0ff',
+  /** Os quatro pontos R·E·A·L: aceso é o branco do texto, apagado é o fio do herói. */
+  pontoAceso: '#ffffff',
+  pontoApagado: 'rgba(255, 255, 255, .24)',
 } as const;
 
 /** A bolinha de cada número, na ordem em que os cartões aparecem. */

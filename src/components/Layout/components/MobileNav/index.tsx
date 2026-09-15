@@ -2,17 +2,19 @@ import { FC, ReactNode, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  PlanoAcaoIcon, CatalogoIcon, AgendaIcon, MoreIcon,
-  DiagnosticoIcon, PlanejamentoIcon, EquipeIcon, MarketingIcon,
+  CatalogoIcon, AgendaIcon, MoreIcon, EquipeIcon, MarketingIcon,
 } from '../../../Icons/system';
 import { useAppSelector } from '@maestra/core/store/store';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 
 // Navbar inferior (tab bar) do mobile: substitui a sidebar (oculta em telas < 768px).
-// Layout da referência (gsap-app): [avatar do perfil] · Plano · Músicas · Agenda · Mais. A
-// primeira célula é a foto do artista selecionado, que leva pra home dele — no lugar de um ícone
-// de casa, ela também diz DE QUEM é a tela. "Mais" (popover) guarda o que sobrou dos módulos:
-// Diagnóstico REAL, Plano estratégico, Equipe e Marketing.
+// [avatar do perfil] · Músicas · Agenda · Equipe · Mais. A primeira célula é a foto do artista
+// selecionado, que leva pra home dele — no lugar de um ícone de casa, ela também diz DE QUEM é a
+// tela. "Mais" (popover) guarda o que sobra, hoje só o Marketing.
+//
+// SÓ FERRAMENTAS. Diagnóstico REAL, Plano de Ação e Plano estratégico saíram da barra: eles são o
+// método, e o método mora nos três cartões da home (ver `components/dashboard/PillarCards`), onde
+// cada um diz em que pé está. A foto continua sendo o caminho de volta para lá.
 //
 // Perfis, Configurações e Suporte NÃO moram aqui. Eles já moraram, e o botão de grade do header
 // sumia no mobile para não duplicar a navegação — só que isso misturava duas coisas de naturezas
@@ -133,15 +135,12 @@ export const MobileNav: FC = () => {
   // Atalhos do dia a dia. A primeira célula (a home do artista) é renderizada à parte: ela é a
   // foto do perfil, não um ícone.
   const tabs: Item[] = [
-    { icon: <PlanoAcaoIcon size={24} />, label: t('Plan', { defaultValue: 'Plano' }), suffix: 'action-plan' },
     { icon: <CatalogoIcon size={24} />, label: t('Catalog', { defaultValue: 'Músicas' }), suffix: 'catalog' },
     { icon: <AgendaIcon size={24} />, label: t('Agenda', { defaultValue: 'Agenda' }), suffix: 'agenda' },
+    { icon: <EquipeIcon size={24} />, label: t('Team', { defaultValue: 'Equipe' }), suffix: 'team' },
   ];
   // Restante dos módulos, dentro do "Mais" (2 por linha, na grade do popover).
   const more: Item[] = [
-    { icon: <DiagnosticoIcon size={22} />, label: t('REAL Diagnostic', { defaultValue: 'Diagnóstico REAL' }), suffix: 'diagnostico' },
-    { icon: <PlanejamentoIcon size={22} />, label: t('Planning', { defaultValue: 'Plano estratégico' }), suffix: 'perfil' },
-    { icon: <EquipeIcon size={22} />, label: t('Team', { defaultValue: 'Equipe' }), suffix: 'team' },
     { icon: <MarketingIcon size={22} />, label: t('Marketing', { defaultValue: 'Marketing' }), suffix: 'marketing' },
   ];
   // Perfis, Configurações e Suporte NÃO entram aqui: eles moram no menu do sistema, no botão de
