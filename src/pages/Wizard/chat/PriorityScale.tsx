@@ -36,7 +36,6 @@ export const PriorityScale: FC<Props> = ({ strategies, objectives, onConfirm, on
   const [index, setIndex] = useState(Math.max(0, firstPending));
   const [objectiveIndex, setObjectiveIndex] = useState(0);
   const [hoverScore, setHoverScore] = useState<number | null>(null);
-  const [advancing, setAdvancing] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [minimized, setMinimized] = useState(false);
   const progressRef = useRef(onProgress);
@@ -105,18 +104,19 @@ export const PriorityScale: FC<Props> = ({ strategies, objectives, onConfirm, on
       const shownScore = hoverScore ?? currentScore;
       const answered = index * objectives.length + objectiveIndex;
       const pick = (score: number) => {
-        if (advancing) return;
         const scores = { ...strategy.objectiveScores, [objectiveIndex]: score };
         const completedStrategy = objectiveIndex + 1 === objectives.length;
         update(list.map((item) => item.id === strategy.id ? { ...item, objectiveScores: scores, artistScores: scores, priorityReviewed: completedStrategy || item.priorityReviewed } : item));
         setHoverScore(null);
-        setAdvancing(true);
-        window.setTimeout(() => {
-          setAdvancing(false);
-          if (objectiveIndex + 1 < objectives.length) setObjectiveIndex((value) => value + 1);
-          else if (index + 1 < list.length) { setIndex((value) => value + 1); setObjectiveIndex(0); }
-          else setMode('rank');
-        }, 360);
+      };
+      const previous = () => {
+        if (objectiveIndex > 0) setObjectiveIndex((value) => value - 1);
+        else if (index > 0) { setIndex((value) => value - 1); setObjectiveIndex(objectives.length - 1); }
+      };
+      const next = () => {
+        if (objectiveIndex + 1 < objectives.length) setObjectiveIndex((value) => value + 1);
+        else if (index + 1 < list.length) { setIndex((value) => value + 1); setObjectiveIndex(0); }
+        else setMode('rank');
       };
       return <>
         <div className="priority-v3__progress"><span>Estratégia {index + 1} de {list.length}</span><span>{answered + 1} de {list.length * objectives.length}</span></div>
@@ -126,10 +126,14 @@ export const PriorityScale: FC<Props> = ({ strategies, objectives, onConfirm, on
           <span className="priority-v3__eyebrow">Objetivo {objectiveIndex + 1} de {objectives.length}</span>
           <p>Ajuda a conquistar <strong>{objectives[objectiveIndex]}</strong>?</p>
           <div className="priority-v3__scale" onMouseLeave={() => setHoverScore(null)}>
-            {SCALE.map((score) => <button key={score} type="button" disabled={advancing} aria-label={`Nota ${score}`} onMouseEnter={() => setHoverScore(score)} onClick={() => pick(score)} style={{ height: 22 + score * 4, background: shownScore != null && score <= shownScore ? scoreColor(shownScore) : undefined }}>{score}</button>)}
+            {SCALE.map((score) => <button key={score} type="button" aria-label={`Nota ${score}`} onMouseEnter={() => setHoverScore(score)} onClick={() => pick(score)} style={{ height: 22 + score * 4, background: shownScore != null && score <= shownScore ? scoreColor(shownScore) : undefined }}>{score}</button>)}
           </div>
           <div className="priority-v3__scale-legend"><span>0 · não ajuda</span><span>10 · ajuda muito</span></div>
           <div className="priority-v3__score-readout" style={{ color: shownScore == null ? undefined : scoreColor(shownScore) }}><strong>{shownScore ?? '–'}</strong><span>{scoreWord(shownScore)}</span></div>
+          <div className="priority-v3__question-actions">
+            <button type="button" onClick={previous} disabled={index === 0 && objectiveIndex === 0}>Anterior</button>
+            <button type="button" className="priority-v3__continue" onClick={next} disabled={typeof currentScore !== 'number'}>Continuar</button>
+          </div>
         </section>
       </>;
     })() : minimized ? <>

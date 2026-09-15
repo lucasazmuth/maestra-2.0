@@ -27,11 +27,11 @@ it('persiste as notas manuais no desmonte e retoma a próxima estratégia', () =
     onConfirm={jest.fn()} onProgress={onProgress} />);
   fireEvent.click(screen.getByText('Eu prefiro priorizar por conta própria'));
   fireEvent.click(screen.getByRole('button', { name: 'Nota 1' }));
-  act(() => jest.advanceTimersByTime(360));
+  fireEvent.click(screen.getByText('Continuar'));
   fireEvent.click(screen.getByRole('button', { name: 'Nota 1' }));
-  act(() => jest.advanceTimersByTime(360));
+  fireEvent.click(screen.getByText('Continuar'));
   fireEvent.click(screen.getByRole('button', { name: 'Nota 1' }));
-  act(() => jest.advanceTimersByTime(360));
+  fireEvent.click(screen.getByText('Continuar'));
   view.unmount();
   const saved = onProgress.mock.calls[0][0];
   expect(saved[0].artistScores[0]).toBe(1);

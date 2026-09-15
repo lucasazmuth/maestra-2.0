@@ -37,7 +37,7 @@
   &__progress-line { height: 3px; overflow: hidden; margin: 10px 0 16px; border-radius: 3px; background: var(--wz-line); }
   &__progress-line i { display: block; height: 100%; border-radius: inherit; background: var(--wz-blue); transition: width .25s ease; }
   &__question { padding: 18px; border-radius: 12px; background: var(--wz-surface-2); }
-  &__question h3 { margin-bottom: 14px; color: var(--wz-ink); }
+  &__question h3 { margin-bottom: 14px; color: var(--wz-ink); white-space: normal; text-wrap: wrap; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
   &__eyebrow { color: var(--wz-faint); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
   &__question p { min-height: 48px; margin: 6px 0 16px; font-size: 15px; }
   &__question p strong { color: var(--wz-ink); font-size: 17px; }
@@ -49,6 +49,10 @@
   &__score-readout { display: flex; align-items: center; gap: 10px; min-height: 34px; margin-top: 14px; color: var(--wz-faint); }
   &__score-readout strong { font-size: 28px; line-height: 1; }
   &__score-readout span { color: var(--wz-ink); font-size: 14px; font-weight: 700; }
+  &__question-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 20px; }
+  &__question-actions button { min-width: 104px; padding: 10px 14px; border: 1px solid var(--wz-line); border-radius: 6px; background: var(--wz-surface); color: var(--wz-ink); font-weight: 700; cursor: pointer; }
+  &__question-actions button:disabled { cursor: default; opacity: .42; }
+  &__question-actions .priority-v3__continue { border-color: var(--wz-blue); background: var(--wz-blue); color: #fff; }
   &__rating span { display: flex; justify-content: space-between; gap: 12px; }
   &__rating small { color: var(--wz-muted); line-height: 1.5; }
   &__rating input { width: 100%; accent-color: var(--wz-blue); }
