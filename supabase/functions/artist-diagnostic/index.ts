@@ -510,36 +510,45 @@ serve(async (req) => {
       chartmetric: a.content?.chartmetricProfile ?? null,
     });
 
-    // ── Rate Limit: 1) máx. 3 perfis pendentes ──
-    const { count: pendingCount, error: pendingError } = await supabaseAdmin
-      .from("artists").select("*", { count: "exact", head: true })
-      .eq("user_id", user.id).eq("is_locked", true);
-    if (pendingError || pendingCount === null) return json({ error: "Erro ao verificar limites" }, 500);
-    if (pendingCount >= 3) {
-      return json({ error: "Limite de perfis pendentes atingido", reason: "pending_limit", pending_count: pendingCount }, 429);
-    }
+    // A Edge Function e a RPC de pré-checagem precisam aplicar a mesma exceção: o admin da
+    // plataforma pode criar perfis livremente. Sem esta consulta, o endpoint ainda devolvia 429
+    // mesmo quando a interface já indicava que a conta podia criar.
+    const { data: platformAdmin, error: adminError } = await supabaseAdmin
+      .from("platform_admins").select("user_id").eq("user_id", user.id).maybeSingle();
+    if (adminError) return json({ error: "Erro ao verificar permissões" }, 500);
 
-    // 2) Cooldown progressivo baseado em exclusões nos últimos 30 dias
-    const { count: deletionCount, error: deletionError } = await supabaseAdmin
-      .from("artist_deletions").select("*", { count: "exact", head: true })
-      .eq("user_id", user.id).eq("was_locked", true)
-      .gte("deleted_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
-    if (deletionError) return json({ error: "Erro ao verificar limites" }, 500);
+    if (!platformAdmin) {
+      // ── Rate Limit: 1) máx. 3 perfis pendentes ──
+      const { count: pendingCount, error: pendingError } = await supabaseAdmin
+        .from("artists").select("*", { count: "exact", head: true })
+        .eq("user_id", user.id).eq("is_locked", true);
+      if (pendingError || pendingCount === null) return json({ error: "Erro ao verificar limites" }, 500);
+      if (pendingCount >= 3) {
+        return json({ error: "Limite de perfis pendentes atingido", reason: "pending_limit", pending_count: pendingCount }, 429);
+      }
 
-    const cooldownSeconds = (deletionCount ?? 0) === 0 ? 0
-      : (deletionCount ?? 0) === 1 ? 600
-      : (deletionCount ?? 0) <= 4 ? 86400 : 604800;
+      // 2) Cooldown progressivo baseado em exclusões nos últimos 30 dias
+      const { count: deletionCount, error: deletionError } = await supabaseAdmin
+        .from("artist_deletions").select("*", { count: "exact", head: true })
+        .eq("user_id", user.id).eq("was_locked", true)
+        .gte("deleted_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+      if (deletionError) return json({ error: "Erro ao verificar limites" }, 500);
 
-    if (cooldownSeconds > 0) {
-      const { data: lastArtist, error: lastError } = await supabaseAdmin
-        .from("artists").select("created_at").eq("user_id", user.id)
-        .order("created_at", { ascending: false }).limit(1).maybeSingle();
-      if (lastError) return json({ error: "Erro ao verificar limites" }, 500);
-      if (lastArtist?.created_at) {
-        const elapsed = (Date.now() - new Date(lastArtist.created_at).getTime()) / 1000;
-        const remaining = Math.ceil(cooldownSeconds - elapsed);
-        if (remaining > 0) {
-          return json({ error: "Cooldown ativo", reason: "cooldown", remaining_seconds: remaining, deletion_count: deletionCount }, 429);
+      const cooldownSeconds = (deletionCount ?? 0) === 0 ? 0
+        : (deletionCount ?? 0) === 1 ? 600
+        : (deletionCount ?? 0) <= 4 ? 86400 : 604800;
+
+      if (cooldownSeconds > 0) {
+        const { data: lastArtist, error: lastError } = await supabaseAdmin
+          .from("artists").select("created_at").eq("user_id", user.id)
+          .order("created_at", { ascending: false }).limit(1).maybeSingle();
+        if (lastError) return json({ error: "Erro ao verificar limites" }, 500);
+        if (lastArtist?.created_at) {
+          const elapsed = (Date.now() - new Date(lastArtist.created_at).getTime()) / 1000;
+          const remaining = Math.ceil(cooldownSeconds - elapsed);
+          if (remaining > 0) {
+            return json({ error: "Cooldown ativo", reason: "cooldown", remaining_seconds: remaining, deletion_count: deletionCount }, 429);
+          }
         }
       }
     }
