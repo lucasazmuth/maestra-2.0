@@ -62,6 +62,7 @@ export const syncActionPlanTaskEvent = async (input: {
   strategyTitle: string;
   deadline?: string;
   completed?: boolean;
+  recurrence?: 'weekly';
 }): Promise<AgendaEvent | null> => {
   const existing = await findActionPlanEvent(input.artistId, input.taskId);
 
@@ -78,6 +79,7 @@ export const syncActionPlanTaskEvent = async (input: {
     description: `Plano de Ação · ${input.strategyTitle}`,
     task_id: input.taskId,
     source: 'action_plan',
+    recurrence_rule: input.recurrence || null,
   };
 
   if (existing) return updateEvent(existing.id, patch);
@@ -94,5 +96,6 @@ export const syncActionPlanTaskEvent = async (input: {
     status: input.completed ? 'completed' : 'scheduled',
     task_id: input.taskId,
     source: 'action_plan',
+    recurrence_rule: input.recurrence || null,
   });
 };

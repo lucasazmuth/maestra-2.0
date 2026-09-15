@@ -599,6 +599,7 @@ export default function Wizard() {
                 strategyTitle: estrategia.title,
                 deadline: tarefa.deadline,
                 completed: tarefa.status === 'done',
+                recurrence: tarefa.schedule?.recurrence,
               })))
             )).catch(() => Alert.alert('Agenda pendente', 'O cronograma foi salvo e a Agenda será atualizada na próxima abertura.'));
           }}

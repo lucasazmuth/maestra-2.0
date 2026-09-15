@@ -694,6 +694,7 @@ export interface AgendaEvent {
   // source distingue evento criado na Agenda ('manual') do gerado por tarefa ('action_plan').
   task_id?: string | null;
   source?: 'manual' | 'action_plan' | string;
+  recurrence_rule?: 'weekly' | null;
   created_at?: string;
   updated_at?: string;
 }

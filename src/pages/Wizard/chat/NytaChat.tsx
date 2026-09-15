@@ -974,6 +974,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
                   strategyTitle: strategy.title,
                   deadline: task.deadline,
                   completed: task.status === 'done',
+                  recurrence: task.schedule?.recurrence,
                 })))
               )).catch(() => message.warning('Cronograma salvo, mas a Agenda será atualizada na próxima abertura.'));
             }}

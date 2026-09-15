@@ -322,7 +322,7 @@ const Agenda: FC = () => {
               return <button type="button" key={key} className={`agenda-month-day${outsideMonth ? ' is-outside' : ''}${isReleaseDay ? ' is-release-day' : ''}`} onClick={() => { setCursor(day); setCalendarView('day'); }}>
                 <b>{day.date()}</b>
                 {isReleaseDay && <em>Dia D</em>}
-                {eventsForDay.slice(0, 2).map((event) => <span key={event.id} style={{ '--event-color': typeColor(event.type) } as React.CSSProperties}>{calendarTitle(event.title, 20)}</span>)}
+                {eventsForDay.slice(0, 2).map((event) => <span key={event.id} style={{ '--event-color': typeColor(event.type) } as React.CSSProperties}>{calendarTitle(event.title, 20)}{event.recurrence_rule === 'weekly' ? ' · semanal' : ''}</span>)}
                 {eventsForDay.length > 2 && <small>+{eventsForDay.length - 2}</small>}
               </button>;
             })}
