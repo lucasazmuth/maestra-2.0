@@ -1602,7 +1602,13 @@
 .schedule-editor__header small { color: var(--wz-muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
 .schedule-editor__header h2 { max-width: 850px; margin: 5px 0; color: var(--wz-ink); font-size: 20px; line-height: 1.35; white-space: normal; overflow-wrap: anywhere; }
 .schedule-editor__header p { margin: 0; color: var(--wz-muted); font-size: 13px; }
-.schedule-editor__header > button { flex: 0 0 36px; width: 36px; height: 36px; border: 1px solid var(--wz-line); border-radius: 50%; background: var(--wz-surface); color: var(--wz-muted); cursor: pointer; }
+.schedule-editor__header > button { display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; padding: 0; border: 1px solid var(--wz-line); border-radius: 50%; background: var(--wz-surface); color: var(--wz-muted); cursor: pointer; transition: border-color .15s ease, background .15s ease, color .15s ease; }
+.schedule-editor__header > button:hover { border-color: #c6d0e1; background: #f4f6fa; color: var(--wz-ink); }
+.schedule-editor__header > button:focus-visible { outline: 3px solid var(--wz-blue-tint); outline-offset: 2px; }
+.schedule-editor__close-icon { position: relative; display: block; width: 16px; height: 16px; }
+.schedule-editor__close-icon::before, .schedule-editor__close-icon::after { content: ''; position: absolute; top: 7px; left: 1px; width: 14px; height: 1.5px; border-radius: 1px; background: currentColor; }
+.schedule-editor__close-icon::before { transform: rotate(45deg); }
+.schedule-editor__close-icon::after { transform: rotate(-45deg); }
 .schedule-editor__body { flex: 1; min-height: 0; overflow: hidden; padding: 0 24px 16px; }
 .schedule-editor__body .schedule-gantt { height: calc(100% - 84px); max-height: none; }
 .schedule-editor__footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 24px; border-top: 1px solid var(--wz-line); color: var(--wz-muted); font-size: 12px; }
