@@ -19,7 +19,7 @@ const dashboardCss = fs.readFileSync(
 );
 
 describe('menu do método no painel', () => {
-  it.each(['Visão geral', 'Diagnóstico', 'Plano de Ação', 'Planejamento'])(
+  it.each(['Visão geral', 'Diagnóstico REAL', 'Plano de Ação', 'Planejamento'])(
     'expõe a aba %s',
     (rotulo) => expect(menuTsx).toContain(rotulo),
   );

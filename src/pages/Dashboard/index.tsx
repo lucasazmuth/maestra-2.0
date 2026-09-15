@@ -174,10 +174,6 @@ const Dashboard: FC = () => {
         />
       ) : <>
 
-      {/* A consultora vem logo depois das três portas: quem não soube o que fazer com elas
-          pergunta aqui, sem ter de sair da home. */}
-      <NytaDashboardHero />
-
       <section className='music-stat-grid'>
         {[
           ['Ouvintes mensais', fmtNumber(chartmetric?.monthly_listeners), sp?.popularity != null ? `${sp.popularity}/100 popularidade` : 'Spotify'],
@@ -237,6 +233,10 @@ const Dashboard: FC = () => {
           )}
         </div>
       </article>
+
+      {/* Depois dos números e das músicas, a Nyta ajuda a interpretar o que a pessoa acabou de
+          ver. A ordem evita que o chat esconda os dados principais na primeira dobra. */}
+      <NytaDashboardHero />
 
       {/* O rodapé encerra a página com o que é da CONTA, não da carreira. Os três levam a algum
           lugar: antes, dois deles eram cartões informativos que não faziam nada, e a pessoa
