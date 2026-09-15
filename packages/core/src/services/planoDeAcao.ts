@@ -1,5 +1,6 @@
 import { TASK_OWNER_SELF } from '../constants/maestra';
 import { STRATEGY_BY_ID } from '../constants/strategyBank';
+import { STRATEGY_BY_ID as LEGACY_STRATEGY_BY_ID } from '../constants/strategyBankLegacy';
 import type { ActionTask, Strategy } from '../interfaces/maestra';
 
 // O passo a passo canônico de uma estratégia → as tarefas dela.
@@ -14,7 +15,9 @@ import type { ActionTask, Strategy } from '../interfaces/maestra';
 const identificador = (): string => Math.random().toString(36).slice(2, 10);
 
 export const buildActionPlan = (strategy: Strategy): ActionTask[] => {
-  const doBanco = strategy.bankId ? STRATEGY_BY_ID[strategy.bankId] : undefined;
+  if (strategy.tasks?.length) return strategy.tasks.map(task => ({ ...task }));
+  const bank = strategy.bankVersion === '4.0' ? STRATEGY_BY_ID : LEGACY_STRATEGY_BY_ID;
+  const doBanco = strategy.bankId ? bank[strategy.bankId] : undefined;
   return (doBanco?.tasks || []).map((description) => ({
     id: identificador(),
     description,

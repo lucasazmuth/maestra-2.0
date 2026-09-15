@@ -1,5 +1,3 @@
-import priorizacao from '../constants/priorizacao_v3.json';
-import { PRIORITY as LEGACY_PRIORITY } from './prioridadeLegacy';
 // Matriz de priorização determinística (Metodologia v2).
 // Transcrição literal de "Nyta_Matriz_Priorizacao_v2" §2 — notas 1–10 de cada estratégia em cada
 // um dos 8 objetivos. Lookup table 53×8 pura, sem LLM.
@@ -9,16 +7,65 @@ export type ObjectiveCode = 'DIG' | 'SHW' | 'MRC' | 'MID' | 'CLS' | 'INT' | 'SIM
 export const OBJECTIVE_CODES: ObjectiveCode[] = ['DIG', 'SHW', 'MRC', 'MID', 'CLS', 'INT', 'SIM', 'FIN'];
 
 // Tupla de 8 notas na ordem de OBJECTIVE_CODES: [DIG, SHW, MRC, MID, CLS, INT, SIM, FIN].
-export const PRIORITY: Record<string, number[]> = Object.fromEntries(
-  priorizacao.strategies.map(s => [s.id, s.notas])
-);
-export const PRIORITY_INFO = Object.fromEntries(priorizacao.strategies.map(s => [s.id, s]));
-export const explanationFor = (bankId: string, objective: string): string =>
-  PRIORITY_INFO[bankId]?.explicacoes[OBJECTIVE_CODES.indexOf(objectiveToCode(objective))] || '';
+export const PRIORITY: Record<string, [number, number, number, number, number, number, number, number]> = {
+  '1': [10, 9, 10, 10, 10, 9, 10, 9],
+  '2': [9, 7, 9, 9, 9, 9, 9, 9],
+  '3': [8, 7, 8, 8, 8, 8, 8, 10],
+  '4': [9, 8, 10, 9, 10, 9, 9, 10],
+  '5': [8, 6, 8, 7, 7, 8, 8, 9],
+  '6': [10, 9, 10, 10, 10, 10, 9, 9],
+  '8': [10, 10, 10, 10, 9, 9, 9, 9],
+  '9': [9, 8, 9, 9, 9, 9, 8, 8],
+  '10': [10, 9, 9, 9, 10, 9, 10, 8],
+  '11': [10, 8, 9, 10, 9, 10, 9, 9],
+  '12': [10, 8, 8, 8, 9, 10, 10, 9],
+  '13': [9, 8, 9, 9, 9, 10, 9, 9],
+  '14': [9, 9, 9, 9, 9, 9, 8, 9],
+  '15': [9, 8, 10, 10, 10, 10, 9, 9],
+  '17': [10, 7, 8, 9, 8, 8, 9, 7],
+  '18': [9, 9, 10, 9, 9, 7, 10, 9],
+  '19': [10, 6, 7, 7, 9, 9, 10, 7],
+  '20': [9, 6, 9, 9, 9, 6, 10, 6],
+  '22': [8, 9, 10, 9, 10, 9, 8, 8],
+  '23': [9, 10, 10, 10, 10, 9, 10, 9],
+  '24': [8, 10, 10, 10, 10, 8, 10, 8],
+  '25': [9, 10, 8, 8, 8, 8, 10, 10],
+  '26': [9, 10, 10, 9, 9, 10, 10, 10],
+  '29': [9, 10, 9, 9, 9, 8, 10, 10],
+  '30': [8, 10, 8, 8, 8, 8, 10, 10],
+  '31': [8, 10, 8, 8, 8, 7, 10, 10],
+  '32': [10, 10, 10, 10, 9, 9, 10, 9],
+  '33': [10, 10, 10, 9, 10, 9, 10, 9],
+  '34': [8, 10, 10, 9, 8, 9, 9, 10],
+  '35': [8, 9, 8, 8, 8, 8, 9, 9],
+  '36': [7, 8, 8, 7, 8, 9, 10, 9],
+  '37': [8, 8, 9, 9, 8, 8, 9, 10],
+  '38': [9, 9, 10, 10, 9, 9, 10, 10],
+  '39': [9, 9, 8, 8, 9, 8, 10, 10],
+  '40': [8, 8, 10, 9, 9, 9, 8, 10],
+  '41a': [9, 8, 9, 8, 9, 9, 8, 8],
+  '41b': [10, 6, 7, 7, 6, 8, 8, 10],
+  '42': [9, 9, 9, 9, 10, 9, 10, 8],
+  '43': [9, 4, 7, 5, 7, 5, 8, 10],
+  '44': [7, 10, 10, 7, 7, 7, 10, 10],
+  '46': [8, 9, 9, 8, 8, 8, 10, 9],
+  '47': [8, 9, 9, 8, 8, 9, 10, 9],
+  '48': [10, 9, 9, 9, 9, 9, 10, 9],
+  '49': [8, 8, 10, 10, 10, 9, 9, 9],
+  '50': [9, 9, 9, 10, 9, 10, 9, 8],
+  '51': [8, 9, 10, 10, 10, 10, 9, 9],
+  '52': [8, 8, 9, 9, 9, 10, 8, 8],
+  '53': [9, 9, 10, 10, 10, 8, 9, 9],
+  '54': [7, 3, 6, 5, 6, 4, 7, 10],
+  '55': [7, 3, 7, 6, 6, 5, 7, 9],
+  N1: [8, 8, 8, 9, 9, 7, 10, 8],
+  N2: [8, 8, 9, 9, 10, 8, 10, 8],
+  N3: [10, 9, 10, 10, 10, 8, 10, 8],
+};
 
 // Nota de uma estratégia num código de objetivo (default 0 se a estratégia não estiver na matriz).
 export const scoreFor = (bankId: string, code: ObjectiveCode): number => {
-  const row = PRIORITY[bankId] || LEGACY_PRIORITY[bankId];
+  const row = PRIORITY[bankId];
   if (!row) return 0;
   return row[OBJECTIVE_CODES.indexOf(code)] ?? 0;
 };

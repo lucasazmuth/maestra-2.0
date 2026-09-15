@@ -1,0 +1,25 @@
+.priority-v3 {
+  h3 { margin: 0 0 12px; font-size: 18px; line-height: 1.4; }
+  p { color: var(--wz-muted); font-size: 13px; line-height: 1.6; }
+  &__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+  &__actions button {
+    padding: 10px 16px; border: 1px solid var(--wz-line); border-radius: 6px;
+    background: var(--wz-surface); color: var(--wz-ink); cursor: pointer;
+    &:last-child { background: var(--wz-blue); color: white; }
+    &:disabled { opacity: .45; cursor: default; }
+  }
+  &__rating { display: grid; gap: 10px; margin: 24px 0; }
+  &__rating span { display: flex; justify-content: space-between; gap: 12px; }
+  &__rating small { color: var(--wz-muted); line-height: 1.5; }
+  &__rating input { width: 100%; accent-color: var(--wz-blue); }
+  &__strategy { padding: 20px 0; border-bottom: 1px solid var(--wz-line); }
+  &__selection {
+    display: grid; grid-template-columns: 20px minmax(0, 1fr) auto;
+    gap: 12px; align-items: start; font-size: 14px; line-height: 1.5;
+    input { width: 18px; height: 18px; accent-color: var(--wz-blue); }
+    span { overflow-wrap: anywhere; }
+  }
+  &__recommendation { color: var(--wz-blue) !important; }
+  summary { font-size: 12px; cursor: pointer; color: var(--wz-muted); }
+  button:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px solid var(--wz-blue); outline-offset: 3px; }
+}

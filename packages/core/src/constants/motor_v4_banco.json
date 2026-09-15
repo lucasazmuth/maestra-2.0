@@ -1,0 +1,2329 @@
+{
+ "version": "4.0",
+ "generated_at": "2026-09-13",
+ "rule": {
+  "summary": "A estratégia entra na lista do artista SE (requires_any_opportunity vazio OU ao menos uma delas marcada) E (triggers vazios OU ao menos uma fraqueza de triggers.weaknesses marcada OU ao menos uma oportunidade de triggers.opportunities marcada).",
+  "notes": [
+   "Dentro de cada lista vale 'qualquer uma': nunca se exige que todas as obrigatórias ou todos os gatilhos estejam marcados.",
+   "Forças e ameaças (info) não disparam nada; são exibidas na visualização como contexto.",
+   "Não existem estratégias universais. Uma estratégia com requires_any_opportunity e triggers vazios nunca dispara (não há nenhuma assim no banco).",
+   "IDs de fraquezas/forças: itens internos 1 a 20. IDs de oportunidades: chips 1 a 22. IDs de ameaças: chips 1 a 13 na ordem da spec da SWOT; conferir contra os IDs internos."
+  ]
+ },
+ "strategies": [
+  {
+   "id": "1",
+   "category": "Lançamentos fonográficos",
+   "title": "Criar uma programação estruturada de lançamentos fonográficos",
+   "subtitle": "Priorizar distribuidora que ofereça atendimento e estratégia de pitching para playlists. Vale avaliar feats e participações especiais para ampliar o alcance de cada lançamento. Ao avaliar suas opções, considere qual demonstra maior interesse em tratar seu trabalho como prioritário. Algumas distribuidoras podem oferecer um adiantamento, dependendo da projeção de receita do seu lançamento.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     3,
+     9,
+     10,
+     11,
+     15,
+     18
+    ],
+    "opportunities": [
+     7,
+     13,
+     14
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     1,
+     8,
+     11,
+     13
+    ]
+   },
+   "action_plan": [
+    "Organizar o banco de músicas, identificando as prontas e em produção (dica: use a Maestra)",
+    "Definir o conceito artístico do projeto, a partir da verdade do artista, refletida em visão, missão e valores",
+    "Avaliar incluir feats nos lançamentos e, se fizer sentido, escolher os artistas para convidar",
+    "Definir o que vai ser lançado nos próximos 12 meses (singles, EP ou álbum)",
+    "Montar um cronograma com a data prevista de cada lançamento",
+    "Apresentar o projeto às distribuidoras identificadas como de interesse",
+    "Preparar plano de marketing do lançamento",
+    "Produzir o conteúdo promocional planejado",
+    "Enviar o pitching para a distribuidora com quatro semanas de antecedência, contendo a master, ISRC, capa, fotos, release e plano de marketing",
+    "Conferir cadastros e metadados de cada lançamento (perfis de artista nas plataformas, ISRC/ISWC, filiação como intérprete e músico) antes do Dia D"
+   ]
+  },
+  {
+   "id": "3",
+   "category": "Distribuição, edição e direitos",
+   "title": "Trabalhar a edição das obras: contratar editora ou constituir editora própria com administração",
+   "subtitle": "A editora é responsável pela arrecadação dos seus direitos de autor. Você pode ter a sua própria editora, o que exige empresa LTDA com CNAE de edição, e fazer um contrato de administração com outra editora para a gestão dos direitos, ou assinar diretamente como autor com uma editora estruturada. A opção de ter e gerir a própria editora só é recomendada nos casos em que a receita gerada pela obra cubra as despesas da operação de gestão.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     18,
+     20
+    ],
+    "opportunities": [
+     13,
+     16
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     8
+    ],
+    "threats": [
+     1,
+     11,
+     12
+    ]
+   },
+   "action_plan": [
+    "Entender como funciona uma editora musical e o que ela arrecada",
+    "Listar todas as suas obras (dica: use o catálogo da Maestra)",
+    "Consultar um contador sobre incluir a atividade de edição na empresa e efetuar a inclusão, se necessário",
+    "Se for editora própria: filiar a uma associação de arrecadação",
+    "Pesquisar editoras que fazem contrato de administração",
+    "Apresentar o catálogo às editoras de interesse",
+    "Avaliar os termos de contratos propostos com apoio jurídico",
+    "Assinar o contrato",
+    "Analisar os relatórios de repasse",
+    "Manter o relacionamento com a editora, a fim de prospectar oportunidades de sincronização e gravação por outros artistas"
+   ]
+  },
+  {
+   "id": "4",
+   "category": "Distribuição, edição e direitos",
+   "title": "Prospectar oportunidades de sincronização",
+   "subtitle": "Trilhas para filmes, séries e publicidade são fonte de receita e de alcance. Com o catálogo organizado e os direitos registrados, suas músicas ficam prontas pra responder rápido aos briefings.",
+   "requires_any_opportunity": [
+    16
+   ],
+   "triggers": {
+    "weaknesses": [
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     8,
+     9,
+     10,
+     11,
+     14,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     1,
+     11
+    ]
+   },
+   "action_plan": [
+    "Entender o que é sincronização e que tipo de música tem demanda",
+    "Organizar o catálogo com as músicas disponíveis para sync (dica: use a Maestra)",
+    "Checar se os direitos das obras estão registrados",
+    "Preparar uma pasta com as músicas, versões instrumentais e informações para sync",
+    "Mapear produtoras, agências de publicidade e supervisores musicais do seu nicho",
+    "Cadastrar as músicas em plataformas e bibliotecas de sincronização",
+    "Apresentar o catálogo aos contatos mapeados",
+    "Atualizar a editora e a distribuidora dos próximos lançamentos, para possíveis conexões",
+    "Negociar cada licenciamento com atenção aos direitos envolvidos",
+    "Registrar cada licenciamento fechado e manter o catálogo atualizado"
+   ]
+  },
+  {
+   "id": "6",
+   "category": "Branding e material promocional",
+   "title": "Definir a documentação de referências de branding do projeto (coordenação entre conceito e desdobramentos visuais)",
+   "subtitle": "O branding é a \"embalagem\" do seu lançamento. É a tradução da sua música em identidade visual, fotos, cenário, figurino etc. É esse documento que orienta a capa e a direção de arte das fotos, materiais audiovisuais e promocionais. Você pode fazer isso por sua conta, caso tenha essa habilidade, ou contratar profissional da área.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     11,
+     12,
+     13,
+     15
+    ],
+    "opportunities": [
+     3,
+     4,
+     5
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     8,
+     9,
+     10,
+     11,
+     12,
+     17
+    ],
+    "threats": [
+     8
+    ]
+   },
+   "action_plan": [
+    "Fazer brainstorm de conceito do projeto",
+    "Afunilar as possibilidades até fechar o conceito (lembre-se do posicionamento almejado)",
+    "Criar um moodboard visual (recortes de imagens) que represente o conceito",
+    "Definir o tom de voz do projeto",
+    "Pesquisar imagens de referência para a capa",
+    "Pesquisar tipologias de referência para a logo",
+    "Pesquisar imagens de referência para direção de arte das fotos de divulgação",
+    "Pesquisar imagens de referência para figurino e visagismo",
+    "Pesquisar imagens de referência de cenografia",
+    "Consolidar o documento de coordenação de branding com o briefing para os demais profissionais"
+   ]
+  },
+  {
+   "id": "8",
+   "category": "Branding e material promocional",
+   "title": "Produzir novo material promocional baseado em uma coordenação estruturada de branding",
+   "subtitle": "Fotos, release, bio, PDF de apresentação e vídeo de venda do show, tudo alinhado à nova identidade. É o kit que abre portas com contratantes, imprensa e marcas.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     7,
+     10,
+     11,
+     12,
+     13,
+     15
+    ],
+    "opportunities": [
+     3
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     8,
+     9,
+     11,
+     12,
+     13,
+     16,
+     17
+    ],
+    "threats": [
+     8
+    ]
+   },
+   "action_plan": [
+    "Listar tudo que precisa de material novo (fotos, release, bio, PDF, vídeo)",
+    "Pesquisar fotógrafos alinhados à nova identidade",
+    "Fechar o fotógrafo e marcar o ensaio",
+    "Realizar o ensaio de fotos",
+    "Selecionar e tratar as melhores imagens",
+    "Escrever a bio curta e a bio longa a partir do posicionamento definido",
+    "Escrever o release (avaliar aspas de jornalista ou personalidade)",
+    "Montar o PDF de apresentação com fotos, bio e informações do show",
+    "Editar o vídeo de venda do show",
+    "Organizar o material numa pasta pronta para envio (e manter atualizada)"
+   ]
+  },
+  {
+   "id": "9",
+   "category": "Branding e material promocional",
+   "title": "Criar media kit criativo para lançamentos estratégicos",
+   "subtitle": "O media kit é um material pensado pra provocar reação em influenciadores e veículos, não só informar, com o objetivo de gerar curiosidade para ouvir a música e repercuti-la. Não precisa ser caro, só precisa ser criativo e alinhado com o conceito do seu lançamento.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     11,
+     13,
+     14,
+     15
+    ],
+    "opportunities": [
+     5,
+     13
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     9,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17
+    ],
+    "threats": [
+     1,
+     8
+    ]
+   },
+   "action_plan": [
+    "Definir o conceito do media kit (o que quer provocar)",
+    "Reunir as melhores fotos, vídeos e números",
+    "Escrever o texto curto de apresentação",
+    "Definir o formato (PDF, vídeo, objeto físico criativo)",
+    "Produzir o media kit",
+    "Revisar e aprovar a versão final",
+    "Mapear os influenciadores e veículos que vão receber",
+    "Personalizar o envio para cada destinatário",
+    "Enviar nos períodos de lançamento, alinhado ao plano de marketing",
+    "Acompanhar quem recebeu, respondeu e publicou"
+   ]
+  },
+  {
+   "id": "10",
+   "category": "Redes sociais e canais próprios",
+   "title": "Estruturar a gestão das redes sociais",
+   "subtitle": "Redes com gestão profissional são a vitrine que sustenta todas as outras frentes. É preciso definir canais prioritários, editorias de conteúdo e verba de tráfego pago nos lançamentos. Você pode fazer isso por conta própria, caso tenha essa habilidade, ou contar com suporte especializado, mesmo que apenas para os períodos de lançamento.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     8,
+     9,
+     10,
+     11,
+     15
+    ],
+    "opportunities": [
+     3,
+     8
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     5,
+     6,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     15,
+     17,
+     19
+    ],
+    "threats": [
+     1,
+     8,
+     13
+    ]
+   },
+   "action_plan": [
+    "Definir quais redes são prioritárias para o seu público",
+    "Definir as editorias de conteúdo, a partir do posicionamento",
+    "Pesquisar profissionais de social media / marketing digital para avaliar contratação",
+    "Montar o cronograma de postagens do mês",
+    "Definir a verba mensal para tráfego pago e os conteúdos a serem impulsionados",
+    "Planejar a produção do conteúdo",
+    "Contratar os profissionais necessários para a produção do conteúdo",
+    "Executar as postagens mantendo o acompanhamento do cronograma",
+    "Analisar o desempenho dos posts",
+    "Ajustar os conteúdos de acordo com as análises realizadas"
+   ]
+  },
+  {
+   "id": "12",
+   "category": "Redes sociais e canais próprios",
+   "title": "Criar site com área de captação de contatos e trabalhar gestão de comunidade, avaliando modelos de remuneração recorrente",
+   "subtitle": "Rede social é terreno alugado; site e base de e-mails são seus. A área de captação de leads transforma visitantes em contatos que você pode acionar direto, sem depender de algoritmo. Comunidade é o ativo que o algoritmo não tira de você: os super-fãs que sustentam lançamentos, shows e até receita recorrente (assinatura, clube de apoiadores). Não importa se são poucos, essa é a sua base quente que vale a pena ser alimentada.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     7,
+     10,
+     11,
+     13,
+     15
+    ],
+    "opportunities": [
+     3,
+     5
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     15,
+     17
+    ],
+    "threats": [
+     1,
+     8,
+     13
+    ]
+   },
+   "action_plan": [
+    "Criar site (mesmo que simples) com área de cadastro",
+    "Fazer campanha de inscrições (avaliar oferta de recompensa)",
+    "Escolher onde criar a comunidade (WhatsApp, Telegram, plataforma de assinatura)",
+    "Definir o que a comunidade vai receber de especial, alinhado ao seu posicionamento",
+    "Definir se vai ter mensalidade e qual valor",
+    "Configurar a plataforma escolhida",
+    "Criar as regras e a mensagem de boas-vindas",
+    "Divulgar a comunidade nas redes e nos shows",
+    "Criar um cronograma de conteúdo e encontros exclusivos",
+    "Acompanhar crescimento, retenção e receita recorrente"
+   ]
+  },
+  {
+   "id": "14",
+   "category": "Redes sociais e canais próprios",
+   "title": "Mapear, organizar e ativar a base de contatos atual e de interesse de network",
+   "subtitle": "Sua rede de contatos é um ativo importante que pode estar sendo subutilizado, se desorganizada. Mapear, segmentar e manter contato constante transforma network dormente em oportunidades reais de show, mídia e parceria.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     9,
+     11,
+     14,
+     15,
+     16
+    ],
+    "opportunities": [
+     3,
+     5
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19
+    ],
+    "threats": [
+     1,
+     8
+    ]
+   },
+   "action_plan": [
+    "Reunir todos os contatos que você já tem (celular, e-mail, redes)",
+    "Criar uma planilha única de contatos",
+    "Classificar cada contato por tipo (jornalista, contratante, músico, fã)",
+    "Identificar os contatos mais estratégicos para o momento do projeto",
+    "Listar os contatos de interesse que você ainda não tem",
+    "Mapear como chegar nesses contatos novos",
+    "Definir um fluxo de comunicação para cada tipo (o quê e com que frequência)",
+    "Criar listas de transmissão ou grupos segmentados",
+    "Enviar a primeira comunicação de cada grupo",
+    "Manter o contato regular conforme o fluxo definido"
+   ]
+  },
+  {
+   "id": "15",
+   "category": "Imprensa, mídia e rádio",
+   "title": "Trabalhar imprensa e mídia nos lançamentos",
+   "subtitle": "Presença na mídia gera legitimação e alcança quem não te encontraria no feed. Você pode contratar assessoria para os períodos de lançamento ou fazer o trabalho por conta própria, mapeando veículos e jornalistas do seu nicho.",
+   "requires_any_opportunity": [
+    17,
+    22
+   ],
+   "triggers": {
+    "weaknesses": [
+     11,
+     14,
+     16
+    ],
+    "opportunities": [
+     5
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17
+    ],
+    "threats": [
+     1,
+     7,
+     8
+    ]
+   },
+   "action_plan": [
+    "Decidir se vai contratar assessoria ou fazer por conta própria",
+    "Se for contratar: pesquisar assessorias com atuação no seu nicho e pedir cases",
+    "Escolher a assessoria e fechar para o período do lançamento",
+    "Se for por conta própria: mapear veículos e jornalistas de interesse",
+    "Levantar o contato de cada um",
+    "Preparar o release e o kit de imprensa do lançamento",
+    "Enviar o material com antecedência",
+    "Fazer follow-up com quem não respondeu",
+    "Registrar a cobertura num documento de clipping",
+    "Manter relacionamento com os contatos entre lançamentos"
+   ]
+  },
+  {
+   "id": "17",
+   "category": "Imprensa, mídia e rádio",
+   "title": "Prospectar participações em podcasts e canais do YouTube",
+   "subtitle": "Podcasts e canais do segmento são vitrines de longa duração: a entrevista fica no ar trabalhando por você. Escolha os alinhados ao seu público e chegue com um bom gancho.",
+   "requires_any_opportunity": [
+    8,
+    17
+   ],
+   "triggers": {
+    "weaknesses": [
+     16
+    ],
+    "opportunities": [
+     5
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     9,
+     10,
+     11,
+     13,
+     14,
+     15,
+     16
+    ],
+    "threats": [
+     1,
+     7
+    ]
+   },
+   "action_plan": [
+    "Listar podcasts e canais do YouTube alinhados ao seu público",
+    "Observar quais já receberam artistas do seu perfil",
+    "Levantar o contato de cada um",
+    "Preparar um pitch curto de apresentação",
+    "Escolher o gancho (lançamento, história, pauta)",
+    "Propor a participação aos contatos mapeados",
+    "Fazer follow-up com quem não respondeu",
+    "Agendar e preparar as participações confirmadas",
+    "Participar e divulgar nas suas redes",
+    "Registrar os contatos e manter relacionamento para novas participações"
+   ]
+  },
+  {
+   "id": "18",
+   "category": "Imprensa, mídia e rádio",
+   "title": "Trabalhar rádio no seu nicho",
+   "subtitle": "A rádio segue relevante em muitos nichos e regiões, e abre porta pra públicos que o digital não alcança. Você pode contratar um divulgador do nicho ou construir relação direta com as rádios estratégicas.",
+   "requires_any_opportunity": [
+    7
+   ],
+   "triggers": {
+    "weaknesses": [
+     16
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     9,
+     10,
+     11,
+     13,
+     14,
+     15,
+     17
+    ],
+    "threats": [
+     1,
+     8
+    ]
+   },
+   "action_plan": [
+    "Decidir se vai contratar divulgador ou fazer por conta própria",
+    "Se contratar: pesquisar divulgadores do nicho e pedir resultados anteriores",
+    "Fechar com o divulgador e alinhar as metas",
+    "Se for por conta própria: mapear rádios estratégicas do segmento",
+    "Levantar o contato das rádios e programadores",
+    "Preparar a música e o material de envio",
+    "Enviar a música propondo execução ou parceria",
+    "Fazer follow-up",
+    "Acompanhar em quais rádios a música entrou",
+    "Manter relacionamento com as rádios para os próximos lançamentos"
+   ]
+  },
+  {
+   "id": "19",
+   "category": "YouTube e podcast próprio",
+   "title": "Criar programação estruturada de conteúdo para o YouTube",
+   "subtitle": "O YouTube é busca, não só rede: conteúdo bem organizado continua sendo encontrado anos depois. Uma programação estruturada transforma o canal em acervo vivo do projeto, além de facilitar a descoberta de novos fãs.",
+   "requires_any_opportunity": [
+    3,
+    8
+   ],
+   "triggers": {
+    "weaknesses": [
+     15
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     15,
+     17
+    ],
+    "threats": [
+     8,
+     13
+    ]
+   },
+   "action_plan": [
+    "Definir o objetivo do canal, a partir do posicionamento do projeto",
+    "Definir os tipos de conteúdo (clipes, bastidores, ao vivo)",
+    "Levantar o que o seu acervo já permite publicar",
+    "Montar um cronograma de publicação realista",
+    "Padronizar capas e títulos com a identidade do projeto",
+    "Produzir os primeiros conteúdos",
+    "Otimizar título, descrição e tags de cada vídeo",
+    "Publicar conforme o cronograma",
+    "Divulgar os vídeos nas outras redes",
+    "Analisar as métricas e ajustar a programação"
+   ]
+  },
+  {
+   "id": "20",
+   "category": "YouTube e podcast próprio",
+   "title": "Lançar podcast (ou videocast) próprio",
+   "subtitle": "Um podcast próprio te coloca do outro lado da mesa: você vira o veículo, cria conexões com convidados e alimenta as redes com cortes. Exige constância, então defina uma frequência que caiba na sua rotina.",
+   "requires_any_opportunity": [
+    17
+   ],
+   "triggers": {
+    "weaknesses": [],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     5,
+     8,
+     9,
+     11,
+     15,
+     17
+    ],
+    "threats": [
+     8
+    ]
+   },
+   "action_plan": [
+    "Definir o tema e o formato do podcast, alinhados ao posicionamento",
+    "Definir uma frequência que caiba na sua rotina (semanal, quinzenal)",
+    "Listar os primeiros convidados ou pautas",
+    "Definir o equipamento e o local de gravação",
+    "Criar a identidade do podcast (nome, capa), coerente com o branding",
+    "Gravar o episódio piloto",
+    "Escolher onde hospedar (Spotify, YouTube)",
+    "Editar e publicar o primeiro episódio",
+    "Divulgar e aproveitar cortes nas redes",
+    "Manter a frequência e avaliar os resultados a cada mês"
+   ]
+  },
+  {
+   "id": "22",
+   "category": "Network, mercado e reconhecimento",
+   "title": "Participar de eventos, congressos e showcases do mercado",
+   "subtitle": "É nos eventos do mercado que os contatos que você procura estão reunidos. Presença constante, pitch afiado e follow-up transformam crachá em relacionamento.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     14,
+     19
+    ],
+    "opportunities": [
+     22
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     19
+    ],
+    "threats": [
+     4
+    ]
+   },
+   "action_plan": [
+    "Listar os eventos, congressos e showcases do mercado no ano",
+    "Marcar as datas e prazos de credenciamento no calendário",
+    "Escolher os mais estratégicos para o momento do projeto",
+    "Preparar o elevator pitch (apresentação de 60 segundos)",
+    "Garantir inscrição ou credenciamento",
+    "Mapear na programação os conteúdos de interesse",
+    "Procurar os palestrantes após os painéis para apresentação e troca de contatos",
+    "Acessar rodadas de negócio e meet-ups",
+    "Fazer follow-up na semana seguinte ao evento",
+    "Interagir digitalmente com a cena entre os eventos"
+   ]
+  },
+  {
+   "id": "48",
+   "category": "Network, mercado e reconhecimento",
+   "title": "Fazer pesquisa para compreender o seu público",
+   "subtitle": "Conhecer quem ouve você é vantagem competitiva: quem é o seu fã, onde está, como consome música, o que compartilha e por quê. Pesquisa de público transforma achismo em decisão de conteúdo, lançamento e show.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     10,
+     11,
+     19
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     8,
+     9,
+     10,
+     19
+    ],
+    "threats": [
+     8
+    ]
+   },
+   "action_plan": [
+    "Definir o que você quer descobrir sobre o seu público (perfil, hábitos, motivações)",
+    "Levantar os dados que já existem (Spotify for Artists, YouTube Studio, redes sociais)",
+    "Montar um questionário curto e enviar para a sua base (redes, comunidade, shows)",
+    "Conversar com fãs nos shows e nas redes para ouvir as motivações",
+    "Observar o público de artistas parecidos com você",
+    "Identificar onde o seu público está e como descobre música nova",
+    "Organizar as informações num perfil de fã (persona)",
+    "Cruzar o perfil do fã com o seu posicionamento e ajustar o que precisar",
+    "Usar o perfil pra orientar conteúdo, lançamentos e escolha de shows",
+    "Atualizar a pesquisa a cada semestre"
+   ]
+  },
+  {
+   "id": "49",
+   "category": "Network, mercado e reconhecimento",
+   "title": "Inscrever o projeto em premiações, pitchings e showcases",
+   "subtitle": "Premiações, pitchings e showcases são legitimação: uma seleção curatorial fala por você. Têm calendário próprio, então mapear prazos com antecedência é o que separa quem participa de quem só ouve falar.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     14,
+     19
+    ],
+    "opportunities": [
+     22
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     18,
+     19
+    ],
+    "threats": [
+     1,
+     7
+    ]
+   },
+   "action_plan": [
+    "Listar premiações, pitchings e showcases do seu nicho",
+    "Levantar regras, prazos e formatos de inscrição",
+    "Marcar tudo no calendário",
+    "Escolher os mais estratégicos para o momento do projeto",
+    "Preparar o material de inscrição (vídeo, bio, release, números)",
+    "Inscrever o projeto dentro dos prazos",
+    "Se selecionado: preparar a apresentação ou o show",
+    "Participar e fazer contatos no evento",
+    "Comunicar a participação ou o prêmio nas redes e na imprensa",
+    "Registrar contatos e resultados para as próximas edições"
+   ]
+  },
+  {
+   "id": "23",
+   "category": "Show e palco",
+   "title": "Montar o show e realizar o show de lançamento com registro audiovisual",
+   "subtitle": "Show pronto e registrado é a base da venda: sem vídeo de qualidade, a prospecção trava. O show de lançamento resolve os dois de uma vez, estreia o espetáculo e gera o material.",
+   "requires_any_opportunity": [
+    6,
+    9,
+    10,
+    11,
+    18
+   ],
+   "triggers": {
+    "weaknesses": [
+     4,
+     5,
+     6,
+     7,
+     10
+    ],
+    "opportunities": [
+     5
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     17
+    ],
+    "threats": [
+     1,
+     7,
+     8,
+     12
+    ]
+   },
+   "action_plan": [
+    "Fechar o repertório do show, alinhado ao conceito do projeto",
+    "Definir o roteiro e a ordem das músicas",
+    "Marcar os ensaios com a banda ou equipe",
+    "Ensaiar até o show estar pronto para o palco",
+    "Escolher a data e o espaço do show de lançamento",
+    "Contratar a equipe técnica (som, luz)",
+    "Contratar o registro em áudio, vídeo e foto",
+    "Preparar e executar a divulgação do show",
+    "Realizar o show com o registro completo",
+    "Editar o material para vídeo de venda e conteúdo de redes"
+   ]
+  },
+  {
+   "id": "24",
+   "category": "Show e palco",
+   "title": "Trabalhar a presença de palco com marcações de roteiro",
+   "subtitle": "Presença de palco se constrói com método, não só talento. Você pode trabalhar com um profissional (preparador, diretor de show) ou por conta própria, gravando e analisando os próprios shows. Marcações de roteiro dão segurança pra performance crescer.",
+   "requires_any_opportunity": [
+    6,
+    9,
+    10,
+    11,
+    18
+   ],
+   "triggers": {
+    "weaknesses": [
+     4,
+     5
+    ],
+    "opportunities": [
+     5,
+     22
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     4,
+     5,
+     9,
+     11,
+     12
+    ],
+    "threats": [
+     8
+    ]
+   },
+   "action_plan": [
+    "Identificar o que você quer melhorar no palco (grave um show e assista)",
+    "Decidir se vai trabalhar com profissional ou por conta própria",
+    "Se for com profissional: pesquisar preparadores, diretores de show ou coreógrafos",
+    "Ver trabalhos anteriores, pedir orçamento e fechar",
+    "Marcar as sessões de trabalho",
+    "Definir as marcações de roteiro do show",
+    "Ensaiar a performance com as marcações",
+    "Gravar um ensaio para avaliar a evolução",
+    "Ajustar os pontos fracos identificados",
+    "Aplicar no próximo show e manter a rotina de avaliação"
+   ]
+  },
+  {
+   "id": "29",
+   "category": "Venda de shows e circulação",
+   "title": "Prospectar shows em órgãos públicos, como prefeituras, fundações e SESCs",
+   "subtitle": "Prefeituras, SESC e órgãos públicos contratam o ano todo, via edital, chamamento ou convite. É um mercado que pede cadastro, documentação em dia e paciência com processos, mas paga projetos inteiros. O órgão público valoriza a popularidade e o alinhamento do artista ao propósito do evento.",
+   "requires_any_opportunity": [
+    11
+   ],
+   "triggers": {
+    "weaknesses": [
+     6,
+     7,
+     8,
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     3,
+     4,
+     5,
+     6,
+     7,
+     9,
+     10,
+     11,
+     13,
+     14,
+     15,
+     19,
+     20
+    ],
+    "threats": [
+     2,
+     3,
+     4
+    ]
+   },
+   "action_plan": [
+    "Listar prefeituras, SESC, SESI e órgãos da região geográfica de seu interesse",
+    "Entender como cada um contrata (edital, chamamento, convite)",
+    "Providenciar os cadastros e a documentação exigidos",
+    "Preparar material de venda adequado ao setor público",
+    "Levantar os contatos das secretarias de cultura",
+    "Enviar proposta e material aos contatos",
+    "Mapear editais e chamamentos abertos",
+    "Inscrever o projeto nos editais correspondentes",
+    "Fazer follow-up e acompanhar os resultados",
+    "Registrar contatos e resultados pra manter presença constante"
+   ]
+  },
+  {
+   "id": "30",
+   "category": "Venda de shows e circulação",
+   "title": "Prospectar shows corporativos (shows fechados para convidados, contratados por empresas)",
+   "subtitle": "O mercado corporativo paga bem e valoriza profissionalismo: material impecável, pontualidade e formato adaptável, então se esse é um mercado importante para você, invista nesses diferenciais. Agências de eventos são a porta de entrada mais rápida. O mercado corporativo valoriza o show voltado para o entretenimento, além do prestígio do artista que será associado à marca. Lembre-se que é um público que não escolheu te assistir.",
+   "requires_any_opportunity": [
+    10
+   ],
+   "triggers": {
+    "weaknesses": [
+     6,
+     7,
+     8,
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     11,
+     12,
+     13,
+     14,
+     15,
+     19,
+     20
+    ],
+    "threats": [
+     3,
+     4,
+     9
+    ]
+   },
+   "action_plan": [
+    "Listar tipos de empresas e eventos corporativos do seu perfil",
+    "Mapear agências de eventos corporativos",
+    "Preparar material de venda voltado ao corporativo",
+    "Definir a faixa de cachê para esse mercado",
+    "Levantar contatos de RH, marketing e agências",
+    "Avaliar investimento em tráfego pago",
+    "Ativar fluxo de e-mails para os contatos mapeados",
+    "Apresentar ou enviar o material de venda",
+    "Fazer follow-up",
+    "Realizar pesquisa de satisfação pós-venda e pedir indicações após cada evento"
+   ]
+  },
+  {
+   "id": "31",
+   "category": "Venda de shows e circulação",
+   "title": "Prospectar shows particulares (casamentos, aniversários etc.)",
+   "subtitle": "Casamentos e eventos privados são receita constante e previsível, apesar de nem sempre converterem em audiência para o trabalho autoral. Cerimonialistas e produtores de eventos particulares são o ponto de conexão entre contratantes e artistas. Invista em diferenciais de personalização e na oferta de experiências especiais.",
+   "requires_any_opportunity": [
+    18
+   ],
+   "triggers": {
+    "weaknesses": [
+     6,
+     7,
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     11,
+     12,
+     13,
+     14,
+     15,
+     19
+    ],
+    "threats": [
+     3,
+     4,
+     12
+    ]
+   },
+   "action_plan": [
+    "Definir o produto para eventos particulares (show voltado ao entretenimento)",
+    "Definir diferencial personalizado, como momento especial dos noivos",
+    "Preparar material de venda para esse público",
+    "Criar site com vídeos e depoimentos",
+    "Definir a faixa de cachê por tipo de evento",
+    "Mapear cerimonialistas e produtores de eventos",
+    "Avaliar investimento em tráfego pago",
+    "Apresentar o serviço aos contatos mapeados",
+    "Fazer follow-up",
+    "Pedir indicação e depoimento aos clientes satisfeitos"
+   ]
+  },
+  {
+   "id": "32",
+   "category": "Venda de shows e circulação",
+   "title": "Prospectar shows em casas de show e teatros",
+   "subtitle": "Casas de show e teatros funcionam por cachê, bilheteria ou parceria. É um tipo de cliente que só vale a pena acessar quando você já tem público pagante, a não ser que a própria casa tenha público. Afinal, você não quer tocar para uma casa vazia nem dar prejuízo para o contratante. Entender o modelo de cada casa antes de propor evita desgaste e melhora a negociação.",
+   "requires_any_opportunity": [
+    9
+   ],
+   "triggers": {
+    "weaknesses": [
+     6,
+     7,
+     8,
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     1,
+     4,
+     7,
+     12
+    ]
+   },
+   "action_plan": [
+    "Listar casas de show e teatros do seu perfil e região",
+    "Entender o modelo de cada um (cachê, bilheteria, parceria)",
+    "Preparar material de venda com o vídeo do show",
+    "Levantar os contatos dos programadores",
+    "Apresentar o show aos programadores",
+    "Fazer follow-up",
+    "Negociar as condições e fechar a data",
+    "Divulgar o show",
+    "Realizar o show e repercutir nas redes",
+    "Manter o relacionamento para prospectar novas datas"
+   ]
+  },
+  {
+   "id": "33",
+   "category": "Venda de shows e circulação",
+   "title": "Prospectar shows em festivais e junto a produtores de eventos",
+   "subtitle": "Festivais são um tipo de cliente importante para quem está formando audiência, pois os próprios eventos já trazem o seu público. Os line-ups são definidos com bastante antecedência, então para esse tipo de contratante a organização é fundamental.",
+   "requires_any_opportunity": [
+    6
+   ],
+   "triggers": {
+    "weaknesses": [
+     6,
+     7,
+     8,
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     19,
+     20
+    ],
+    "threats": [
+     1,
+     4,
+     7
+    ]
+   },
+   "action_plan": [
+    "Listar os festivais e produtores do seu nicho",
+    "Marcar os prazos de inscrição e curadoria no calendário",
+    "Preparar material de venda voltado a festivais",
+    "Levantar os contatos de produtores e curadores",
+    "Inscrever o projeto nos festivais com chamada aberta",
+    "Apresentar o projeto aos produtores",
+    "Fazer follow-up",
+    "Acompanhar os resultados das curadorias",
+    "Negociar e confirmar as participações",
+    "Registrar contatos e manter relacionamento para as próximas edições"
+   ]
+  },
+  {
+   "id": "N5",
+   "category": "Venda de shows e circulação",
+   "title": "Planejar turnê de circulação",
+   "subtitle": "Circular por praças estratégicas constrói público fora da sua cidade, dilui custos de deslocamento e atrai editais e patrocínios de circulação. Aproveite os momentos de visibilidade do lançamento para prospectar shows de lançamento em diferentes cidades, mesmo que poucas.",
+   "requires_any_opportunity": [
+    6,
+    9,
+    11
+   ],
+   "triggers": {
+    "weaknesses": [
+     6,
+     7
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     3,
+     4,
+     10
+    ]
+   },
+   "action_plan": [
+    "Identificar as praças onde o seu público já existe ou pode existir (dados de streaming e redes)",
+    "Definir a rota e o período da circulação (praças próximas agrupadas)",
+    "Mapear editais e programas de circulação (Sesc, fundações, patrocínios de circulação)",
+    "Levantar casas, festivais e produtores locais em cada praça",
+    "Montar o orçamento da turnê (deslocamento, hospedagem, equipe, cachês)",
+    "Definir o formato do show para a estrada (equipe e ficha técnica viáveis)",
+    "Inscrever o projeto nos editais de circulação e prospectar as datas",
+    "Fechar as datas e a logística",
+    "Planejar a divulgação local em cada praça (rádio, imprensa, parceiros)",
+    "Realizar a turnê, registrar e avaliar praça por praça"
+   ]
+  },
+  {
+   "id": "34",
+   "category": "Empresariamento e estrutura",
+   "title": "Procurar empresário/a",
+   "subtitle": "Empresário não se encontra, se conquista: seu projeto precisa estar organizado e com números na mão. Sua música isolada é apenas uma ideia; carreira é projeto. E sintonia vale mais que tamanho do escritório, pois o alinhamento de visão é o que sustenta a parceria. Escolha alguém que vá te escolher também e vestir sua camisa.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     7,
+     8,
+     9,
+     10,
+     17
+    ],
+    "opportunities": [
+     6,
+     9,
+     10,
+     11,
+     18
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     1,
+     6,
+     12
+    ]
+   },
+   "action_plan": [
+    "Definir o que você espera de um empresário (papéis e limites)",
+    "Organizar a apresentação do projeto e os números (dica: use a Maestra)",
+    "Listar empresários e escritórios que cuidam de artistas do seu porte",
+    "Pesquisar a reputação e o elenco de cada um",
+    "Apresentar o projeto aos mais alinhados",
+    "Conversar pra avaliar sintonia e visão de carreira",
+    "Avaliar a proposta de cada um (percentual, escopo, prazo)",
+    "Alinhar expectativas e responsabilidades",
+    "Formalizar a parceria em contrato, com apoio jurídico",
+    "Definir a rotina de trabalho e os rituais de alinhamento"
+   ]
+  },
+  {
+   "id": "35",
+   "category": "Empresariamento e estrutura",
+   "title": "Contratar assistente de produção / produtor executivo",
+   "subtitle": "Delegar é o primeiro ato de gestão profissional. Um assistente de produção ou produtor executivo libera seu tempo pro que só você pode fazer, e as tarefas do seu plano ganham dono.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     8,
+     9,
+     10
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     6,
+     10,
+     17
+    ],
+    "threats": [
+     8
+    ]
+   },
+   "action_plan": [
+    "Listar as atividades e tarefas que você precisa delegar",
+    "Definir o perfil (assistente de produção ou produtor executivo)",
+    "Definir carga horária e forma de pagamento",
+    "Divulgar a vaga ou pedir indicações na cena",
+    "Selecionar e entrevistar os candidatos",
+    "Escolher e formalizar a contratação",
+    "Apresentar o plano estratégico e os processos do projeto",
+    "Treinar nas ferramentas e rotinas",
+    "Definir os pontos de acompanhamento semanais",
+    "Delegar oficialmente as tarefas do plano com prazos"
+   ]
+  },
+  {
+   "id": "36",
+   "category": "Empresariamento e estrutura",
+   "title": "Organizar a parte burocrática e operacional",
+   "subtitle": "Financeiro e jurídico malcuidados cobram caro depois. Terceirizar com quem entende de música (BPO administrativo, assessoria jurídica recorrente) custa menos que um contrato ruim assinado, um cachê não recebido corretamente ou uma conta paga por engano.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     8,
+     9,
+     10,
+     20
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     19
+    ],
+    "threats": [
+     12
+    ]
+   },
+   "action_plan": [
+    "Consultar contador para constituir empresa",
+    "Definir os processos financeiros de contas a pagar e a receber",
+    "Definir os processos de contratações de receitas e despesas",
+    "Mapear os contratos recorrentes necessários (contrato de show, de agenciamento, de distribuição, edição etc.)",
+    "Avaliar contratação de BPO (suporte terceirizado de operação financeira)",
+    "Escolher assessoria jurídica especializada para confecção dos contratos-padrão",
+    "Efetuar o registro das obras e das marcas necessárias com suporte profissional",
+    "Criar e acompanhar o checklist de produção dos shows e ações contratados",
+    "Gerar relatórios de acompanhamento para mapeamento e resolução dos gargalos"
+   ]
+  },
+  {
+   "id": "37",
+   "category": "Captação de recursos",
+   "title": "Inscrever o projeto em editais alinhados com o posicionamento",
+   "subtitle": "Editais são a porta de captação mais democrática do mercado, mas funcionam por calendário: quem trata como rotina (e não como loteria) aprova mais. Além da viabilização financeira do projeto em si, eles também refletem posicionamento, pois indicam que o seu projeto passou por uma curadoria.",
+   "requires_any_opportunity": [
+    1
+   ],
+   "triggers": {
+    "weaknesses": [
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     1,
+     2,
+     3
+    ]
+   },
+   "action_plan": [
+    "Listar os editais abertos compatíveis com o projeto",
+    "Criar um calendário fixo de editais recorrentes",
+    "Ler as regras e marcar os prazos num calendário",
+    "Avaliar se vai inscrever por conta própria ou com profissional de captação",
+    "Reunir a documentação base",
+    "Adaptar o projeto ao formato de cada edital escolhido",
+    "Preparar os textos de acordo com o edital",
+    "Inscrever o projeto dentro do prazo",
+    "Acompanhar os resultados",
+    "Revisar o calendário a cada 3 meses e manter a ativação contínua"
+   ]
+  },
+  {
+   "id": "38",
+   "category": "Captação de recursos",
+   "title": "Criar projeto incentivado para captação de patrocínio",
+   "subtitle": "Leis de incentivo transformam imposto em patrocínio: o projeto aprovado vira produto de captação junto a marcas. Exige fôlego de gestão e prestação de contas, mas viabiliza projetos grandes.",
+   "requires_any_opportunity": [
+    2,
+    4
+   ],
+   "triggers": {
+    "weaknesses": [
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     2,
+     8,
+     9
+    ]
+   },
+   "action_plan": [
+    "Definir o conceito e o escopo do projeto incentivado",
+    "Montar o orçamento do projeto",
+    "Definir as contrapartidas (acessibilidade, social, cultural)",
+    "Avaliar fazer por conta própria ou com produtor especializado em projetos incentivados",
+    "Inscrever o projeto na lei de incentivo correspondente",
+    "Acompanhar a aprovação",
+    "Montar o material de venda do projeto para patrocinadores",
+    "Mapear marcas com perfil de investimento alinhado e levantar os contatos",
+    "Apresentar o projeto às marcas",
+    "Fazer follow-up, negociar e formalizar o patrocínio"
+   ]
+  },
+  {
+   "id": "39",
+   "category": "Captação de recursos",
+   "title": "Criar campanha de financiamento coletivo",
+   "subtitle": "Crowdfunding é pré-venda com narrativa: o público banca o projeto antes dele existir, em troca de recompensas e pertencimento. Funciona quando a base é engajada e a meta é realista.",
+   "requires_any_opportunity": [
+    12
+   ],
+   "triggers": {
+    "weaknesses": [
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     3,
+     9
+    ]
+   },
+   "action_plan": [
+    "Definir o objetivo e calcular a meta de arrecadação",
+    "Escolher a plataforma de crowdfunding",
+    "Definir as recompensas por faixa de valor",
+    "Produzir o vídeo e o texto da campanha",
+    "Montar a página da campanha",
+    "Preparar o plano de divulgação (antes, durante e reta final)",
+    "Aquecer a base antes do lançamento",
+    "Lançar a campanha",
+    "Divulgar e atualizar os apoiadores durante toda a campanha",
+    "Entregar as recompensas e prestar contas ao fim"
+   ]
+  },
+  {
+   "id": "40",
+   "category": "Marcas, influenciadores e creators",
+   "title": "Mapear marcas alinhadas e prospectar ativações publicitárias",
+   "subtitle": "Dependendo do segmento e do tamanho do artista, a publicidade pode ser uma fonte de receita importante. Marca boa é a que combina com seus valores, não só a que paga, pois é a sua imagem em jogo. Um material específico mostrando o que você entrega (audiência, imagem, ativações) transforma conversa em contrato.",
+   "requires_any_opportunity": [
+    4,
+    19
+   ],
+   "triggers": {
+    "weaknesses": [
+     7,
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     3,
+     9
+    ]
+   },
+   "action_plan": [
+    "Definir o que você oferece a uma marca (contrapartidas e ativações)",
+    "Listar marcas alinhadas aos seus valores e público",
+    "Preparar um material de venda específico para marcas",
+    "Levantar os contatos de marketing de cada marca",
+    "Desenhar uma proposta de parceria para cada uma",
+    "Apresentar a proposta aos contatos",
+    "Fazer follow-up",
+    "Negociar os termos",
+    "Formalizar a parceria em contrato",
+    "Entregar as contrapartidas e reportar os resultados"
+   ]
+  },
+  {
+   "id": "41a",
+   "category": "Marcas, influenciadores e creators",
+   "title": "Ativar influenciadores para divulgar o trabalho",
+   "subtitle": "Influenciadores emprestam confiança: a indicação deles chega onde seu anúncio não chega. Engajamento real vale mais que número de seguidores.",
+   "requires_any_opportunity": [
+    19
+   ],
+   "triggers": {
+    "weaknesses": [
+     15,
+     16
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     8,
+     9,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     19
+    ],
+    "threats": [
+     9,
+     13
+    ]
+   },
+   "action_plan": [
+    "Definir o público que você quer atingir",
+    "Listar influenciadores que falam com esse público",
+    "Analisar o engajamento real de cada um",
+    "Definir o formato da parceria (permuta, pago, orgânico)",
+    "Preparar o media kit para envio",
+    "Apresentar a proposta aos influenciadores",
+    "Combinar conteúdo e data com quem topar",
+    "Enviar o material",
+    "Acompanhar as publicações",
+    "Medir o resultado de cada ativação"
+   ]
+  },
+  {
+   "id": "41b",
+   "category": "Marcas, influenciadores e creators",
+   "title": "Atuar como influenciador junto a marcas",
+   "subtitle": "Seu público é um ativo comercial: marcas pagam pra falar com ele através de você. Posicionar-se como creator abre uma linha de receita que não depende de show nem de lançamento, mas só vale a pena se a ativação reforçar seu posicionamento como artista.",
+   "requires_any_opportunity": [
+    19
+   ],
+   "triggers": {
+    "weaknesses": [
+     17
+    ],
+    "opportunities": [
+     4
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     9,
+     13
+    ]
+   },
+   "action_plan": [
+    "Definir o seu nicho de conteúdo como creator",
+    "Organizar as redes para esse posicionamento",
+    "Montar um media kit com números e perfil do público",
+    "Definir a tabela de valores por entregável",
+    "Decidir se vai por conta própria ou via agência",
+    "Se for via agência: pesquisar e fechar com uma especializada",
+    "Listar marcas que combinam com o seu conteúdo",
+    "Apresentar-se às marcas",
+    "Negociar e fechar as primeiras publis",
+    "Entregar o conteúdo e reportar os resultados"
+   ]
+  },
+  {
+   "id": "42",
+   "category": "Parcerias artísticas",
+   "title": "Fazer parcerias com outros artistas da cena",
+   "subtitle": "Feat é troca de público: cada parceria apresenta seu trabalho pra base do outro artista, fortalecendo a cena como um todo.",
+   "requires_any_opportunity": [
+    13
+   ],
+   "triggers": {
+    "weaknesses": [
+     2,
+     6,
+     14,
+     15
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     19
+    ],
+    "threats": [
+     1
+    ]
+   },
+   "action_plan": [
+    "Listar artistas que combinam com o seu trabalho",
+    "Priorizar por afinidade e troca de público",
+    "Mapear como chegar em cada um",
+    "Definir o tipo de parceria (feat, abertura, show conjunto, turnê)",
+    "Preparar a proposta ou convite",
+    "Apresentar a ideia aos artistas",
+    "Combinar os detalhes com quem topar",
+    "Formalizar o combinado (divisão de direitos, custos e divulgação)",
+    "Realizar a parceria",
+    "Divulgar em conjunto e manter a relação pra novas trocas"
+   ]
+  },
+  {
+   "id": "N2",
+   "category": "Parcerias artísticas",
+   "title": "Ativar parcerias de composição",
+   "subtitle": "Compor com outras pessoas é prática de mercado, não sinal de fraqueza: parcerias trazem repertório novo, ampliam a rede e podem gerar direitos pra ambos. Afinidade artística vem antes de tudo.",
+   "requires_any_opportunity": [
+    13
+   ],
+   "triggers": {
+    "weaknesses": [
+     2
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     14
+    ],
+    "threats": [
+     1
+    ]
+   },
+   "action_plan": [
+    "Definir o que você busca na parceria (letra, melodia, produção, gênero)",
+    "Listar compositores e artistas com afinidade",
+    "Ouvir o trabalho de cada um e escolher com quem tentar",
+    "Fazer o convite propondo uma sessão de composição",
+    "Realizar as sessões",
+    "Combinar a divisão de direitos autorais antes de finalizar",
+    "Registrar as obras com a divisão correta",
+    "Selecionar o que entra no repertório e nos lançamentos",
+    "Manter as parcerias que funcionaram",
+    "Ampliar a rede de coautores ao longo do tempo"
+   ]
+  },
+  {
+   "id": "43",
+   "category": "Produtos e educação",
+   "title": "Criar a Lojinha do/da [nome do artista]",
+   "subtitle": "A lojinha transforma fã em fonte de receita e outdoor ambulante. Você pode começar enxuto (sob demanda ou tiragem pequena) para testar o que o seu público realmente veste e usa.",
+   "requires_any_opportunity": [
+    15
+   ],
+   "triggers": {
+    "weaknesses": [
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     5,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     15,
+     17,
+     19,
+     20
+    ],
+    "threats": [
+     1,
+     3,
+     8
+    ]
+   },
+   "action_plan": [
+    "Definir os produtos (camiseta, vinil, acessórios), alinhados ao conceito do projeto",
+    "Pesquisar fornecedores ou parceiros de licenciamento",
+    "Pedir orçamentos e amostras",
+    "Definir os preços de cada produto",
+    "Escolher onde vender (loja online, nos shows)",
+    "Montar a loja online ou o ponto de venda",
+    "Produzir um estoque inicial enxuto (ou sob demanda)",
+    "Fotografar os produtos com a identidade do projeto",
+    "Divulgar a lojinha nas redes, na comunidade e nos shows",
+    "Controlar estoque, vendas e reposição"
+   ]
+  },
+  {
+   "id": "54",
+   "category": "Produtos e educação",
+   "title": "Lançar cursos, aulas ou mentorias",
+   "subtitle": "Seu conhecimento é produto: aulas, cursos e mentorias geram receita recorrente sem depender de show, e reforçam sua autoridade no nicho. Comece com o que você já domina e o que já te perguntam.",
+   "requires_any_opportunity": [
+    20
+   ],
+   "triggers": {
+    "weaknesses": [
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     5,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     19,
+     20
+    ],
+    "threats": [
+     3,
+     8
+    ]
+   },
+   "action_plan": [
+    "Listar o que você sabe ensinar e o que já te perguntam",
+    "Escolher o formato (aula individual, curso online, mentoria, workshop)",
+    "Definir o público-alvo (fãs, músicos iniciantes, profissionais)",
+    "Montar o conteúdo e o programa",
+    "Definir preço e forma de pagamento",
+    "Escolher a plataforma ou o espaço",
+    "Produzir o material (vídeos, apostilas, exercícios)",
+    "Divulgar nas redes, na comunidade e no site",
+    "Realizar as primeiras turmas ou sessões",
+    "Coletar feedback e melhorar a próxima edição"
+   ]
+  },
+  {
+   "id": "55",
+   "category": "Produtos e educação",
+   "title": "Atuar como palestrante",
+   "subtitle": "Sua trajetória é conteúdo: eventos, escolas, empresas e festivais pagam por histórias reais. Palestras posicionam você como referência e abrem portas que o show sozinho não abre.",
+   "requires_any_opportunity": [
+    20
+   ],
+   "triggers": {
+    "weaknesses": [
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     5,
+     7,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     19,
+     20
+    ],
+    "threats": [
+     8
+    ]
+   },
+   "action_plan": [
+    "Definir os temas que você domina e que interessam a um público",
+    "Estruturar uma palestra-base (roteiro, duração, mensagem central)",
+    "Preparar material de apresentação do palestrante (bio, temas, vídeo)",
+    "Definir o cachê por tipo de evento",
+    "Mapear eventos, escolas, empresas e festivais que contratam palestrantes",
+    "Levantar os contatos",
+    "Apresentar-se e enviar o material",
+    "Fazer follow-up",
+    "Realizar as primeiras palestras e registrar em vídeo",
+    "Usar o registro pra prospectar as próximas"
+   ]
+  },
+  {
+   "id": "50",
+   "category": "Internacionalização",
+   "title": "Prospectar bookers e agentes internacionais para turnê no exterior",
+   "subtitle": "Turnê internacional é projeto de médio prazo: começa por mapear bookers e agentes dos mercados onde seu som conversa, e por ter material em inglês. Funciona melhor quando show, branding e network já são forças.",
+   "requires_any_opportunity": [
+    21
+   ],
+   "triggers": {
+    "weaknesses": [
+     6,
+     14,
+     19
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     3,
+     4
+    ]
+   },
+   "action_plan": [
+    "Definir os mercados internacionais onde o seu som conversa",
+    "Pesquisar bookers e agentes que trabalham esses mercados",
+    "Preparar o material de venda em inglês (e no idioma local, se necessário)",
+    "Ter o vídeo de show pronto e legendado",
+    "Apresentar o projeto",
+    "Fazer follow-up",
+    "Negociar as condições da turnê (cachês, logística, vistos)",
+    "Fechar as datas e organizar a viagem",
+    "Divulgar nas redes sociais",
+    "Repercutir a turnê no Brasil"
+   ]
+  },
+  {
+   "id": "51",
+   "category": "Internacionalização",
+   "title": "Inscrever o projeto em festivais internacionais e editais de mobilidade",
+   "subtitle": "Festivais internacionais e editais de mobilidade (fundações, embaixadas, órgãos públicos e privados) pagam passagem e cachê pra artistas brasileiros circularem. Prazos longos, inscrição bem-feita, e a porta se abre.",
+   "requires_any_opportunity": [
+    21
+   ],
+   "triggers": {
+    "weaknesses": [
+     6,
+     17
+    ],
+    "opportunities": [
+     1,
+     6
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     3,
+     4,
+     8
+    ]
+   },
+   "action_plan": [
+    "Listar festivais internacionais alinhados ao seu perfil",
+    "Mapear editais de mobilidade",
+    "Marcar prazos de inscrição no calendário",
+    "Preparar o material em inglês (bio, release, vídeo, ficha técnica)",
+    "Inscrever o projeto nos festivais com chamada aberta",
+    "Inscrever o projeto nos editais de mobilidade",
+    "Se selecionado: organizar logística, vistos e passagens",
+    "Participar e fazer contatos com programadores presentes",
+    "Registrar contatos e resultados para as próximas edições",
+    "Repercutir nas redes sociais"
+   ]
+  },
+  {
+   "id": "53",
+   "category": "Empreendimentos próprios",
+   "title": "Criar evento, festival ou label próprios",
+   "subtitle": "Quando você cria o evento, você deixa de esperar convite: vira contratante de si mesmo e dos parceiros, constrói marca e ocupa a agenda nos seus termos. Você fomenta a cena e protagoniza a cena ao mesmo tempo. Exige gestão de produção e fôlego financeiro, então funciona melhor quando comercial e network já são forças.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     6,
+     7
+    ],
+    "opportunities": [
+     6
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     3,
+     7,
+     8
+    ]
+   },
+   "action_plan": [
+    "Definir o conceito do evento, alinhado ao posicionamento",
+    "Definir formato, porte e periodicidade",
+    "Montar o orçamento (produção, cachês, estrutura, divulgação)",
+    "Definir o modelo de receita (bilheteria, patrocínio, edital, bar)",
+    "Escolher local e data",
+    "Convidar artistas parceiros",
+    "Buscar patrocínio ou edital para viabilizar",
+    "Contratar produção e estrutura técnica",
+    "Divulgar e vender ingressos",
+    "Realizar, registrar e avaliar pra próxima edição"
+   ]
+  },
+  {
+   "id": "N1",
+   "category": "Estrutura ao redor da arte",
+   "title": "Buscar formação artística complementar",
+   "subtitle": "Formação é estrutura, não julgamento: aulas de canto, instrumento, teoria ou linguagem musical dão ferramenta pra você expressar melhor o que já é seu. Expressão corporal também entra aqui e pode melhorar sua performance de palco. Você define o que quer desenvolver.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     1,
+     5
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     9,
+     10,
+     11,
+     17
+    ],
+    "threats": [
+     8
+    ]
+   },
+   "action_plan": [
+    "Identificar o que você quer desenvolver tecnicamente",
+    "Pesquisar professores, escolas ou cursos nessa área",
+    "Avaliar formato (presencial, online, intensivo) e custo",
+    "Escolher e fechar",
+    "Montar uma rotina de estudo e prática",
+    "Aplicar o aprendizado nos ensaios e no repertório",
+    "Gravar e comparar sua evolução ao longo do tempo",
+    "Pedir feedback ao professor e ajustar o foco",
+    "Manter a constância por pelo menos um ciclo (6 meses)",
+    "Avaliar os resultados e definir o próximo passo"
+   ]
+  },
+  {
+   "id": "N3",
+   "category": "Estrutura ao redor da arte",
+   "title": "Trabalhar com produtor musical com boa capacidade técnica e alinhado ao seu estilo musical",
+   "subtitle": "Produção é onde a música vira fonograma competitivo. Um produtor com afinidade com seu gênero e um estúdio adequado ao projeto fazem diferença que o mercado percebe e valoriza; e o ouvinte sente, mesmo sem saber explicar.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     3
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     4,
+     5,
+     6,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     1,
+     11
+    ]
+   },
+   "action_plan": [
+    "Definir o que você espera da produção (referências sonoras do seu gênero)",
+    "Listar produtores com experiência no seu estilo",
+    "Ouvir trabalhos anteriores e conversar com os mais alinhados",
+    "Pedir orçamentos e prazos",
+    "Escolher o produtor e o estúdio e formalizar (contrato, prazos, direitos)",
+    "Preparar as músicas e as referências antes do estúdio",
+    "Realizar a pré-produção e os ensaios",
+    "Gravar",
+    "Acompanhar mixagem e masterização",
+    "Receber os arquivos finais (master, ISRC) e organizar no catálogo (dica: use a Maestra)"
+   ]
+  },
+  {
+   "id": "N6",
+   "category": "Conteúdo audiovisual",
+   "title": "Produzir o conteúdo audiovisual para os lançamentos",
+   "subtitle": "Música hoje é vista, além de ser ouvida: clipe, visualizer, session ao vivo e bastidores são ativos para o lançamento prosperar nas redes e no YouTube. Não precisa ser caro, precisa ser coerente com o branding e planejado junto com o lançamento, não depois.",
+   "requires_any_opportunity": [
+    3,
+    8,
+    14
+   ],
+   "triggers": {
+    "weaknesses": [
+     12,
+     13,
+     15
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     9,
+     10,
+     11,
+     12,
+     13,
+     15,
+     17,
+     18,
+     19
+    ],
+    "threats": [
+     8,
+     13
+    ]
+   },
+   "action_plan": [
+    "Definir, para cada lançamento do cronograma, quais peças audiovisuais vão existir (clipe, visualizer, lyric video, session, bastidores)",
+    "Definir o conceito visual de cada peça a partir do documento de branding",
+    "Montar o orçamento e decidir o que será produzido por conta própria e o que será contratado",
+    "Pesquisar e fechar diretor, videomaker ou produtora alinhados ao conceito",
+    "Planejar a produção (roteiro, locação, figurino, equipe, datas)",
+    "Realizar a gravação",
+    "Acompanhar edição, cor e finalização",
+    "Produzir os cortes e versões para cada rede (vertical, teaser, trecho)",
+    "Publicar conforme o plano de marketing do lançamento",
+    "Analisar o desempenho e alimentar o planejamento do próximo lançamento"
+   ]
+  }
+ ]
+}
