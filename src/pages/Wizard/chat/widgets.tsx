@@ -69,6 +69,22 @@ export const ScheduleApprovalCard: FC<{
     updateState(strategyId, { manualDates: { ...previous, [order]: date }, adjusted: true, accepted: false });
   };
   const accepted = calculated.every((strategy) => schedule.strategies[strategy.id]?.accepted);
+  const gantt = useMemo(() => {
+    const dates = calculated.flatMap((strategy) => strategy.tasks.map((task) => task.deadline).filter(Boolean) as string[]);
+    if (schedule.releaseDate) dates.push(schedule.releaseDate);
+    if (schedule.startDate) dates.push(schedule.startDate);
+    dates.push(today);
+    const ordered = dates.map((date) => dayjs(date)).sort((a, b) => a.valueOf() - b.valueOf());
+    const start = ordered[0].subtract(3, 'day').startOf('day');
+    const end = ordered[ordered.length - 1].add(7, 'day').startOf('day');
+    const span = Math.max(1, end.diff(start, 'day'));
+    const position = (date?: string) => date ? Math.max(0, Math.min(100, dayjs(date).diff(start, 'day') / span * 100)) : 0;
+    return {
+      start,
+      position,
+      ticks: Array.from({ length: 5 }, (_, index) => start.add(Math.round(span * index / 4), 'day')),
+    };
+  }, [calculated, schedule.releaseDate, schedule.startDate, today]);
 
   return (
     <div className='nyta-card' style={{ maxWidth: 720 }}>
@@ -81,6 +97,16 @@ export const ScheduleApprovalCard: FC<{
         <label style={{ display: 'grid', gap: 6, fontWeight: 700 }}>Início do plano
           <DatePicker value={schedule.startDate ? dayjs(schedule.startDate) : null} onChange={(value) => update({ startDate: value?.format('YYYY-MM-DD') })} format='DD/MM/YYYY' />
         </label>
+      </div>
+      <div className='wiz-gantt' aria-label='Visualização do cronograma'>
+        <div className='wiz-gantt__heading'>Linha do tempo do plano</div>
+        <div className='wiz-gantt__axis'>
+          {gantt.ticks.map((tick) => <span key={tick.toISOString()}>{tick.format('DD MMM')}</span>)}
+        </div>
+        <div className='wiz-gantt__legend'>
+          <span><i className='wiz-gantt__legend-today' />Hoje</span>
+          {schedule.releaseDate && <span><i className='wiz-gantt__legend-release' />Dia D</span>}
+        </div>
       </div>
       <div style={{ display: 'grid', gap: 14 }}>
         {calculated.map((strategy) => {
@@ -99,14 +125,28 @@ export const ScheduleApprovalCard: FC<{
               <Select value={state.path} placeholder='Escolha um caminho' options={definition.caminho.opcoes.map((option) => ({ value: option.rotulo, label: option.rotulo }))} onChange={(path) => updateState(strategy.id, { path, accepted: false })} />
               <small style={{ color: '#71809e', fontWeight: 400 }}>{texts.caminho_apoio}</small>
             </label>}
-            <div style={{ display: 'grid', gap: 5, marginTop: 14 }}>
-              {strategy.tasks.map((task) => <div key={task.id} draggable aria-label={`Tarefa ${task.description}`} onDragStart={() => setDragged({ strategyId: strategy.id, order: task.schedule?.order || 0 })} onDragOver={(event) => event.preventDefault()} onDrop={() => {
-                if (dragged?.strategyId === strategy.id) moveTask(strategy.id, dragged.order, task.deadline);
-                setDragged(null);
-              }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, fontSize: 13, padding: '7px 0', borderTop: '1px solid #f0f3f8', cursor: 'grab' }}>
-                <span>{task.description}{task.schedule?.continuous ? ' · contínua' : ''}</span>
-                <DatePicker size='small' value={task.deadline ? dayjs(task.deadline) : null} onChange={(value) => moveTask(strategy.id, task.schedule?.order || 0, value?.format('YYYY-MM-DD'))} format='DD/MM' />
-              </div>)}
+            <div className='wiz-gantt__tasks'>
+              <div className='wiz-gantt__scale' aria-hidden='true'>
+                {gantt.ticks.map((tick) => <i key={tick.toISOString()} style={{ left: `${gantt.position(tick.format('YYYY-MM-DD'))}%` }} />)}
+                <b className='wiz-gantt__today' style={{ left: `${gantt.position(today)}%` }} />
+                {schedule.releaseDate && <b className='wiz-gantt__release' style={{ left: `${gantt.position(schedule.releaseDate)}%` }} />}
+              </div>
+              {strategy.tasks.map((task, index) => {
+                const previousDeadline = strategy.tasks[index - 1]?.deadline;
+                const taskEnd = gantt.position(task.deadline);
+                const taskStart = gantt.position(previousDeadline && previousDeadline < (task.deadline || '') ? previousDeadline : dayjs(task.deadline).subtract(index ? 2 : 5, 'day').format('YYYY-MM-DD'));
+                return <div key={task.id} className='wiz-gantt__task' draggable aria-label={`Tarefa ${task.description}`} onDragStart={() => setDragged({ strategyId: strategy.id, order: task.schedule?.order || 0 })} onDragOver={(event) => event.preventDefault()} onDrop={() => {
+                  if (dragged?.strategyId === strategy.id) moveTask(strategy.id, dragged.order, task.deadline);
+                  setDragged(null);
+                }}>
+                  <span className='wiz-gantt__task-name'>{task.description}{task.schedule?.continuous ? ' · contínua' : ''}</span>
+                  <span className='wiz-gantt__track'>
+                    <i className={`wiz-gantt__bar${task.schedule?.tight ? ' is-tight' : ''}`} style={{ left: `${taskStart}%`, width: `${Math.max(1.6, taskEnd - taskStart)}%` }} />
+                    <i className='wiz-gantt__milestone' style={{ left: `${taskEnd}%` }} title={task.deadline ? dayjs(task.deadline).format('DD/MM/YYYY') : undefined} />
+                  </span>
+                  <DatePicker size='small' value={task.deadline ? dayjs(task.deadline) : null} onChange={(value) => moveTask(strategy.id, task.schedule?.order || 0, value?.format('YYYY-MM-DD'))} format='DD/MM' />
+                </div>;
+              })}
             </div>
             {tight > 0 && <p style={{ color: '#9a6400', margin: '12px 0 0', fontSize: 13 }}>{texts.apertadas.replace('{n}', String(tight))}</p>}
           </section>;
