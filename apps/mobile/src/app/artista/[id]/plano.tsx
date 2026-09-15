@@ -152,6 +152,7 @@ export default function Plano() {
       strategyTitle: estrategia.title,
       deadline: depois.deadline,
       completed: depois.status === 'done',
+      recurrence: depois.schedule?.recurrence,
     }).catch(() => {});
   }, [artista]);
 

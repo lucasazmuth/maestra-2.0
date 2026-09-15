@@ -220,6 +220,7 @@ const ActionPlan: FC = () => {
       strategyTitle: strategy.title,
       deadline: nextTask.deadline,
       completed: nextTask.status === 'done',
+      recurrence: nextTask.schedule?.recurrence,
     }).catch(() => toast.error('A tarefa foi salva, mas não consegui atualizar a Agenda.'));
   };
 
