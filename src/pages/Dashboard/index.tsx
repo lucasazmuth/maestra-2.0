@@ -9,7 +9,9 @@ import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities
 import { useIsPlatformAdmin } from '@maestra/core/hooks/useIsPlatformAdmin';
 import { pilaresDoPainel, type Pilar } from '@maestra/core/nucleo/pilaresDoPainel';
 import type { Artist } from '@maestra/core/interfaces/maestra';
+import { altasForPattern, tierForAltas } from '@maestra/core/constants/realBadge';
 import { Spinner } from '../../components/spinner/spinner';
+import { RealBadge } from '../../components/RealBadge';
 import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
 import { PillarCards, type SecaoDoPainel } from '../../components/dashboard/PillarCards';
 import { PlatformReviewModal } from '../../components/PlatformReviewModal';
@@ -59,14 +61,40 @@ const Atalho: FC<{ icone: ReactNode; titulo: string; texto: string; aoAbrir: () 
   </article>
 );
 
-const CabecalhoDoMetodo: FC<{ pilar: Pilar; aoAbrir: () => void }> = ({ pilar, aoAbrir }) => (
-  <header className='method-view-header'>
-    <div>
-      <span>{pilar.rotulo}</span>
-      <h1 id={`method-${pilar.chave}`}>{pilar.titulo}</h1>
-      <p>{pilar.linha}</p>
-    </div>
-    <button type='button' onClick={aoAbrir}>{pilar.cta}<FiArrowRight aria-hidden /></button>
+const CabecalhoDoMetodo: FC<{
+  pilar: Pilar;
+  aoAbrir: () => void;
+  perfilReal?: { name: string; description: string; pattern: Record<'r' | 'e' | 'a' | 'l', boolean> };
+}> = ({ pilar, aoAbrir, perfilReal }) => (
+  <header className={`method-view-header ${perfilReal ? 'method-diagnostic-header' : ''}`}>
+    {perfilReal ? <>
+      <div className='method-diagnostic-header-top'>
+        <div>
+          <span>{pilar.rotulo}</span>
+          <h1 id={`method-${pilar.chave}`}>{pilar.titulo}</h1>
+          <p>{pilar.linha}</p>
+        </div>
+        <button type='button' onClick={aoAbrir}>{pilar.cta}<FiArrowRight aria-hidden /></button>
+      </div>
+      <div className='method-diagnostic-summary'>
+        <RealBadge tier={tierForAltas(altasForPattern(perfilReal.pattern))} label={String(altasForPattern(perfilReal.pattern))} size={54} />
+        <div>
+          <span>Seu perfil de carreira</span>
+          <strong>{perfilReal.name}</strong>
+          <p>{perfilReal.description}</p>
+        </div>
+        <div className='method-diagnostic-pattern' aria-label='Dimensões REAL'>
+          {(['r', 'e', 'a', 'l'] as const).map((key) => <i key={key} className={perfilReal.pattern[key] ? 'acesa' : ''}>{key.toUpperCase()}</i>)}
+        </div>
+      </div>
+    </> : <>
+      <div>
+        <span>{pilar.rotulo}</span>
+        <h1 id={`method-${pilar.chave}`}>{pilar.titulo}</h1>
+        <p>{pilar.linha}</p>
+      </div>
+      <button type='button' onClick={aoAbrir}>{pilar.cta}<FiArrowRight aria-hidden /></button>
+    </>}
   </header>
 );
 
@@ -86,7 +114,11 @@ const PainelDoMetodo: FC<{
   if (pilar.chave === 'diagnostico' && real) {
     return (
       <section className='method-view method-view-diagnostico method-view-report' aria-labelledby='method-diagnostico'>
-        <CabecalhoDoMetodo pilar={pilar} aoAbrir={aoAbrir} />
+        <CabecalhoDoMetodo
+          pilar={pilar}
+          aoAbrir={aoAbrir}
+          perfilReal={{ name: real.profile.name, description: real.profile.description, pattern: real.pattern }}
+        />
         <DiagnosticReport
           realIndex={real}
           chartmetric={content.chartmetricProfile as Chartmetric | null}
@@ -98,6 +130,7 @@ const PainelDoMetodo: FC<{
           enableStickyCta={false}
           showPlanningCta={false}
           hideHero
+          hideProfile
           hideLegacyNotice
           onRedo={aoAbrir}
           redoLocked={!podeRefazer}

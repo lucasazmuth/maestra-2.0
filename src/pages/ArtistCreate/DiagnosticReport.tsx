@@ -507,6 +507,8 @@ interface Props {
   heroSub?: string;
   // Esconde o hero interno (avatar + título + refazer) — a /diagnostico usa o PageHeader padrão.
   hideHero?: boolean;
+  // O dashboard incorpora o resumo de perfil no cabeçalho do método e evita repeti-lo abaixo.
+  hideProfile?: boolean;
   // O dashboard já oferece a ação de refazer no cabeçalho do método; não repete o aviso legado.
   hideLegacyNotice?: boolean;
   // Conteúdo opcional renderizado logo ABAIXO do card "Seu perfil de carreira" (ex.: banner de refazer).
@@ -520,7 +522,7 @@ interface Props {
 
 // Página de diagnóstico REAL (free tier) — entregue ao artista antes do pagamento.
 // Determinística: consome o realIndex calculado no backend (sem IA). Suporta v1 (antigo) e v2.
-export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true, onRedo, redoLocked = false, heroTitle, heroSub, hideHero = false, hideLegacyNotice = false, belowProfile, artistId, vinculo }) => {
+export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true, onRedo, redoLocked = false, heroTitle, heroSub, hideHero = false, hideProfile = false, hideLegacyNotice = false, belowProfile, artistId, vinculo }) => {
   const authUser = useAppSelector((s) => s.auth.user);
   const [methodOpen, setMethodOpen] = useState(false);
   // v2 (motor REAL Consolidado) tem `version: 2` + `boletim`; v1 mantém o shape antigo.
@@ -695,7 +697,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
       )}
 
       {/* SEÇÃO 2 — O perfil REAL */}
-      <div ref={profileRef} className={`${styles.realProfileCard} ${styles.reveal}`} style={{ animationDelay: '0.1s' }}>
+      {!hideProfile && <div ref={profileRef} className={`${styles.realProfileCard} ${styles.reveal}`} style={{ animationDelay: '0.1s' }}>
         {/* Refazer diagnóstico: sutil, no canto do card (não exportado no PDF/share). */}
         {onRedo && !hideHero && (
           <button
@@ -744,7 +746,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
             })}
           </div>
         </div>
-      </div>
+      </div>}
 
       {belowProfile}
 
