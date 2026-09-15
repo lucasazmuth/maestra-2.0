@@ -21,17 +21,23 @@ it('limita a escolha a dez e entrega percentual sem pré-selecionar', () => {
 });
 
 it('persiste as notas manuais no desmonte e retoma a próxima estratégia', () => {
+  jest.useFakeTimers();
   const onProgress = jest.fn();
   const view = render(<PriorityScale strategies={strategies.slice(0,2)} objectives={objectives}
     onConfirm={jest.fn()} onProgress={onProgress} />);
   fireEvent.click(screen.getByText('Priorizar por conta própria'));
-  fireEvent.change(screen.getAllByRole('slider')[0], { target: {value:'1'} });
-  fireEvent.click(screen.getByText('Concordo, próxima'));
+  fireEvent.click(screen.getByRole('button', { name: 'Nota 1' }));
+  act(() => jest.advanceTimersByTime(360));
+  fireEvent.click(screen.getByRole('button', { name: 'Nota 1' }));
+  act(() => jest.advanceTimersByTime(360));
+  fireEvent.click(screen.getByRole('button', { name: 'Nota 1' }));
+  act(() => jest.advanceTimersByTime(360));
   view.unmount();
   const saved = onProgress.mock.calls[0][0];
   expect(saved[0].artistScores[0]).toBe(1);
   render(<PriorityScale strategies={saved} objectives={objectives} onConfirm={jest.fn()} />);
   expect(screen.getByText('Estratégia 2 de 2')).toBeTruthy();
+  jest.useRealTimers();
 });
 
 it('não grava autosave depois da confirmação', () => {
