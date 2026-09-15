@@ -81,6 +81,13 @@ const Cronograma = ({ estrategias, agendaInicial, aoConfirmar }: {
   const atualizar = (id: string, patch: Record<string, unknown>) => setAgenda((atual) => ({
     ...atual, strategies: { ...atual.strategies, [id]: { ...atual.strategies[id], ...patch } },
   }));
+  const mover = (estrategiaId: string, ordem: number, data: string | undefined, dias: number) => {
+    if (!data) return;
+    const proxima = new Date(`${data}T12:00:00Z`);
+    proxima.setUTCDate(proxima.getUTCDate() + dias);
+    const manuais = agenda.strategies[estrategiaId]?.manualDates || {};
+    atualizar(estrategiaId, { manualDates: { ...manuais, [ordem]: proxima.toISOString().slice(0, 10) }, adjusted: true, accepted: false });
+  };
   const todasAceitas = calculadas.every((estrategia) => agenda.strategies[estrategia.id]?.accepted);
   return <Cartao titulo='Seu cronograma'>
     <Text style={estilos.texto}>Defina as datas base e aceite cada estratégia antes de ela aparecer na Agenda.</Text>
@@ -96,7 +103,7 @@ const Cronograma = ({ estrategias, agendaInicial, aoConfirmar }: {
         <Text style={estilos.cronogramaTitulo}>{estrategia.title}</Text>
         {banco.pergunta_propria && <><Text style={estilos.rotulo}>{banco.pergunta_propria}</Text><TextInput style={estilos.campo} value={estado.ownDate || ''} onChangeText={(ownDate) => atualizar(estrategia.id, { ownDate, accepted: false })} placeholder='AAAA-MM-DD' /></>}
         {banco.caminho && <View style={estilos.opcoesDoCronograma}>{banco.caminho.opcoes.map((opcao) => <Pressable key={opcao.rotulo} style={[estilos.opcaoCronograma, estado.path === opcao.rotulo && estilos.opcaoCronogramaAtiva]} onPress={() => atualizar(estrategia.id, { path: opcao.rotulo, accepted: false })}><Text style={estilos.opcaoCronogramaTexto}>{opcao.rotulo}</Text></Pressable>)}</View>}
-        {estrategia.tasks.map((tarefa) => <View key={tarefa.id} style={estilos.tarefaCronograma}><Text style={estilos.tarefaCronogramaTexto}>{tarefa.description}{tarefa.schedule?.continuous ? ' · contínua' : ''}</Text><Text style={[estilos.tarefaCronogramaData, tarefa.schedule?.tight && estilos.tarefaCronogramaApertada]}>{tarefa.deadline}</Text></View>)}
+        {estrategia.tasks.map((tarefa) => <View key={tarefa.id} style={estilos.tarefaCronograma}><Text style={estilos.tarefaCronogramaTexto}>{tarefa.description}{tarefa.schedule?.continuous ? ' · contínua' : ''}</Text><View style={estilos.moverTarefa}><Pressable accessibilityLabel={`Adiantar ${tarefa.description} uma semana`} onPress={() => mover(estrategia.id, tarefa.schedule?.order || 0, tarefa.deadline, -7)}><Feather name='chevron-up' size={16} color={WZ.muted} /></Pressable><Text style={[estilos.tarefaCronogramaData, tarefa.schedule?.tight && estilos.tarefaCronogramaApertada]}>{tarefa.deadline}</Text><Pressable accessibilityLabel={`Adiar ${tarefa.description} uma semana`} onPress={() => mover(estrategia.id, tarefa.schedule?.order || 0, tarefa.deadline, 7)}><Feather name='chevron-down' size={16} color={WZ.muted} /></Pressable></View></View>)}
         {apertadas > 0 && <Text style={estilos.avisoCronograma}>{CRONOGRAMA_TEXTS.apertadas.replace('{n}', String(apertadas))}</Text>}
         <BotaoPrincipal rotulo={estado.accepted ? 'Estratégia aceita' : 'Aceitar estratégia'} pequeno aoTocar={() => atualizar(estrategia.id, { accepted: !estado.accepted })} />
       </View>;
@@ -828,6 +835,7 @@ const estilos = StyleSheet.create({
   tarefaCronograma: { flexDirection: 'row', gap: 8, justifyContent: 'space-between', paddingVertical: 6, borderTopWidth: 1, borderTopColor: WZ.line },
   tarefaCronogramaTexto: { flex: 1, fontSize: 12, lineHeight: 18, color: WZ.text },
   tarefaCronogramaData: { fontSize: 12, color: WZ.muted, fontWeight: '700' },
+  moverTarefa: { alignItems: 'center', gap: 2 },
   tarefaCronogramaApertada: { color: '#a05b00' },
   avisoCronograma: { fontSize: 12, lineHeight: 18, color: '#a05b00' },
 

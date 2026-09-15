@@ -52,4 +52,12 @@ describe('cronograma v1', () => {
     base.strategies['strategy-22'] = { ownDate: '2026-09-20' };
     expect(scheduleStrategy(strategy('22'), base, '2026-01-01').tasks).toHaveLength(10);
   });
+
+  it('reaplica ajuste manual e desloca as tarefas seguintes da cadeia', () => {
+    const base = defaultSchedule('2026-01-01');
+    base.strategies['strategy-3'] = { path: 'Editora própria', manualDates: { 1: '2026-01-10' } };
+    const tasks = buildScheduledTasks(strategy('3'), base, '2026-01-01');
+    expect(tasks[0].deadline).toBe('2026-01-10');
+    expect(tasks[1].deadline).toBe('2026-01-15');
+  });
 });

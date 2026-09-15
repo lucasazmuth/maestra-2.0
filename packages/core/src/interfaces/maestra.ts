@@ -91,6 +91,9 @@ export interface ScheduleStrategyState {
   ownDate?: string;
   path?: string;
   adjusted?: boolean;
+  // Data escolhida manualmente por posição canônica da tarefa. O motor reaplica os deslocamentos
+  // após recalcular a âncora para que o ajuste sobreviva a reload e a edição em outra superfície.
+  manualDates?: Record<number, string>;
 }
 
 export interface ActionPlanSchedule {
