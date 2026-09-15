@@ -24,12 +24,11 @@ export const PillarCards: FC<PillarCardsProps> = ({ artist, ativa, onSelect }) =
   const jornada = useJourneyState(artist);
   const { viewPlanning, manageTasks } = useArtistCapabilities(artist);
   const pilares = pilaresDoPainel(artist, jornada, { viewPlanning, manageTasks });
-  const itens: Array<{ chave: SecaoDoPainel; rotulo: string; status?: string }> = [
+  const itens: Array<{ chave: SecaoDoPainel; rotulo: string }> = [
     { chave: 'visao-geral', rotulo: 'Visão geral' },
     ...pilares.map((pilar) => ({
       chave: pilar.chave,
       rotulo: ROTULOS[pilar.chave],
-      status: pilar.estado === 'andamento' ? 'Em andamento' : undefined,
     })),
   ];
 
@@ -44,7 +43,6 @@ export const PillarCards: FC<PillarCardsProps> = ({ artist, ativa, onSelect }) =
           onClick={() => onSelect(item.chave)}
         >
           <span>{item.rotulo}</span>
-          {item.status && <small>{item.status}</small>}
         </button>
       ))}
     </nav>
