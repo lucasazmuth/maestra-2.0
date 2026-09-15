@@ -7503,7 +7503,7 @@
 /* O relatório REAL vive também dentro do dashboard. Aqui ele herda a mesma superfície clara
    do método, sem alterar a composição que continua sendo usada no fluxo de diagnóstico. */
 .method-view-report { min-height: 0; background: #f7f9fc; }
-.method-view-report [class*="realWrap"] { max-width: none; padding: 28px 30px 36px; color: #53688f; }
+.method-view-report [class*="realWrap"] { max-width: none; padding: 24px 0 36px; color: #53688f; }
 .method-view-report [class*="realProfileCard"],
 .method-view-report [class*="dimCard"],
 .method-view-report [class*="insightsBlock"],
@@ -7554,7 +7554,7 @@
   .method-planning-grid .method-primary-card { grid-row: auto; }
   .method-primary-card, .method-real-card, .method-progress-card, .method-list-card { min-height: 0; }
   .method-primary-card, .method-real-card, .method-progress-card { padding: 24px 20px; }
-  .method-view-report [class*="realWrap"] { padding: 22px 16px 28px; }
+  .method-view-report [class*="realWrap"] { padding: 20px 0 28px; }
 }
 
 /* Long real-world task data must stay contained inside the reference hero. */
