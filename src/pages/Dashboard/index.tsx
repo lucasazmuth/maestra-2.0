@@ -29,6 +29,14 @@ import { DiagnosticReport, type Chartmetric } from '../ArtistCreate/DiagnosticRe
 const fmtNumber = (value?: number | null) =>
   typeof value === 'number' ? value.toLocaleString('pt-BR') : '—';
 
+const fmtUpdatedAt = (value?: string | null) => {
+  if (!value || Number.isNaN(new Date(value).getTime())) return 'Atualização indisponível';
+  const data = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+    .format(new Date(value))
+    .replace('.', '');
+  return `Atualizado em ${data}`;
+};
+
 const secaoDaUrl = (search: string): SecaoDoPainel => {
   const aba = new URLSearchParams(search).get('aba');
   return aba === 'diagnostico' || aba === 'execucao' || aba === 'planejamento' ? aba : 'visao-geral';
@@ -217,21 +225,20 @@ const Dashboard: FC = () => {
 
       <section className='music-stat-grid'>
         {[
-          ['Ouvintes mensais', fmtNumber(chartmetric?.monthly_listeners), sp?.popularity != null ? `${sp.popularity}/100 popularidade` : 'Spotify'],
+          { label: 'Ouvintes mensais', value: fmtNumber(chartmetric?.monthly_listeners), updatedAt: chartmetric?.fetched_at || sp?.fetched_at || artist.updated_at },
           // Seguidores vêm da Chartmetric, não do spotifyProfile: desde Fev/2026 a Web API do
           // Spotify em Dev Mode não devolve mais `followers`, e o fallback pelo token do embed
           // player hoje bate em 429 QUOTA_EXCEEDED. O campo ficava nulo em quase todos os
           // artistas e o card exibia um traço mudo, que lê como "não tem seguidores". A
           // Chartmetric é a mesma fonte que o Diagnóstico REAL já usa pra esse número.
-          ['Seguidores', fmtNumber(chartmetric?.sp_followers ?? sp?.followers), 'Spotify'],
-          ['Músicas ativas', String(tracks.length), `${albums.length} álbuns/singles`],
-          ['Tarefas pendentes', String(journey.tasksPending), `${journey.tasksDone} concluídas`],
-        ].map(([label, value, change], index) => (
+          { label: 'Seguidores', value: fmtNumber(chartmetric?.sp_followers ?? sp?.followers), updatedAt: chartmetric?.fetched_at || sp?.fetched_at || artist.updated_at },
+          { label: 'Músicas ativas', value: String(tracks.length), updatedAt: sp?.fetched_at || artist.updated_at },
+          { label: 'Tarefas pendentes', value: String(journey.tasksPending), updatedAt: artist.updated_at },
+        ].map(({ label, value, updatedAt }, index) => (
           <article key={label}>
             <header><i style={{ background: ['#29cc39', '#3361ff', '#8833ff', '#ffcb33'][index] }} /><span>{label}</span></header>
             <strong>{value}</strong>
-            <b style={{ color: ['#29cc39', '#3361ff', '#8833ff', '#ffcb33'][index] }}>{change}</b>
-            <div className='music-spark' style={{ '--spark': ['#29cc39', '#3361ff', '#8833ff', '#ffcb33'][index] } as CSSProperties} />
+            <small>{fmtUpdatedAt(updatedAt)}</small>
           </article>
         ))}
       </section>

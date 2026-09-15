@@ -7464,6 +7464,15 @@
   letter-spacing: 0;
 }
 
+/* Métricas mostram a procedência temporal, não um gráfico decorativo. */
+.music-dashboard > .music-stat-grid article > small {
+  display: block;
+  margin-top: 10px;
+  color: #aebbd0;
+  font-size: 10px;
+  font-weight: 700;
+}
+
 /* Dashboard do artista: uma superfície, com o método navegável por abas. */
 .method-view { min-height: 560px; color: #53688f; }
 .method-view-header { display: flex; min-height: 170px; align-items: flex-end; justify-content: space-between; gap: 36px; padding: 34px 38px; border-radius: 8px 8px 0 0; background: #111a2e; color: #fff; }
