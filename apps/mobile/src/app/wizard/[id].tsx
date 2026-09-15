@@ -10,10 +10,11 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 
 import { WIZARD_TOTAL_STEPS } from '@maestra/core/constants/maestra';
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
-import type { ArtistContent, ArtistIdentity } from '@maestra/core/interfaces/maestra';
+import type { ActionPlanSchedule, ArtistContent, ArtistIdentity, Strategy } from '@maestra/core/interfaces/maestra';
 import { shouldEnrichChartmetric } from '@maestra/core/lib/chartmetricFreshness';
 import { supabase } from '@maestra/core/lib/supabase';
 import { clearWizardPlatformContext, setWizardPlatformContext } from '@maestra/core/services/wizardAi';
+import { syncActionPlanTaskEvent } from '@maestra/core/services/db/events';
 import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 import {
@@ -23,6 +24,7 @@ import {
 import { migrateWizardContent } from '@maestra/core/wizard/migracao';
 import { perguntaEmDestaque, placeholderDaPergunta } from '@maestra/core/wizard/pergunta';
 import * as motores from '@maestra/core/wizard/motores';
+import { CRONOGRAMA_TEXTS, defaultSchedule, scheduleBankFor, scheduleStrategy } from '@maestra/core/services/cronograma';
 import { SWOT_INTERNAL, SWOT_OPPORTUNITIES, SWOT_THREATS } from '@maestra/core/wizard/swot';
 
 import {
@@ -67,6 +69,41 @@ const INSUMOS = [
 
 const rotuloDe = (opcoes: { value: string; label: string }[], v: string) =>
   opcoes.find((o) => o.value === v)?.label || v;
+
+const Cronograma = ({ estrategias, agendaInicial, aoConfirmar }: {
+  estrategias: Strategy[];
+  agendaInicial: ActionPlanSchedule;
+  aoConfirmar: (agenda: ActionPlanSchedule, estrategiasComDatas: Strategy[]) => void;
+}) => {
+  const hoje = new Date().toISOString().slice(0, 10);
+  const [agenda, setAgenda] = useState(agendaInicial);
+  const calculadas = useMemo(() => estrategias.map((estrategia) => scheduleStrategy(estrategia, agenda, hoje)), [estrategias, agenda, hoje]);
+  const atualizar = (id: string, patch: Record<string, unknown>) => setAgenda((atual) => ({
+    ...atual, strategies: { ...atual.strategies, [id]: { ...atual.strategies[id], ...patch } },
+  }));
+  const todasAceitas = calculadas.every((estrategia) => agenda.strategies[estrategia.id]?.accepted);
+  return <Cartao titulo='Seu cronograma'>
+    <Text style={estilos.texto}>Defina as datas base e aceite cada estratégia antes de ela aparecer na Agenda.</Text>
+    <Text style={estilos.rotulo}>Próximo lançamento (AAAA-MM-DD)</Text>
+    <TextInput style={estilos.campo} value={agenda.releaseDate} onChangeText={(releaseDate) => setAgenda((atual) => ({ ...atual, releaseDate }))} placeholder='2026-12-15' />
+    <Text style={estilos.rotulo}>Início do plano (AAAA-MM-DD)</Text>
+    <TextInput style={estilos.campo} value={agenda.startDate} onChangeText={(startDate) => setAgenda((atual) => ({ ...atual, startDate }))} placeholder={hoje} />
+    {calculadas.map((estrategia) => {
+      const banco = scheduleBankFor(estrategia)!;
+      const estado = agenda.strategies[estrategia.id] || {};
+      const apertadas = estrategia.tasks.filter((tarefa) => tarefa.schedule?.tight).length;
+      return <View key={estrategia.id} style={estilos.cronogramaEstrategia}>
+        <Text style={estilos.cronogramaTitulo}>{estrategia.title}</Text>
+        {banco.pergunta_propria && <><Text style={estilos.rotulo}>{banco.pergunta_propria}</Text><TextInput style={estilos.campo} value={estado.ownDate || ''} onChangeText={(ownDate) => atualizar(estrategia.id, { ownDate, accepted: false })} placeholder='AAAA-MM-DD' /></>}
+        {banco.caminho && <View style={estilos.opcoesDoCronograma}>{banco.caminho.opcoes.map((opcao) => <Pressable key={opcao.rotulo} style={[estilos.opcaoCronograma, estado.path === opcao.rotulo && estilos.opcaoCronogramaAtiva]} onPress={() => atualizar(estrategia.id, { path: opcao.rotulo, accepted: false })}><Text style={estilos.opcaoCronogramaTexto}>{opcao.rotulo}</Text></Pressable>)}</View>}
+        {estrategia.tasks.map((tarefa) => <View key={tarefa.id} style={estilos.tarefaCronograma}><Text style={estilos.tarefaCronogramaTexto}>{tarefa.description}{tarefa.schedule?.continuous ? ' · contínua' : ''}</Text><Text style={[estilos.tarefaCronogramaData, tarefa.schedule?.tight && estilos.tarefaCronogramaApertada]}>{tarefa.deadline}</Text></View>)}
+        {apertadas > 0 && <Text style={estilos.avisoCronograma}>{CRONOGRAMA_TEXTS.apertadas.replace('{n}', String(apertadas))}</Text>}
+        <BotaoPrincipal rotulo={estado.accepted ? 'Estratégia aceita' : 'Aceitar estratégia'} pequeno aoTocar={() => atualizar(estrategia.id, { accepted: !estado.accepted })} />
+      </View>;
+    })}
+    <Acoes><View style={estilos.flex} /><BotaoPrincipal rotulo='Salvar cronograma' apagado={!todasAceitas} aoTocar={() => aoConfirmar(agenda, calculadas)} /></Acoes>
+  </Cartao>;
+};
 
 export default function Wizard() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -540,6 +577,26 @@ export default function Wizard() {
             }}
           />
         );
+      case 'schedule': {
+        const hoje = new Date().toISOString().slice(0, 10);
+        return <Cronograma
+          estrategias={(draft.strategies || []).filter((estrategia) => estrategia.tasks.length)}
+          agendaInicial={draft.actionPlanSchedule || defaultSchedule(hoje)}
+          aoConfirmar={(actionPlanSchedule, strategies) => {
+            conversa.falaDoArtista('Cronograma aprovado');
+            void persist({ actionPlanSchedule, strategies }, 8).then(() => Promise.all(
+              strategies.flatMap((estrategia) => estrategia.tasks.map((tarefa) => syncActionPlanTaskEvent({
+                artistId: artista!.id,
+                taskId: tarefa.id,
+                title: tarefa.description,
+                strategyTitle: estrategia.title,
+                deadline: tarefa.deadline,
+                completed: tarefa.status === 'done',
+              })))
+            )).catch(() => Alert.alert('Agenda pendente', 'O cronograma foi salvo e a Agenda será atualizada na próxima abertura.'));
+          }}
+        />;
+      }
       case 'final': {
         const concluido = (draft.step ?? 0) >= WIZARD_TOTAL_STEPS;
         return (
@@ -760,6 +817,19 @@ const estilos = StyleSheet.create({
   },
   valorDoMapa: { fontSize: 14, lineHeight: 21, color: WZ.text },
   resumo: { fontSize: 14, lineHeight: 23.8, color: WZ.text },
+  texto: { fontSize: 14, lineHeight: 21, color: WZ.text, marginBottom: 12 },
+  rotulo: { fontSize: 12, lineHeight: 18, fontWeight: '700', color: WZ.muted, marginTop: 10, marginBottom: 5 },
+  cronogramaEstrategia: { marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: WZ.line, gap: 7 },
+  cronogramaTitulo: { fontSize: 15, fontWeight: '800', color: WZ.ink },
+  opcoesDoCronograma: { gap: 6, marginTop: 4 },
+  opcaoCronograma: { borderWidth: 1, borderColor: WZ.line2, borderRadius: 6, padding: 10 },
+  opcaoCronogramaAtiva: { borderColor: WZ.blue, backgroundColor: '#eef3ff' },
+  opcaoCronogramaTexto: { fontSize: 13, color: WZ.text, fontWeight: '700' },
+  tarefaCronograma: { flexDirection: 'row', gap: 8, justifyContent: 'space-between', paddingVertical: 6, borderTopWidth: 1, borderTopColor: WZ.line },
+  tarefaCronogramaTexto: { flex: 1, fontSize: 12, lineHeight: 18, color: WZ.text },
+  tarefaCronogramaData: { fontSize: 12, color: WZ.muted, fontWeight: '700' },
+  tarefaCronogramaApertada: { color: '#a05b00' },
+  avisoCronograma: { fontSize: 12, lineHeight: 18, color: '#a05b00' },
 
   barraDoCampo: {
     flexDirection: 'row', alignItems: 'flex-end', gap: 8,

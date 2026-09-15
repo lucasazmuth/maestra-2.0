@@ -160,7 +160,9 @@
 
 .agenda-month-day:hover { border-color: #b9c9ec; background: #f8faff; }
 .agenda-month-day.is-outside { opacity: .46; }
+.agenda-month-day.is-release-day { border-color: #7c4dff; background: #faf8ff; }
 .agenda-month-day > b { font-size: 12px; }
+.agenda-month-day > em { color: #6940d6; font-size: 10px; font-style: normal; font-weight: 800; }
 .agenda-month-day > span { overflow: hidden; border-left: 3px solid var(--event-color); padding-left: 5px; color: #64779b; font-size: 9px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
 .agenda-month-day > small { color: #8798b4; font-size: 9px; font-weight: 800; }
 

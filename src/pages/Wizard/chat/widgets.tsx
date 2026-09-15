@@ -30,6 +30,7 @@ import { generateObjectives } from '@maestra/core/wizard/motores';
 import { stripEmDash } from '@maestra/core/wizard/limpar';
 import type {
   ActionTask,
+  ActionPlanSchedule,
   ArtistGender,
   ArtistIdentity,
   ArtistStage,
@@ -41,12 +42,75 @@ import type {
   Strategy,
   SwotAnalysis,
 } from '@maestra/core/interfaces/maestra';
+import { scheduleBankFor, scheduleStrategy } from '@maestra/core/services/cronograma';
 
 // Widgets interativos renderizados dentro do chat da Nyta. Cada um coleta uma resposta
 // estruturada e devolve via callback — o orquestrador (NytaChat) ecoa a resposta como
 // mensagem do usuário e persiste no draft.
 
 const uid = () => Math.random().toString(36).slice(2, 10);
+
+// O cronograma não é texto gerado pela IA: o card só coleta as âncoras e aplica o motor
+// determinístico do núcleo. Assim o mesmo resultado pode ser reproduzido no aplicativo nativo.
+export const ScheduleApprovalCard: FC<{
+  strategies: Strategy[];
+  schedule: ActionPlanSchedule;
+  texts: { aceite: string; apertadas: string; continua: string; ancora_mudou: string; caminho_apoio: string };
+  onConfirm: (schedule: ActionPlanSchedule, strategies: Strategy[]) => void;
+}> = ({ strategies, schedule: initial, texts, onConfirm }) => {
+  const today = dayjs().format('YYYY-MM-DD');
+  const [schedule, setSchedule] = useState<ActionPlanSchedule>(initial);
+  const calculated = useMemo(() => strategies.map((strategy) => scheduleStrategy(strategy, schedule, today)), [strategies, schedule, today]);
+  const update = (patch: Partial<ActionPlanSchedule>) => setSchedule((current) => ({ ...current, ...patch }));
+  const updateState = (strategyId: string, patch: Record<string, unknown>) => setSchedule((current) => ({
+    ...current,
+    strategies: { ...current.strategies, [strategyId]: { ...current.strategies[strategyId], ...patch } },
+  }));
+  const accepted = calculated.every((strategy) => schedule.strategies[strategy.id]?.accepted);
+
+  return (
+    <div className='nyta-card' style={{ maxWidth: 720 }}>
+      <div className='wiz-card-title'>Seu cronograma</div>
+      <p style={{ marginTop: 0, color: 'var(--wz-muted)', lineHeight: 1.55 }}>Defina as duas datas que organizam seu plano. Nada entra na Agenda antes do seu aceite.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 20 }}>
+        <label style={{ display: 'grid', gap: 6, fontWeight: 700 }}>Próximo lançamento (Dia D)
+          <DatePicker value={schedule.releaseDate ? dayjs(schedule.releaseDate) : null} onChange={(value) => update({ releaseDate: value?.format('YYYY-MM-DD') })} format='DD/MM/YYYY' />
+        </label>
+        <label style={{ display: 'grid', gap: 6, fontWeight: 700 }}>Início do plano
+          <DatePicker value={schedule.startDate ? dayjs(schedule.startDate) : null} onChange={(value) => update({ startDate: value?.format('YYYY-MM-DD') })} format='DD/MM/YYYY' />
+        </label>
+      </div>
+      <div style={{ display: 'grid', gap: 14 }}>
+        {calculated.map((strategy) => {
+          const definition = scheduleBankFor(strategy)!;
+          const state = schedule.strategies[strategy.id] || {};
+          const tight = strategy.tasks.filter((task) => task.schedule?.tight).length;
+          return <section key={strategy.id} style={{ border: '1px solid #dde4f2', borderRadius: 8, padding: 16, background: '#fff' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+              <div><strong>{strategy.title}</strong><div style={{ color: '#71809e', fontSize: 13, marginTop: 4 }}>{definition.ancora === 'lancamento' ? 'Ancorada no lançamento' : definition.ancora === 'inicio' ? 'Ancorada no início do plano' : 'Ancorada em uma data própria'}</div></div>
+              <button type='button' className={state.accepted ? 'primary-btn' : 'ghost-btn'} onClick={() => updateState(strategy.id, { accepted: !state.accepted })}>{state.accepted ? 'Aceita' : 'Aceitar estratégia'}</button>
+            </div>
+            {definition.pergunta_propria && <label style={{ display: 'grid', gap: 6, marginTop: 14, fontSize: 13, fontWeight: 700 }}>{definition.pergunta_propria}
+              <DatePicker value={state.ownDate ? dayjs(state.ownDate) : null} onChange={(value) => updateState(strategy.id, { ownDate: value?.format('YYYY-MM-DD'), accepted: false })} format='DD/MM/YYYY' />
+            </label>}
+            {definition.caminho && <label style={{ display: 'grid', gap: 6, marginTop: 14, fontSize: 13, fontWeight: 700 }}>Como você quer seguir?
+              <Select value={state.path} placeholder='Escolha um caminho' options={definition.caminho.opcoes.map((option) => ({ value: option.rotulo, label: option.rotulo }))} onChange={(path) => updateState(strategy.id, { path, accepted: false })} />
+              <small style={{ color: '#71809e', fontWeight: 400 }}>{texts.caminho_apoio}</small>
+            </label>}
+            <div style={{ display: 'grid', gap: 5, marginTop: 14 }}>
+              {strategy.tasks.map((task) => <div key={task.id} draggable aria-label={`Tarefa ${task.description}`} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 13, padding: '7px 0', borderTop: '1px solid #f0f3f8' }}>
+                <span>{task.description}{task.schedule?.continuous ? ' · contínua' : ''}</span>
+                <strong style={{ whiteSpace: 'nowrap', color: task.schedule?.tight ? '#c26b00' : '#48618e' }}>{dayjs(task.deadline).format('DD/MM')}</strong>
+              </div>)}
+            </div>
+            {tight > 0 && <p style={{ color: '#9a6400', margin: '12px 0 0', fontSize: 13 }}>{texts.apertadas.replace('{n}', String(tight))}</p>}
+          </section>;
+        })}
+      </div>
+      <button type='button' className='primary-btn' disabled={!accepted} style={{ marginTop: 20 }} onClick={() => onConfirm(schedule, calculated)}>{accepted ? 'Salvar cronograma na Agenda' : 'Aceite cada estratégia para continuar'}</button>
+    </div>
+  );
+};
 
 // Revela listas longas (estratégias, SWOT, oportunidades/ameaças) item por item em vez de tudo de
 // uma vez. Sem isso, um card com 20+ itens nasce já com a altura final, e o `ResizeObserver` do
