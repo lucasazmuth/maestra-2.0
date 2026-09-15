@@ -97,8 +97,9 @@ export const ScheduleApprovalCard: FC<{
   return (
     <div className='nyta-card schedule-studio'>
       <div className='wiz-card-title'>Seu cronograma</div>
-      <p style={{ marginTop: 0, color: 'var(--wz-muted)', lineHeight: 1.55 }}>Defina as duas datas que organizam seu plano. Nada entra na Agenda antes do seu aceite.</p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 20 }}>
+      <details className='schedule-studio__dates'>
+      <summary><span>Início {schedule.startDate ? dayjs(schedule.startDate).format('DD/MM/YYYY') : 'a definir'}</span><span>Lançamento {schedule.releaseDate ? dayjs(schedule.releaseDate).format('DD/MM/YYYY') : 'a definir'}</span><span>Editar datas</span></summary>
+      <div className='schedule-studio__date-fields'>
         <label style={{ display: 'grid', gap: 6, fontWeight: 700 }}>Próximo lançamento (Dia D)
           <DatePicker allowClear={false} value={schedule.releaseDate ? dayjs(schedule.releaseDate) : null} onChange={(value) => update({ releaseDate: value?.format('YYYY-MM-DD') })} format='DD/MM/YYYY' />
         </label>
@@ -106,9 +107,10 @@ export const ScheduleApprovalCard: FC<{
           <DatePicker allowClear={false} value={schedule.startDate ? dayjs(schedule.startDate) : null} onChange={(value) => update({ startDate: value?.format('YYYY-MM-DD') })} format='DD/MM/YYYY' />
         </label>
       </div>
+      </details>
       <nav className='schedule-studio__progress' aria-label='Estratégias do cronograma'>
         <span>{calculated.filter(strategy => schedule.strategies[strategy.id]?.accepted).length} de {calculated.length} aprovadas</span>
-        <Select aria-label='Estratégia em revisão' value={activeIndex} onChange={setActiveIndex} options={calculated.map((strategy, index) => ({ value: index, label: `${schedule.strategies[strategy.id]?.accepted ? '✓ ' : ''}${index + 1}. ${strategy.title}` }))} />
+        <span>Estratégia {activeIndex + 1} de {calculated.length}</span>
       </nav>
       <div style={{ display: 'grid', gap: 14 }}>
         {calculated.slice(activeIndex, activeIndex + 1).map((strategy) => {
@@ -128,6 +130,9 @@ export const ScheduleApprovalCard: FC<{
               <Select value={state.path} placeholder='Escolha um caminho' options={definition.caminho.opcoes.map((option) => ({ value: option.rotulo, label: option.rotulo }))} onChange={(path) => updateState(strategy.id, { path, accepted: false, manualDates: {}, adjusted: false })} />
               <small style={{ color: '#71809e', fontWeight: 400 }}>{texts.caminho_apoio}</small>
             </label>}
+            {ready && <div className='schedule-studio__overview'><div><span>Primeira tarefa</span><strong>{strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort()[0] ? dayjs(strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort()[0]).format('DD MMM') : 'A definir'}</strong></div><div className='schedule-studio__overview-line' aria-hidden='true'>{strategy.tasks.map((task, index) => task.deadline && <i key={index} style={{ left: `${gantt.position(task.deadline)}%` }} />)}</div><div><span>Último início</span><strong>{strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort().at(-1) ? dayjs(strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort().at(-1)).format('DD MMM') : 'A definir'}</strong></div></div>}
+            <details className='schedule-studio__task-details'>
+            <summary>Revisar {strategy.tasks.length} tarefas e ajustar datas</summary>
             <div className='schedule-studio__toolbar'><span>Início das tarefas</span><div role='group' aria-label='Visualização'><button type='button' aria-pressed={view === 'timeline'} onClick={() => setView('timeline')}>Linha do tempo</button><button type='button' aria-pressed={view === 'list'} onClick={() => setView('list')}>Lista</button></div></div>
             <div className={`schedule-studio__chart ${view === 'list' ? 'is-list' : ''}`}>
             <div className='schedule-studio__axis'><span>Tarefa</span><div>{gantt.ticks.map(tick => <span key={tick.toISOString()} style={{ left: `${gantt.position(tick.format('YYYY-MM-DD'))}%` }}>{tick.format('DD/MM')}</span>)}</div><span>Início</span></div>
@@ -156,12 +161,13 @@ export const ScheduleApprovalCard: FC<{
             </div>
             </div>
             <p className='schedule-studio__note'>{texts.aceite}</p>
+            </details>
             {tight > 0 && <p style={{ color: '#9a6400', margin: '12px 0 0', fontSize: 13 }}>{texts.apertadas.replace('{n}', String(tight))}</p>}
             <footer className='schedule-studio__footer'><button type='button' disabled={activeIndex === 0} onClick={() => setActiveIndex(value => value - 1)}>Anterior</button><button type='button' className='schedule-studio__approve' disabled={!ready} onClick={() => { updateState(strategy.id, { accepted: true }); if (activeIndex + 1 < calculated.length) setActiveIndex(value => value + 1); }}>{state.accepted ? 'Aprovada' : 'Aprovar estratégia'}{activeIndex + 1 < calculated.length ? ' e continuar' : ''}</button></footer>
           </section>;
         })}
       </div>
-      <button type='button' className='primary-btn' disabled={!accepted} style={{ marginTop: 20 }} onClick={() => onConfirm(schedule, calculated)}>{accepted ? 'Salvar cronograma na Agenda' : 'Aceite cada estratégia para continuar'}</button>
+      {accepted && <button type='button' className='schedule-studio__save' onClick={() => onConfirm(schedule, calculated)}>Salvar cronograma na Agenda</button>}
     </div>
   );
 };
