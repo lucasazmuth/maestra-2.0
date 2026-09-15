@@ -1345,7 +1345,6 @@
   .avisoLegado { border-color: #ddcbf1; background: #f8f2fe; color: #6b4a95; }
   .dimAviso { background: #f4f7fd; color: #61749a; }
   .pieNaoSei { color: #788bad; }
-  .engInfo { color: #93a4c0; }
   .cacheLabel { color: #61749a; }
   .cacheBarWrap { background: #e8eefb; }
   .cacheVal { color: #52668d; }
@@ -2286,14 +2285,6 @@ $docLow: #8b9ab4;
 .healthPos { color: #1db954; }
 .healthNeg { color: #e0a13c; }
 
-// Engajamento por rede (A).
-.engGrid { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
-.engGridTitle { font-size: 12px; font-weight: 800; color: #9a9aa3; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 10px; }
-.engRow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 6px 0; }
-.engNet { font-size: 12.5px; color: #c9c9d0; font-weight: 600; }
-.engVal { font-size: 12.5px; font-weight: 700; color: #8a8a92; text-align: right; }
-.engAbove { color: #1db954; }
-.engBelow { color: #b0b0b8; }
 
 // ═══════════════════ Quiz V4 — widgets (cachê por tipo, receita por fonte, matriz de imprensa) ═══════════════════
 // Linha de apoio da pergunta: onde achar o número, o que deixar em zero, o que não entra no cálculo.
@@ -2417,7 +2408,6 @@ $docLow: #8b9ab4;
   line-height: 1.5;
 }
 .pieNaoSei { margin-top: 12px; color: #9a9aa3; font-size: 12.5px; line-height: 1.5; }
-.engInfo { margin-left: 8px; color: #8a8a93; font-size: 11.5px; font-weight: 600; text-transform: none; letter-spacing: 0; }
 .cacheBlock { margin-top: 18px; display: flex; flex-direction: column; gap: 9px; }
 .cacheRow { display: grid; grid-template-columns: minmax(96px, 1.1fr) minmax(0, 2fr) auto; align-items: center; gap: 10px; }
 .cacheLabel { color: #b3b3bd; font-size: 12.5px; }
@@ -2633,7 +2623,6 @@ $docLow: #8b9ab4;
   .dimStatRow,
   .pieBlock,
   .healthBlock,
-  .engGrid,
   .methodBlock {
     border-color: #e4ebf5 !important;
   }
@@ -2661,7 +2650,6 @@ $docLow: #8b9ab4;
   .cityChartLabel,
   .platformSectionTitle,
   .healthTitle,
-  .engGridTitle,
   .pieBlockTitle {
     color: #7184a5 !important;
   }
@@ -2742,7 +2730,6 @@ $docLow: #8b9ab4;
     background: #f7f9fd !important;
     border-color: #e4ebf5 !important;
   }
-  .healthLabel, .engNet, .pieLegendLabel { color: #61749a !important; }
+  .healthLabel, .pieLegendLabel { color: #61749a !important; }
   .healthVal, .pieLegendVal { color: #52668d !important; }
-  .engVal { color: #7184a5 !important; }
 }
