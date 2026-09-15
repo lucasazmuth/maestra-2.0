@@ -9,7 +9,7 @@ import styles from './PillarCards.module.scss';
 export type SecaoDoPainel = 'visao-geral' | ChaveDoPilar;
 
 const ROTULOS: Record<ChaveDoPilar, string> = {
-  diagnostico: 'Diagnóstico',
+  diagnostico: 'Diagnóstico REAL',
   execucao: 'Plano de Ação',
   planejamento: 'Planejamento',
 };
