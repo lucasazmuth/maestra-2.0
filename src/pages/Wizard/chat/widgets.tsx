@@ -58,7 +58,6 @@ export const ScheduleApprovalCard: FC<{
   const [schedule, setSchedule] = useState<ActionPlanSchedule>(initial);
   const [activeIndex, setActiveIndex] = useState(0);
   const [view, setView] = useState<'timeline' | 'list'>('timeline');
-  const [dragged, setDragged] = useState<{ strategyId: string; order: number } | null>(null);
   const calculated = useMemo(() => strategies.map((strategy) => scheduleStrategy(strategy, schedule, today)), [strategies, schedule, today]);
   const update = (patch: Partial<ActionPlanSchedule>) => setSchedule((current) => ({ ...current, ...patch,
     strategies: Object.fromEntries(Object.entries(current.strategies).map(([id, state]) => {
@@ -82,15 +81,17 @@ export const ScheduleApprovalCard: FC<{
     const dates = (calculated[activeIndex]?.tasks || []).map(task => task.deadline).filter(Boolean) as string[];
     if (!dates.length) dates.push(today);
     const ordered = dates.map((date) => dayjs(date)).sort((a, b) => a.valueOf() - b.valueOf());
-    const start = ordered[0].subtract(3, 'day').startOf('day');
-    const end = ordered[ordered.length - 1].add(7, 'day').startOf('day');
+    const start = ordered[0].startOf('month');
+    const end = ordered[ordered.length - 1].endOf('month');
     const span = Math.max(1, end.diff(start, 'day'));
     const position = (date?: string) => date ? Math.max(0, Math.min(100, dayjs(date).diff(start, 'day') / span * 100)) : 0;
+    const monthCount = Math.max(1, end.diff(start, 'month') + 1);
     return {
       start,
       end,
       position,
-      ticks: Array.from({ length: 5 }, (_, index) => start.add(Math.round(span * index / 4), 'day')),
+      months: Array.from({ length: monthCount }, (_, index) => start.add(index, 'month')),
+      width: Math.max(620, monthCount * 150),
     };
   }, [calculated, activeIndex, today]);
 
@@ -133,33 +134,21 @@ export const ScheduleApprovalCard: FC<{
             {ready && <div className='schedule-studio__overview'><div><span>Primeira tarefa</span><strong>{strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort()[0] ? dayjs(strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort()[0]).format('DD MMM') : 'A definir'}</strong></div><div className='schedule-studio__overview-line' aria-hidden='true'>{strategy.tasks.map((task, index) => task.deadline && <i key={index} style={{ left: `${gantt.position(task.deadline)}%` }} />)}</div><div><span>Último início</span><strong>{strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort().at(-1) ? dayjs(strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort().at(-1)).format('DD MMM') : 'A definir'}</strong></div></div>}
             <details className='schedule-studio__task-details'>
             <summary>Revisar {strategy.tasks.length} tarefas e ajustar datas</summary>
-            <div className='schedule-studio__toolbar'><span>Início das tarefas</span><div role='group' aria-label='Visualização'><button type='button' aria-pressed={view === 'timeline'} onClick={() => setView('timeline')}>Linha do tempo</button><button type='button' aria-pressed={view === 'list'} onClick={() => setView('list')}>Lista</button></div></div>
-            <div className={`schedule-studio__chart ${view === 'list' ? 'is-list' : ''}`}>
-            <div className='schedule-studio__axis'><span>Tarefa</span><div>{gantt.ticks.map(tick => <span key={tick.toISOString()} style={{ left: `${gantt.position(tick.format('YYYY-MM-DD'))}%` }}>{tick.format('DD/MM')}</span>)}</div><span>Início</span></div>
-            <div className='wiz-gantt__tasks'>
-              <div className='wiz-gantt__scale' aria-hidden='true'>
-                {gantt.ticks.map((tick) => <i key={tick.toISOString()} style={{ left: `${gantt.position(tick.format('YYYY-MM-DD'))}%` }} />)}
-                {dayjs(today).isAfter(gantt.start) && dayjs(today).isBefore(gantt.end) && <b className='wiz-gantt__today' title='Hoje' style={{ left: `${gantt.position(today)}%` }} />}
-                {schedule.releaseDate && dayjs(schedule.releaseDate).isAfter(gantt.start) && dayjs(schedule.releaseDate).isBefore(gantt.end) && <b className='wiz-gantt__release' title='Dia D' style={{ left: `${gantt.position(schedule.releaseDate)}%` }} />}
+            <div className='schedule-studio__toolbar'><span>Início das tarefas</span><div role='group' aria-label='Visualização'><button type='button' aria-pressed={view === 'timeline'} onClick={() => setView('timeline')}>Gantt</button><button type='button' aria-pressed={view === 'list'} onClick={() => setView('list')}>Lista</button></div></div>
+            {view === 'timeline' ? <div className='schedule-gantt' aria-label='Cronograma em Gantt'>
+              <div className='schedule-gantt__content' style={{ width: 300 + gantt.width }}>
+                <div className='schedule-gantt__corner'>Tarefas</div>
+                <div className='schedule-gantt__months' style={{ width: gantt.width }}>{gantt.months.map(month => <span key={month.format('YYYY-MM')} style={{ width: gantt.width / gantt.months.length }}>{month.format('MMM YYYY')}</span>)}</div>
+                {strategy.tasks.map((task, index) => <div className='schedule-gantt__row' key={task.id}>
+                  <div className='schedule-gantt__task'><small>{String(index + 1).padStart(2, '0')}</small><span>{task.description}</span>{task.schedule?.continuous && <b>Semanal</b>}{task.schedule?.tight && <b className='is-tight'>Apertada</b>}</div>
+                  <div className='schedule-gantt__timeline' style={{ width: gantt.width }}>
+                    {gantt.months.map(month => <i key={month.format('YYYY-MM')} style={{ width: gantt.width / gantt.months.length }} />)}
+                    {task.schedule?.continuous && <span className='schedule-gantt__recurrence' style={{ left: `${gantt.position(task.deadline)}%` }} />}
+                    <DatePicker allowClear={false} inputReadOnly aria-label={`Início: ${task.description}`} className={`schedule-gantt__marker${task.schedule?.tight ? ' is-tight' : ''}`} value={task.deadline ? dayjs(task.deadline) : null} onChange={(value) => moveTask(strategy.id, task.schedule?.order || 0, value?.format('YYYY-MM-DD'))} format='DD MMM' style={{ left: `${gantt.position(task.deadline)}%` }} />
+                  </div>
+                </div>)}
               </div>
-              {strategy.tasks.map((task, index) => {
-                const taskEnd = gantt.position(task.deadline);
-                return <div key={task.id} className='wiz-gantt__task' draggable aria-label={`Tarefa ${task.description}`} onDragStart={() => setDragged({ strategyId: strategy.id, order: task.schedule?.order || 0 })} onDragOver={(event) => event.preventDefault()} onDrop={() => {
-                  if (dragged?.strategyId === strategy.id) moveTask(strategy.id, dragged.order, task.deadline);
-                  setDragged(null);
-                }}>
-                  <span className='wiz-gantt__task-name'><small>{String(index + 1).padStart(2, '0')}</small>{task.description}{task.schedule?.continuous ? ' · semanal' : ''}{task.schedule?.tight ? ' · apertada' : ''}</span>
-                  <span className='wiz-gantt__track'>
-                    {dayjs(today).isAfter(gantt.start) && dayjs(today).isBefore(gantt.end) && <b className='wiz-gantt__today' title='Hoje' style={{ left: `${gantt.position(today)}%` }} />}
-                    {schedule.releaseDate && dayjs(schedule.releaseDate).isAfter(gantt.start) && dayjs(schedule.releaseDate).isBefore(gantt.end) && <b className='wiz-gantt__release' title='Dia D' style={{ left: `${gantt.position(schedule.releaseDate)}%` }} />}
-                    {task.schedule?.continuous && <i className='schedule-studio__recurrence' style={{ left: `${taskEnd}%`, right: 0 }} />}
-                    {task.deadline && <i className={`wiz-gantt__milestone${task.schedule?.tight ? ' is-tight' : ''}`} style={{ left: `${taskEnd}%` }} title={dayjs(task.deadline).format('DD/MM/YYYY')} />}
-                  </span>
-                  <DatePicker allowClear={false} aria-label={`Início: ${task.description}`} size='small' value={task.deadline ? dayjs(task.deadline) : null} onChange={(value) => moveTask(strategy.id, task.schedule?.order || 0, value?.format('YYYY-MM-DD'))} format='DD/MM' />
-                </div>;
-              })}
-            </div>
-            </div>
+            </div> : <div className='schedule-list'>{strategy.tasks.map((task, index) => <label key={task.id}><span><small>{String(index + 1).padStart(2, '0')}</small>{task.description}</span><DatePicker allowClear={false} aria-label={`Início: ${task.description}`} size='small' value={task.deadline ? dayjs(task.deadline) : null} onChange={(value) => moveTask(strategy.id, task.schedule?.order || 0, value?.format('YYYY-MM-DD'))} format='DD/MM' /></label>)}</div>}
             <p className='schedule-studio__note'>{texts.aceite}</p>
             </details>
             {tight > 0 && <p style={{ color: '#9a6400', margin: '12px 0 0', fontSize: 13 }}>{texts.apertadas.replace('{n}', String(tight))}</p>}
