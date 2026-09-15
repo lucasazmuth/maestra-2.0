@@ -1,57 +1,55 @@
 import fs from 'fs';
 import path from 'path';
 
-import { COR_PILARES } from '@maestra/core/constants/design';
-
-// Os três pilares da home têm que ser os MESMOS nas duas superfícies: a web pinta por SCSS, o app
-// por `COR_PILARES`, e este arquivo é o que impede a duplicata de virar divergência.
-//
-// Aqui há duas famílias de cor, e é de propósito: o FUNDO é o gradiente escuro escolhido para
-// cada cartão, e o acento do pilar (`COR_PILARES`) aparece no ícone. Se alguém reintroduzir o
-// fundo navy antigo por cima dos gradientes, este teste cai junto.
-
-const scss = fs.readFileSync(
+const menuScss = fs.readFileSync(
   path.join(__dirname, '..', 'components', 'dashboard', 'PillarCards.module.scss'),
   'utf8',
 );
-const tsx = fs.readFileSync(
+const menuTsx = fs.readFileSync(
   path.join(__dirname, '..', 'components', 'dashboard', 'PillarCards.tsx'),
   'utf8',
 );
-const semEspacos = (valor: string) => valor.replace(/\s+/g, '');
+const dashboardTsx = fs.readFileSync(
+  path.join(__dirname, '..', 'pages', 'Dashboard', 'index.tsx'),
+  'utf8',
+);
+const dashboardCss = fs.readFileSync(
+  path.join(__dirname, '..', 'styles', 'gsap-reference.css'),
+  'utf8',
+);
 
-describe('cromo dos pilares do painel', () => {
-  it.each(Object.entries(COR_PILARES))('%s (%s) é o valor que a web usa', (_nome, valor) => {
-    expect(semEspacos(scss)).toContain(semEspacos(valor));
+describe('menu do método no painel', () => {
+  it.each(['Visão geral', 'Diagnóstico', 'Plano de Ação', 'Planejamento'])(
+    'expõe a aba %s',
+    (rotulo) => expect(menuTsx).toContain(rotulo),
+  );
+
+  it('usa navegação semântica e botões nativos', () => {
+    expect(menuTsx).toContain("<nav className={styles.menu} aria-label='Áreas do método'>");
+    expect(menuTsx).toContain("type='button'");
+    expect(menuTsx).toContain("aria-current={ativa === item.chave ? 'page' : undefined}");
+  });
+
+  it('troca a seção dentro do dashboard sem navegar', () => {
+    expect(menuTsx).toContain('onClick={() => onSelect(item.chave)}');
+    expect(dashboardTsx).toContain("useState<SecaoDoPainel>('visao-geral')");
+    expect(dashboardTsx).toContain('pilarAtivo ?');
+  });
+
+  it('mantém o menu rolável no celular e sinaliza a aba ativa', () => {
+    expect(menuScss).toContain('overflow-x: auto');
+    expect(menuScss).toContain('.menu button.ativo::after');
+    expect(menuScss).toContain('@media (max-width: 700px)');
   });
 
   it.each(['Dark Gradient 04', 'Dark Gradient 12', 'Dark Gradient 05'])(
-    'usa o background enviado (%s)',
-    (nome) => {
-      expect(scss).toContain(nome);
-    },
+    'preserva o background aprovado no painel %s',
+    (nome) => expect(dashboardCss).toContain(nome),
   );
 
-  it('não reintroduz o background navy anterior no campo do cartão', () => {
-    expect(semEspacos(scss)).not.toContain('linear-gradient(135deg,#121c38,#18254d)');
-    expect(semEspacos(scss)).not.toContain('radial-gradient(circleat76%-66%,#315de8');
-  });
-
-  // O roxo da marca só pode entrar como acento do ícone. Se ele aparecer num `background`, alguém
-  // misturou o token institucional com o gradiente importado.
-  it('o roxo institucional é acento, nunca background', () => {
-    const linhasComRoxo = scss.split('\n').filter((l) => l.includes(COR_PILARES.anelPlanejamento));
-    expect(linhasComRoxo.length).toBeGreaterThan(0);
-    linhasComRoxo.forEach((linha) => {
-      expect(linha).not.toMatch(/background/);
-    });
-  });
-
-  // O cartão inteiro é o alvo do clique. Um cartão desta altura cujo único alvo fosse o texto da
-  // ação seria caça ao botão no celular, e estes três são o único caminho para os módulos.
-  it('o cartão inteiro é clicável e alcançável pelo teclado', () => {
-    expect(tsx).toContain("role='button'");
-    expect(tsx).toContain('tabIndex={0}');
-    expect(tsx).toContain('onKeyDown');
+  it('tem painéis internos para diagnóstico, execução e planejamento', () => {
+    expect(dashboardTsx).toContain("pilar.chave === 'diagnostico'");
+    expect(dashboardTsx).toContain("pilar.chave === 'execucao'");
+    expect(dashboardTsx).toContain("pilar.chave === 'planejamento'");
   });
 });
