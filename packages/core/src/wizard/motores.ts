@@ -2,7 +2,7 @@
 // Funções puras (sem React, sem rede, sem LLM). Consomem as lookup tables deste diretório.
 
 import { TASK_OWNER_SELF } from '../constants/maestra';
-import { STRATEGY_BY_ID } from '../constants/strategyBank';
+import { STRATEGY_BANK, STRATEGY_BY_ID } from '../constants/strategyBank';
 // A montagem das tarefas de uma estratégia mora no núcleo: o app nativo traz estratégia
 // arquivada de volta ao plano, e a mesma estratégia tem que render as mesmas tarefas nos dois.
 import { buildActionPlan } from '../services/planoDeAcao';
@@ -14,8 +14,7 @@ import type {
   RecognitionTag,
   Strategy,
 } from '../interfaces/maestra';
-import { MATRIX_A, MATRIX_B, MATRIX_C, TRANSVERSAL_FORCES } from './matrizes';
-import { OBJECTIVE_CODES, globalSum, objectiveToCode, scoreFor } from './prioridade';
+import { OBJECTIVE_CODES, objectiveToCode, scoreFor } from './prioridade';
 import { internalLabel, opportunityLabel } from './swot';
 
 // Quem já importava `buildActionPlan` daqui continua importando daqui.
@@ -113,76 +112,36 @@ const personalizeName = (title: string, name?: string, gender?: ArtistIdentity['
 };
 
 
-// Resultado intermediário da geração, antes de virar Strategy.
-interface GenItem {
-  bankId: string;
-  fromWeakness: number[]; // ids de fraquezas que dispararam
-  fromOpportunity: number[]; // ids de oportunidades que dispararam
-  fromForce: number[]; // ids de forças focadas que potencializam (Matriz C)
-}
-
-// Gera as estratégias a partir das seleções do Diagnóstico (Metodologia v2 §10).
-// Ameaças NÃO geram estratégias (decisão mantida — ficam no radar do diagnóstico).
+// A oportunidade obrigatoria permite a entrada; o gatilho justifica a sugestao.
 export const generateStrategies = (
   swot: NonNullable<ArtistContent['swotInputs']>,
   identity: ArtistIdentity
 ): Strategy[] => {
   const internal = swot.internal || {};
-  const weaknesses = Object.keys(internal)
-    .map(Number)
-    .filter((id) => internal[id] === 'melhorar');
-  const forces = Object.keys(internal)
-    .map(Number)
-    .filter((id) => internal[id] === 'forte' && !TRANSVERSAL_FORCES.has(id));
   const opportunities = swot.opportunities || [];
-
-  const items = new Map<string, GenItem>();
-  const ensure = (bankId: string): GenItem => {
-    if (!items.has(bankId)) items.set(bankId, { bankId, fromWeakness: [], fromOpportunity: [], fromForce: [] });
-    return items.get(bankId)!;
-  };
-
-  // Matriz A — fraquezas.
-  weaknesses.forEach((wId) => (MATRIX_A[wId] || []).forEach((sid) => ensure(sid).fromWeakness.push(wId)));
-  // Matriz B — oportunidades.
-  opportunities.forEach((oId) => (MATRIX_B[oId] || []).forEach((sid) => ensure(sid).fromOpportunity.push(oId)));
-  // Matriz C — forças focadas potencializam estratégias JÁ geradas (não criam novas).
-  forces.forEach((fId) =>
-    (MATRIX_C[fId] || []).forEach((sid) => {
-      if (items.has(sid)) ensure(sid).fromForce.push(fId);
-    })
-  );
-
-  // Ordena por seção do banco (3.1→3.27) e depois por id, e materializa as Strategy.
-  const ordered = Array.from(items.values()).sort((a, b) => {
-    const oa = STRATEGY_BY_ID[a.bankId]?.order ?? 99;
-    const ob = STRATEGY_BY_ID[b.bankId]?.order ?? 99;
-    if (oa !== ob) return oa - ob;
-    return a.bankId.localeCompare(b.bankId, undefined, { numeric: true });
-  });
-
-  return ordered.map((g) => {
-    const bank = STRATEGY_BY_ID[g.bankId];
-    const forceLabels = g.fromForce.map(internalLabel).filter(Boolean);
-    const swotRefs = {
-      weaknesses: g.fromWeakness.map(internalLabel).filter(Boolean),
-      opportunities: g.fromOpportunity.map(opportunityLabel).filter(Boolean),
-      strengths: forceLabels,
-    };
-    // A estratégia LIDERA o título (texto da própria estratégia). A força focada vira tipo SO
-    // (ataque) e aparece em swotRefs.strengths ("Responde a: Forças"), NÃO como prefixo no título
-    // (evita o "Alavancando [força] — [estratégia]" que confundia, já que a força está logo abaixo).
-    const baseTitle = personalizeName(bank?.title || g.bankId, identity.name, identity.gender);
-    return {
-      id: uid(),
-      bankId: g.bankId,
-      type: forceLabels.length ? 'SO' : 'WO',
-      title: baseTitle,
-      swotRefs,
-      tasks: [],
-      score: 0,
-    } as Strategy;
-  });
+  return STRATEGY_BANK.filter(s => {
+    const allowed = !s.requires_any_opportunity.length
+      || s.requires_any_opportunity.some(id => opportunities.includes(id));
+    const triggered = (!s.triggers.weaknesses.length && !s.triggers.opportunities.length)
+      || s.triggers.weaknesses.some(id => internal[id] === 'melhorar')
+      || s.triggers.opportunities.some(id => opportunities.includes(id));
+    return allowed && triggered;
+  }).map(s => ({
+    id: uid(),
+    bankId: s.id,
+    bankVersion: '4.0',
+    type: 'WO',
+    title: personalizeName(s.title, identity.name, identity.gender),
+    description: personalizeName(s.subtitle, identity.name, identity.gender),
+    swotRefs: {
+      weaknesses: s.triggers.weaknesses.filter(id => internal[id] === 'melhorar').map(internalLabel),
+      opportunities: Array.from(new Set([...s.requires_any_opportunity, ...s.triggers.opportunities]))
+        .filter(id => opportunities.includes(id)).map(opportunityLabel),
+      strengths: s.info.strengths.filter(id => internal[id] === 'forte').map(internalLabel),
+    },
+    tasks: [],
+    score: 0,
+  }));
 };
 
 // ─── Priorização (Nyta_Matriz_Priorizacao_v2) ──────────────────────────────────────────────────
@@ -221,7 +180,7 @@ export const prioritizeStrategies = (strategies: Strategy[], objectives: string[
   const scores = suggestScores(strategies, objectives);
   const withScores = strategies.map((s) => {
     const byObjective = scores[s.id]?.byObjective || {};
-    const finalScore = objectives.reduce((sum, _o, i) => sum + (byObjective[i] || 0), 0);
+    const finalScore = objectives.length ? Math.round(objectives.reduce((sum, _o, i) => sum + (byObjective[i] || 0), 0) / objectives.length * 10) : 0;
     return {
       ...s,
       objectiveScores: byObjective,
@@ -231,8 +190,6 @@ export const prioritizeStrategies = (strategies: Strategy[], objectives: string[
   });
   return withScores.sort((a, b) => {
     if ((b.finalScore || 0) !== (a.finalScore || 0)) return (b.finalScore || 0) - (a.finalScore || 0);
-    const gv = globalSum(b.bankId || '') - globalSum(a.bankId || '');
-    if (gv !== 0) return gv;
     const oa = STRATEGY_BY_ID[a.bankId || '']?.order ?? 99;
     const ob = STRATEGY_BY_ID[b.bankId || '']?.order ?? 99;
     return oa - ob;
@@ -282,7 +239,7 @@ export const seedScheduledPlan = (
       ...s,
       tasks: tasks.map((t, j) => ({
         ...t,
-        deadline: addDays(startISO, i * stagger + j * cadence),
+        deadline: t.deadline || addDays(startISO, i * stagger + j * cadence),
       })),
     })
   );

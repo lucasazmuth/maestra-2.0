@@ -1,0 +1,1267 @@
+{
+ "version": "3.0",
+ "generated_at": "2026-09-13",
+ "scale": "1-10",
+ "objectives": [
+  {
+   "code": "DIG",
+   "label": "Ampliar resultados digitais"
+  },
+  {
+   "code": "SHW",
+   "label": "Ampliar agenda de shows"
+  },
+  {
+   "code": "MRC",
+   "label": "Obter reconhecimento do mercado"
+  },
+  {
+   "code": "MID",
+   "label": "Obter reconhecimento da crítica e da mídia"
+  },
+  {
+   "code": "CLS",
+   "label": "Obter reconhecimento da classe artística"
+  },
+  {
+   "code": "INT",
+   "label": "Alcançar repercussão internacional"
+  },
+  {
+   "code": "SIM",
+   "label": "Cumprir missão simbólica"
+  },
+  {
+   "code": "FIN",
+   "label": "Gerar sustentabilidade financeira"
+  }
+ ],
+ "rule": {
+  "percentual": "média simples das notas nos objetivos do artista (até 5) × 10, inteiro",
+  "caminho_1": "lista ordenada por percentual; toque abre nota+explicação por objetivo; recomendadas em destaque com motivo, sem pré-seleção; artista escolhe 10 em qualquer ordem",
+  "caminho_2": "uma estratégia por vez; marcador 1-10 por objetivo já na nota canônica com rótulo 'sugestão da Nyta' e explicação; comparativo você×Nyta; lista final calculada com as notas do artista",
+  "nao_aplicar": [
+   "corte automático",
+   "desempate",
+   "dependência lógica (vai para o Cronograma)",
+   "regras especiais de lojinha e lançamentos"
+  ]
+ },
+ "strategies": [
+  {
+   "id": "1",
+   "title": "Criar uma programação estruturada de lançamentos fonográficos",
+   "category": "Lançamentos fonográficos",
+   "notas": [
+    10,
+    8,
+    10,
+    10,
+    10,
+    9,
+    10,
+    8
+   ],
+   "explicacoes": [
+    "Lançar é a alavanca direta de streams e descoberta",
+    "Música nova aquece a agenda e justifica o show de lançamento, mas só lançar não vende show",
+    "Quem lança com constância é lembrado com constância",
+    "Lançamento é pauta para você trabalhar imprensa",
+    "Pares acompanham quem está lançando",
+    "Pitching alcança playlists de fora; ir além exige trabalho específico",
+    "É a obra chegando em quem você quer tocar",
+    "Streaming paga pouco, mas o lançamento puxa show, sync e patrocínio"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "3",
+   "title": "Trabalhar a edição das obras: contratar editora ou constituir editora própria com administração",
+   "category": "Distribuição, edição e direitos",
+   "notas": [
+    8,
+    7,
+    8,
+    8,
+    8,
+    8,
+    10,
+    10
+   ],
+   "explicacoes": [
+    "Organiza a arrecadação do que já toca; não move streams por si",
+    "Indireto: catálogo em ordem sustenta o negócio dos shows",
+    "Compositor com editora é visto como profissional",
+    "Bastidor: pesa mais na credibilidade que na pauta",
+    "Coautorias e regravações dependem de edição em dia",
+    "Administração internacional dos direitos abre arrecadação fora",
+    "Protege a obra pra que ela cumpra a missão por muito tempo",
+    "Direitos autorais administrados são receita recorrente"
+   ],
+   "recomendada": true,
+   "motivo_recomendada": "Se você compõe, precisa de uma editora para garantir seus direitos"
+  },
+  {
+   "id": "4",
+   "title": "Prospectar oportunidades de sincronização",
+   "category": "Distribuição, edição e direitos",
+   "notas": [
+    10,
+    8,
+    10,
+    9,
+    10,
+    9,
+    9,
+    10
+   ],
+   "explicacoes": [
+    "Uma trilha em série dispara buscas pela música",
+    "Sync dá visibilidade que puxa convites, mas é indireto",
+    "Sincronizar é chancela do mercado audiovisual",
+    "Aparecer em série ou publicidade vira notícia",
+    "Pares valorizam quem tem música em trilha",
+    "Bibliotecas de sync são globais",
+    "A música chega onde o artista não está",
+    "Licenciamento paga bem e pode recorrer"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "6",
+   "title": "Definir a documentação de referências de branding do projeto (coordenação entre conceito e desdobramentos visuais)",
+   "category": "Branding e material promocional",
+   "notas": [
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    9
+   ],
+   "explicacoes": [
+    "Identidade coerente faz o conteúdo converter",
+    "Material alinhado vende show",
+    "O primeiro contato do contratante com seu trabalho é sua apresentação visual",
+    "Sem imagem alinhada, nenhuma assessoria funciona",
+    "Pares respeitam projeto bem embalado",
+    "Fora, a imagem é o primeiro filtro",
+    "É a tradução da missão em imagem",
+    "Marca clara valoriza cachê e atrai patrocínio"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "8",
+   "title": "Produzir novo material promocional baseado em uma coordenação estruturada de branding",
+   "category": "Branding e material promocional",
+   "notas": [
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    9
+   ],
+   "explicacoes": [
+    "Fotos e vídeo novos alimentam as redes",
+    "Sem PDF e vídeo de venda, a prospecção trava",
+    "É o que o contratante recebe e avalia",
+    "Release e fotos são a matéria-prima para a imprensa",
+    "Material profissional é notado pelos pares",
+    "Sem material promocional adequado, esquece mercado internacional",
+    "Carrega o conceito pra fora do palco",
+    "Ferramenta de venda: é o que fecha contratos"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "9",
+   "title": "Criar media kit criativo para lançamentos estratégicos",
+   "category": "Branding e material promocional",
+   "notas": [
+    9,
+    7,
+    9,
+    9,
+    9,
+    7,
+    8,
+    8
+   ],
+   "explicacoes": [
+    "Provoca compartilhamento e curiosidade",
+    "Mostra profissionalismo pra quem contrata",
+    "Chega no mercado de forma diferenciada",
+    "Feito pra gerar repercussão em veículos",
+    "Chega nos pares como referência de criatividade",
+    "Só faz sentido se a ativação for no exterior",
+    "Carrega o conceito do lançamento, mas alcança poucos",
+    "Investimento que abre portas, não receita direta"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "10",
+   "title": "Estruturar a gestão das redes sociais",
+   "category": "Redes sociais e canais próprios",
+   "notas": [
+    10,
+    9,
+    9,
+    9,
+    10,
+    9,
+    10,
+    8
+   ],
+   "explicacoes": [
+    "É o motor direto do resultado digital",
+    "Contratante olha as redes antes de fechar",
+    "Audiência é parâmetro para o mercado",
+    "Redes fortes atraem pauta e reforçam o posicionamento",
+    "Pares acompanham pelas redes",
+    "Redes não têm fronteira",
+    "Conteúdo é a entrega diária da missão",
+    "Indireto: audiência vira venda com o tempo"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "12",
+   "title": "Criar site com área de captação de contatos e trabalhar gestão de comunidade, avaliando modelos de remuneração recorrente",
+   "category": "Redes sociais e canais próprios",
+   "notas": [
+    10,
+    8,
+    8,
+    8,
+    9,
+    8,
+    10,
+    9
+   ],
+   "explicacoes": [
+    "Base própria e super-fãs, que o algoritmo não tira",
+    "Base quente enche show",
+    "Comunidade forte impressiona quem contrata",
+    "Comunidade ativa amplifica cada notícia",
+    "Pares notam quem tem base fiel",
+    "Comunidade não tem fronteira; site é vitrine global",
+    "Relação direta é onde a entrega acontece",
+    "Assinatura e clube geram receita recorrente"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "14",
+   "title": "Mapear, organizar e ativar a base de contatos atual e de interesse de network",
+   "category": "Redes sociais e canais próprios",
+   "notas": [
+    9,
+    9,
+    9,
+    9,
+    9,
+    9,
+    8,
+    8
+   ],
+   "explicacoes": [
+    "Contatos ativados espalham lançamentos",
+    "Contratantes mapeados e acionados viram datas",
+    "Network é de onde vêm os convites",
+    "Jornalistas na base recebem tudo em primeira mão",
+    "Relação constante com pares",
+    "Contatos de fora abrem portas",
+    "Relacionamento sustenta a entrega",
+    "Contratos nascem de relacionamento"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "15",
+   "title": "Trabalhar imprensa e mídia nos lançamentos",
+   "category": "Imprensa, mídia e rádio",
+   "notas": [
+    9,
+    8,
+    10,
+    10,
+    10,
+    9,
+    9,
+    8
+   ],
+   "explicacoes": [
+    "Matéria gera busca e legitima o conteúdo",
+    "Mídia ajuda a vender show, indiretamente",
+    "Presença na mídia é chancela pro mercado",
+    "É a estratégia de mídia por definição",
+    "Imprensa impacta a classe artística",
+    "Clipping no material de venda é uma chancela",
+    "A mídia conta a sua história pra quem não te conhece",
+    "Legitimação valoriza cachê e patrocínio"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "17",
+   "title": "Prospectar participações em podcasts e canais do YouTube",
+   "category": "Imprensa, mídia e rádio",
+   "notas": [
+    10,
+    7,
+    9,
+    10,
+    8,
+    7,
+    9,
+    6
+   ],
+   "explicacoes": [
+    "Entrevista fica no ar e leva público novo",
+    "Ajuda a ser lembrado por contratantes, mas indiretamente",
+    "Presença em canais do segmento posiciona",
+    "Vitrine de longa duração",
+    "Pares assistem aos mesmos canais",
+    "Barreira da língua prejudica a repercussão internacional",
+    "Conversa longa conta a missão inteira",
+    "Sem receita direta"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "18",
+   "title": "Trabalhar rádio no seu nicho",
+   "category": "Imprensa, mídia e rádio",
+   "notas": [
+    9,
+    9,
+    10,
+    10,
+    9,
+    6,
+    10,
+    7
+   ],
+   "explicacoes": [
+    "Rádio ainda converte em busca nos nichos",
+    "Rádio local abre agenda regional",
+    "Tocar na rádio é chancela do mercado",
+    "Rádio legitima no nicho",
+    "Pares respeitam quem toca na rádio",
+    "Efeito local; pouco alcance fora",
+    "Rádio leva a música a quem não está no digital",
+    "Execução pública paga e puxa show, mas indiretamente, e o custo para tocar pode não compensar"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "19",
+   "title": "Criar programação estruturada de conteúdo para o YouTube",
+   "category": "YouTube e podcast próprio",
+   "notas": [
+    10,
+    6,
+    7,
+    7,
+    9,
+    9,
+    10,
+    7
+   ],
+   "explicacoes": [
+    "Canal organizado é descoberta contínua",
+    "Baixa conversão para venda de shows",
+    "Não é a primeira coisa que o mercado olha",
+    "Conteúdo próprio, sem geração de pauta",
+    "Pares acompanham canais bem cuidados",
+    "YouTube é global por natureza",
+    "Acervo é a missão registrada",
+    "Monetização pode não acompanhar"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "20",
+   "title": "Lançar podcast (ou videocast) próprio",
+   "category": "YouTube e podcast próprio",
+   "notas": [
+    9,
+    6,
+    9,
+    9,
+    9,
+    6,
+    10,
+    6
+   ],
+   "explicacoes": [
+    "Conteúdo constante alimenta as redes",
+    "Pouco efeito na agenda",
+    "Você vira o veículo e conversa com o mercado",
+    "Podcast próprio gera pauta e convidados",
+    "Convidados da cena viram relação",
+    "Alcance limitado ao idioma",
+    "Conversa é entrega direta da missão",
+    "Pouca conversão para shows e dificuldade de obter patrocínios"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "22",
+   "title": "Participar de eventos, congressos e showcases do mercado",
+   "category": "Network, mercado e reconhecimento",
+   "notas": [
+    8,
+    9,
+    10,
+    9,
+    10,
+    9,
+    7,
+    8
+   ],
+   "explicacoes": [
+    "Efeito digital indireto",
+    "É onde os contratantes estão reunidos",
+    "Circular no mercado é aparecer e ser lembrado",
+    "Jornalistas e curadores frequentam",
+    "É o encontro da classe",
+    "Especialmente em eventos com intercâmbio internacional",
+    "Não fala diretamente com o seu público",
+    "Contatos viram negócios com o tempo"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "48",
+   "title": "Fazer pesquisa para compreender o seu público",
+   "category": "Network, mercado e reconhecimento",
+   "notas": [
+    10,
+    9,
+    9,
+    9,
+    8,
+    9,
+    10,
+    8
+   ],
+   "explicacoes": [
+    "Conhecer o fã melhora o conteúdo",
+    "Saber onde o público está guia a agenda",
+    "Dados de público convencem contratante",
+    "Persona afina a narrativa pra imprensa",
+    "Menor impacto entre os pares",
+    "Revela praças fora onde o som conversa",
+    "Entender quem ouve é entender a entrega",
+    "Decisão melhor, receita indireta"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "49",
+   "title": "Inscrever o projeto em premiações, pitchings e showcases",
+   "category": "Network, mercado e reconhecimento",
+   "notas": [
+    9,
+    8,
+    10,
+    10,
+    10,
+    9,
+    9,
+    8
+   ],
+   "explicacoes": [
+    "Prêmio gera busca",
+    "Showcases podem atrair contratantes",
+    "Seleção curatorial é chancela",
+    "Prêmio é pauta garantida",
+    "Legitimação pelos pares",
+    "Prêmios e showcases internacionais abrem portas",
+    "Reconhecimento da obra",
+    "Raramente paga direto, mas ajuda a rentabilizar em outras frentes"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "23",
+   "title": "Montar o show e realizar o show de lançamento com registro audiovisual",
+   "category": "Show e palco",
+   "notas": [
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    9
+   ],
+   "explicacoes": [
+    "Registro do show vira conteúdo ao vivo, fundamental para engajamento",
+    "Sem show pronto, nada se vende",
+    "Show de lançamento é vitrine pro mercado",
+    "Estreia com registro gera cobertura",
+    "Pares vão ao show de lançamento",
+    "Vídeo de show é o passaporte pra bookers de fora",
+    "O palco é onde a missão acontece ao vivo",
+    "Show pronto é o produto que se vende, embora o lançamento possa ser um investimento"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "24",
+   "title": "Trabalhar a presença de palco com marcações de roteiro",
+   "category": "Show e palco",
+   "notas": [
+    9,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    8
+   ],
+   "explicacoes": [
+    "Performance forte gera vídeo que circula",
+    "Palco bom traz recontratação e indicação",
+    "A performance é um critério importante de avaliação artística",
+    "Crítica avalia performance",
+    "Pares reconhecem domínio de palco",
+    "Fora, a performance é o que fica",
+    "É a entrega da missão na presença",
+    "Show melhor sustenta cachê, indiretamente"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "29",
+   "title": "Prospectar shows em órgãos públicos, como prefeituras, fundações e SESCs",
+   "category": "Venda de shows e circulação",
+   "notas": [
+    9,
+    10,
+    9,
+    9,
+    9,
+    5,
+    10,
+    10
+   ],
+   "explicacoes": [
+    "Evento público gera repercussão digital, mas não necessariamente da base do artista",
+    "Agenda direta",
+    "Contratação pública é chancela institucional",
+    "Evento público dá visibilidade local",
+    "Circuitos públicos reúnem a classe",
+    "Não tem impacto direto",
+    "Leva a música a quem não pagaria ingresso",
+    "Órgãos públicos pagam bons cachês, em geral"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "30",
+   "title": "Prospectar shows corporativos (shows fechados para convidados, contratados por empresas)",
+   "category": "Venda de shows e circulação",
+   "notas": [
+    8,
+    10,
+    8,
+    7,
+    8,
+    5,
+    9,
+    10
+   ],
+   "explicacoes": [
+    "Público fechado, menor efeito digital",
+    "Agenda direta",
+    "Shows corporativos são fechados, não necessariamente chegam ao conhecimento do mercado",
+    "Eventos fechados; pouca visibilidade externa",
+    "Menor efeito entre pares",
+    "Shows fechados não geram repercussão",
+    "Entretenimento pra quem não escolheu ouvir",
+    "Melhor cachê do mercado"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "31",
+   "title": "Prospectar shows particulares (casamentos, aniversários etc.)",
+   "category": "Venda de shows e circulação",
+   "notas": [
+    8,
+    10,
+    8,
+    6,
+    8,
+    5,
+    9,
+    10
+   ],
+   "explicacoes": [
+    "Não necessariamente converte em audiência",
+    "Agenda direta",
+    "Shows fechados que não chegam ao conhecimento do mercado",
+    "Invisível pra mídia",
+    "Pouco efeito entre pares",
+    "Shows fechados não geram visibilidade",
+    "O momento especial de alguém",
+    "Receita constante e previsível"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "32",
+   "title": "Prospectar shows em casas de show e teatros",
+   "category": "Venda de shows e circulação",
+   "notas": [
+    10,
+    10,
+    10,
+    10,
+    10,
+    9,
+    10,
+    8
+   ],
+   "explicacoes": [
+    "Show com público gera conteúdo e boca a boca",
+    "Agenda direta",
+    "Circuito de casas é chancela",
+    "Programação de casas gera pauta",
+    "A cena se encontra nas casas",
+    "Agenda de shows em espaços de bilheteria é indicativo de performance",
+    "Público que escolheu te ver",
+    "Bilheteria é incerta"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "33",
+   "title": "Prospectar shows em festivais e junto a produtores de eventos",
+   "category": "Venda de shows e circulação",
+   "notas": [
+    10,
+    10,
+    10,
+    10,
+    10,
+    9,
+    10,
+    8
+   ],
+   "explicacoes": [
+    "Público novo descobre você no line-up",
+    "Agenda direta",
+    "Line-up é curadoria pública",
+    "Festival gera cobertura",
+    "Pares no mesmo palco",
+    "Festivais são chancela da visibilidade do artista em seu país de origem",
+    "Alcance amplo da sua música",
+    "Cachês costumam ser mais baixos e o artista que não é atração principal tem pouco poder de barganha"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "N5",
+   "title": "Planejar turnê de circulação",
+   "category": "Venda de shows e circulação",
+   "notas": [
+    10,
+    10,
+    10,
+    10,
+    10,
+    8,
+    10,
+    7
+   ],
+   "explicacoes": [
+    "Praças novas viram público novo",
+    "Agenda direta em várias cidades",
+    "Artista que circula é notado",
+    "Turnê gera pauta local",
+    "Circular é legitimar",
+    "Circulação nacional é ensaio pra internacional",
+    "A missão chega a outras cidades",
+    "Altos custos logísticos; pode ser investimento ao invés de receita direta"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "34",
+   "title": "Procurar empresário/a",
+   "category": "Empresariamento e estrutura",
+   "notas": [
+    8,
+    10,
+    10,
+    9,
+    8,
+    9,
+    9,
+    10
+   ],
+   "explicacoes": [
+    "Gestão profissional reflete em tudo, com o tempo",
+    "É a principal atribuição do empresário",
+    "Ter um empresário abre portas e novas conexões",
+    "Empresário abre portas de mídia",
+    "Representação profissional é notada, ainda que indiretamente",
+    "Empresário com rede fora abre o exterior",
+    "Libera o artista pra criar",
+    "Alguém vendendo é o maior salto de receita"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "35",
+   "title": "Contratar assistente de produção / produtor executivo",
+   "category": "Empresariamento e estrutura",
+   "notas": [
+    8,
+    9,
+    8,
+    8,
+    8,
+    8,
+    9,
+    9
+   ],
+   "explicacoes": [
+    "Libera tempo pra conteúdo",
+    "Produção organizada sustenta agenda",
+    "Organização é reconhecida",
+    "Suporte na ativação de pautas",
+    "Profissionalismo percebido",
+    "Logística de fora exige apoio",
+    "Execução do plano é a missão em prática",
+    "Execução vira resultado"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "36",
+   "title": "Organizar a parte burocrática e operacional",
+   "category": "Empresariamento e estrutura",
+   "notas": [
+    7,
+    10,
+    10,
+    6,
+    8,
+    9,
+    10,
+    10
+   ],
+   "explicacoes": [
+    "Impacto indireto",
+    "Organização gera receitas",
+    "Empresa formal é exigência do mercado",
+    "Invisível para a mídia",
+    "Formalização é respeito profissional",
+    "Contrato internacional exige estrutura",
+    "Sustenta a missão no tempo",
+    "Evita perdas e organiza a receita"
+   ],
+   "recomendada": true,
+   "motivo_recomendada": "Se música é negócio, ele precisa estar estruturado como uma empresa"
+  },
+  {
+   "id": "37",
+   "title": "Inscrever o projeto em editais alinhados com o posicionamento",
+   "category": "Captação de recursos",
+   "notas": [
+    8,
+    8,
+    9,
+    9,
+    8,
+    8,
+    9,
+    10
+   ],
+   "explicacoes": [
+    "Financia, não divulga",
+    "Muitos editais pagam circulação",
+    "Aprovação em edital é curadoria",
+    "Projeto aprovado vira notícia",
+    "Pares acompanham os editais",
+    "Editais de mobilidade abrem fora",
+    "Viabiliza projetos de causa",
+    "Recurso direto pro projeto"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "38",
+   "title": "Criar projeto incentivado para captação de patrocínio",
+   "category": "Captação de recursos",
+   "notas": [
+    9,
+    9,
+    10,
+    10,
+    9,
+    7,
+    10,
+    10
+   ],
+   "explicacoes": [
+    "Investimento em digital como contrapartida para o patrocinador",
+    "Projeto patrocinado viabiliza a realização de shows",
+    "Patrocínio é chancela de marca, profissionalismo e relevância",
+    "Patrocinador traz visibilidade",
+    "Projeto grande é notado pela classe",
+    "Entra no seu portfólio, mas não é determinante",
+    "Viabiliza a missão em escala",
+    "Viabiliza projetos grandes"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "39",
+   "title": "Criar campanha de financiamento coletivo",
+   "category": "Captação de recursos",
+   "notas": [
+    9,
+    9,
+    8,
+    6,
+    9,
+    7,
+    10,
+    10
+   ],
+   "explicacoes": [
+    "Campanha mobiliza e engaja a base",
+    "Recompensas podem incluir shows",
+    "Meta batida é prova de público",
+    "Não gera pauta",
+    "Pares apoiam e divulgam",
+    "Impacto indireto",
+    "O público banca a missão",
+    "Pré-venda financia o projeto"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "40",
+   "title": "Mapear marcas alinhadas e prospectar ativações publicitárias",
+   "category": "Marcas, influenciadores e creators",
+   "notas": [
+    8,
+    7,
+    8,
+    7,
+    9,
+    7,
+    8,
+    10
+   ],
+   "explicacoes": [
+    "Ativação de marca amplia alcance, mas não é sobre a música",
+    "Visibilidade atrelada à marca não necessariamente converte em show",
+    "Marca associada é chancela, mas a música não é o foco",
+    "Repercussão de campanhas acontece em geral de forma restrita aos veículos de mercado",
+    "Parceria com marca é notada",
+    "Marcas globais abrem mercados, mas não convertem em exposição da música",
+    "Só vale se a marca reforçar a missão",
+    "Publicidade paga bem"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "41a",
+   "title": "Ativar influenciadores para divulgar o trabalho",
+   "category": "Marcas, influenciadores e creators",
+   "notas": [
+    10,
+    7,
+    9,
+    8,
+    9,
+    7,
+    8,
+    6
+   ],
+   "explicacoes": [
+    "Indicação chega onde anúncio não chega",
+    "Pouco efeito direto na agenda",
+    "Repercussão em rede posiciona",
+    "Influenciador é mídia hoje",
+    "Pares notam quem repercute",
+    "Só faz sentido com influenciadores internacionais",
+    "Alguém contando a sua história",
+    "Custo, não receita"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "41b",
+   "title": "Atuar como influenciador junto a marcas",
+   "category": "Marcas, influenciadores e creators",
+   "notas": [
+    8,
+    6,
+    7,
+    7,
+    6,
+    6,
+    8,
+    10
+   ],
+   "explicacoes": [
+    "Conteúdo de marca amplia audiência, porém não necessariamente relacionada à música",
+    "Não move agenda",
+    "Posiciona como creator, não como artista",
+    "Publi raramente é pauta",
+    "Não necessariamente é valorizado pelos pares",
+    "Barreira da língua nos conteúdos",
+    "Só vale se reforçar o posicionamento",
+    "Publi é receita direta"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "42",
+   "title": "Fazer parcerias com outros artistas da cena",
+   "category": "Parcerias artísticas",
+   "notas": [
+    9,
+    9,
+    9,
+    9,
+    10,
+    9,
+    10,
+    8
+   ],
+   "explicacoes": [
+    "Feat é troca de audiência",
+    "Show conjunto abre datas",
+    "Parceria é sinal de relevância",
+    "Feat é pauta",
+    "É o reconhecimento dos pares em ato",
+    "Feat com artista de fora abre mercado",
+    "A cena se fortalece junto",
+    "Divide custos e receitas"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "N2",
+   "title": "Ativar parcerias de composição",
+   "category": "Parcerias artísticas",
+   "notas": [
+    9,
+    6,
+    9,
+    9,
+    10,
+    8,
+    10,
+    7
+   ],
+   "explicacoes": [
+    "Repertório novo alimenta lançamentos",
+    "Repertório novo não necessariamente impacta na agenda",
+    "Coautoria com nomes conhecidos abre portas",
+    "Parceria de composição é pauta",
+    "É o reconhecimento dos pares em ato",
+    "Coautores de fora abrem mercado",
+    "A missão ganha outras vozes",
+    "Coautoria divide direitos e receita é incerta"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "43",
+   "title": "Criar a Lojinha do/da [nome do artista]",
+   "category": "Produtos e educação",
+   "notas": [
+    8,
+    5,
+    7,
+    5,
+    7,
+    5,
+    10,
+    10
+   ],
+   "explicacoes": [
+    "Fã de camiseta é outdoor, gera pouco stream",
+    "Vende mais em show, não gera show",
+    "Merch é sinal de base, não de mercado",
+    "Raramente vira pauta",
+    "Pouco efeito entre pares",
+    "Não é relevante",
+    "Fã veste a missão",
+    "Margem boa por unidade"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "54",
+   "title": "Lançar cursos, aulas ou mentorias",
+   "category": "Produtos e educação",
+   "notas": [
+    8,
+    5,
+    6,
+    5,
+    6,
+    5,
+    7,
+    10
+   ],
+   "explicacoes": [
+    "Aluno vira fã e divulga",
+    "Não move agenda",
+    "Ensinar posiciona como referência, mas não como artista",
+    "Raramente vira pauta",
+    "Pares reconhecem quem forma, mas não converte em posicionamento artístico",
+    "Não impacta",
+    "A não ser que sua missão esteja relacionada à educação",
+    "Receita recorrente sem show"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "55",
+   "title": "Atuar como palestrante",
+   "category": "Produtos e educação",
+   "notas": [
+    7,
+    5,
+    7,
+    6,
+    6,
+    5,
+    9,
+    10
+   ],
+   "explicacoes": [
+    "Efeito digital baixo",
+    "Não move agenda",
+    "Referência no tema, mas não como artista",
+    "Palestra em evento só gera alguma pauta em veículo de mercado",
+    "Pares reconhecem a trajetória, mas não impacta no posicionamento artístico",
+    "Pouco efeito",
+    "Contar a história é entrega",
+    "Cachê de palestra pode ser maior do que o cachê do show"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "50",
+   "title": "Prospectar bookers e agentes internacionais para turnê no exterior",
+   "category": "Internacionalização",
+   "notas": [
+    9,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    6
+   ],
+   "explicacoes": [
+    "Turnê fora gera conteúdo e buscas",
+    "Agenda internacional",
+    "Tocar fora legitima aqui",
+    "Turnê fora é pauta",
+    "Pares respeitam quem circula fora",
+    "É a estratégia internacional por definição",
+    "A missão atravessa fronteira",
+    "Custos altos, receita incerta"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "51",
+   "title": "Inscrever o projeto em festivais internacionais e editais de mobilidade",
+   "category": "Internacionalização",
+   "notas": [
+    9,
+    10,
+    10,
+    10,
+    10,
+    10,
+    9,
+    9
+   ],
+   "explicacoes": [
+    "Público novo descobre você",
+    "Agenda internacional",
+    "Festival fora é chancela",
+    "Cobertura de festival internacional",
+    "Line-up internacional gera reconhecimento entre os pares",
+    "É a porta de entrada mais viável",
+    "A missão em outro público",
+    "Mobilidade paga passagem e cachê"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "53",
+   "title": "Criar evento, festival ou label próprios",
+   "category": "Empreendimentos próprios",
+   "notas": [
+    9,
+    9,
+    10,
+    10,
+    10,
+    6,
+    9,
+    8
+   ],
+   "explicacoes": [
+    "Marca própria gera conteúdo",
+    "Você contrata a si mesmo",
+    "Quem cria evento vira referência",
+    "Evento próprio é pauta",
+    "Fomentar a cena é reconhecimento dos pares",
+    "Impacto indireto",
+    "Fomenta e protagoniza a cena",
+    "Risco alto, retorno financeiro instável"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "N1",
+   "title": "Buscar formação artística complementar",
+   "category": "Estrutura ao redor da arte",
+   "notas": [
+    9,
+    9,
+    9,
+    9,
+    10,
+    8,
+    10,
+    7
+   ],
+   "explicacoes": [
+    "Performance melhor gera conteúdo melhor",
+    "Palco melhor recontrata",
+    "Técnica é notada pelo mercado",
+    "Crítica avalia técnica",
+    "Pares reconhecem domínio",
+    "Fora, a técnica é critério",
+    "Ferramenta pra expressar o que já é seu",
+    "Investimento, retorno indireto"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "N3",
+   "title": "Trabalhar com produtor musical com boa capacidade técnica e alinhado ao seu estilo musical",
+   "category": "Estrutura ao redor da arte",
+   "notas": [
+    9,
+    9,
+    10,
+    10,
+    10,
+    9,
+    10,
+    8
+   ],
+   "explicacoes": [
+    "Fonograma competitivo entra em playlist",
+    "Som melhor vende show",
+    "Produção profissional é o mínimo pro mercado",
+    "Produção boa é notada pela crítica",
+    "Pares respeitam produção",
+    "Fora, produção é o primeiro filtro",
+    "A obra soa como deve",
+    "Investimento que valoriza o catálogo"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  },
+  {
+   "id": "N6",
+   "title": "Produzir o conteúdo audiovisual para os lançamentos",
+   "category": "Conteúdo audiovisual",
+   "notas": [
+    10,
+    8,
+    9,
+    8,
+    9,
+    10,
+    10,
+    7
+   ],
+   "explicacoes": [
+    "Vídeo é o que faz o lançamento existir no feed",
+    "Vídeo vende show, mas indiretamente",
+    "O audiovisual vai ser o ponto de contato do mercado com a sua música",
+    "Não gera pauta, mas reforça imagem",
+    "Pares notam produção audiovisual",
+    "Vídeo cruza fronteiras sem idioma",
+    "A missão em imagem e som",
+    "Custo alto, receita indireta"
+   ],
+   "recomendada": false,
+   "motivo_recomendada": ""
+  }
+ ]
+}

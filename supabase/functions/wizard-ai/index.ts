@@ -723,71 +723,9 @@ Retorne JSON: { "objectives": ["..."], "financial": "<o objetivo financeiro EXAT
       return { objectives: objs, financial };
     }
 
-    case 'generateStrategies': {
-      const similarPlans = await searchSimilarPlans(identity, spotify, { matchCount: 5 });
-      const references = formatReferenceContext(similarPlans);
-      const prevBlock = (previous && previous.length)
-        ? `\n\nESTRATÉGIAS JÁ PROPOSTAS (o artista pediu OUTRAS — PROIBIDO repetir ou reformular):\n${previous.map((s: any) => `- ${s.title}`).join('\n')}`
-        : '';
-      const prompt = `Gere de 12 a 16 ESTRATÉGIAS para o plano do artista, cruzando a SWOT: fraqueza × oportunidade (gera a maior parte), força × ameaça (defesa) e força × oportunidade (alavancagem).${flexionContext(identity?.gender)}
-Para cada FRAQUEZA marcada, escolha a estratégia-resposta do banco abaixo, personalizada ao artista. Inclua também as ESTRATÉGIAS UNIVERSAIS.
-${CROSSING_BANK}
-${UNIVERSAL_STRATEGIES}
-SWOT DO ARTISTA:
-- Forças: ${(swot?.strengths || []).join('; ')}
-- Fraquezas: ${(swot?.weaknesses || []).join('; ')}
-- Oportunidades: ${(swot?.opportunities || []).join('; ')}
-- Ameaças: ${(swot?.threats || []).join('; ')}
-${identityContext(identity)}${userEditsContext(userEdits)}${dossierContext(dossier)}${references}${prevBlock}
-OBJETIVOS: ${(objectives || []).join('; ')}
-CADA ESTRATÉGIA: { "type": "SO|ST|WO|WT", "title": (até 5 palavras, pode usar o nome do artista, ex.: "Lojinha da ${identity?.name || 'artista'}"), "description": (1-2 frases: COMO + canal + meta + prazo), "why": (liga ao item EXATO da SWOT), "category": (EXATAMENTE uma de: ${CATEGORIES.join(', ')}) }.
-PROIBIDO opinar sobre a obra/estilo/sonoridade. Selecione só o que é relevante às fraquezas/oportunidades marcadas + universais.
-Retorne JSON: { "strategies": [{ "type": "WO", "title": "...", "description": "...", "why": "...", "category": "..." }] }`;
-      const result = await callGroqJson(SYSTEM, prompt, HEAVY_MODEL);
-      result.strategies = (result.strategies || []).map((s: any) => ({
-        ...s,
-        category: CATEGORIES.includes(s.category) ? s.category : classifyCategory(`${s.title || ''} ${s.description || ''}`),
-      }));
-      saveGeneratedPlan(identity, spotify, swot, objectives || [], result.strategies || []);
-      return result;
-    }
-
-    case 'prioritizeStrategies': {
-      const strat = (strategies || []) as any[];
-      const profiles = objectiveProfiles(objectives || [], recognitionTags || identity?.recognitionTags || []);
-      const totalW = Object.values(profiles).reduce((a, b) => a + b, 0) || 1;
-      const onlyFinancial = Object.entries(profiles).every(([p, w]) => p === 'financeiro' || (w as number) === 0);
-      const scored = strat.map((s) => {
-        const cat = CATEGORIES.includes(s.category) ? s.category : classifyCategory(`${s.title || ''} ${s.description || ''}`);
-        const row = IMPACT_MATRIX[cat] || IMPACT_MATRIX.digital;
-        let impact = 0;
-        for (const [p, w] of Object.entries(profiles)) impact += (row[p] ?? 4.5) * (w as number);
-        impact = impact / totalW;
-        // Doc 6 §6: merch nunca entre as primeiras, salvo foco exclusivamente financeiro.
-        if (cat === 'merchan' && !onlyFinancial) impact -= 1.0;
-        return { id: s.id, title: s.title, category: cat, impact };
-      });
-      scored.sort((a, b) => b.impact - a.impact);
-      const N = scored.length;
-      const top12 = new Set(scored.slice(0, 12).map((x) => x.id));
-      const listForRationale = scored.slice(0, 12).map((x, i) => `${i + 1}. [id:${x.id}] ${x.title}`).join('\n');
-      const rationales: Record<string, string> = {};
-      try {
-        const data = await callGroqJson(
-          SYSTEM,
-          `Para cada estratégia abaixo (já ordenada por prioridade), escreva UMA linha curta e pedagógica ligando-a ao objetivo que ela mais serve.${flexionContext(identity?.gender)}\nOBJETIVOS: ${(objectives || []).join('; ')}\nESTRATÉGIAS:\n${listForRationale}\nRetorne JSON: { "rationales": [{ "id": "...", "line": "..." }] }`
-        );
-        (data.rationales || []).forEach((r: any) => {
-          if (r?.id) rationales[r.id] = String(r.line || '');
-        });
-      } catch (_) { /* fallback abaixo */ }
-      const out = scored.map((x, i) => ({
-        id: x.id,
-        finalScore: N - i,
-        priorityRationale: rationales[x.id] || (top12.has(x.id) ? 'Contribui diretamente para os seus objetivos.' : ''),
-      }));
-      return { strategies: out };
-    }
+    case 'generateStrategies':
+    case 'prioritizeStrategies':
+      throw new Error('Esta operação foi substituída pelo motor determinístico v4. Atualize o aplicativo.');
 
     case 'createSwotQuiz': {
       const prompt = `Gere 8 perguntas de diagnostico (abertas) para coletar dados que permitam montar uma analise SWOT do artista. As perguntas devem explorar forcas, fraquezas, oportunidades e ameacas da carreira.\n${identityContext(identity)}${spotifyContext(spotify)}\nRetorne JSON: { "questions": ["string", ...] }`;
