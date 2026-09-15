@@ -437,6 +437,8 @@ const ActionPlan: FC = () => {
                                         estado especificamente abre os detalhes da tarefa (botão
                                         "···"), onde o campo Status continua existindo. */}
                                     <TaskDate className="ap-date" value={t.deadline} overdue={overdue} disabled={!editPlanning} onBlocked={showProRequired} onChange={(d) => patchTask(p.s.id, t.id, { deadline: d })} />
+                                    {t.schedule?.continuous && <span className="ap-schedule-badge">Contínua</span>}
+                                    {t.schedule?.tight && <span className="ap-schedule-badge ap-schedule-badge--tight">Apertada</span>}
                                   </span>
                                 </span>
                                 <button type="button" className="action-task-more" aria-label="Abrir detalhes da tarefa" onClick={() => setSelectedTaskRef({ strategyId: p.s.id, taskId: t.id })}><FiMoreVertical size={17} /></button>
