@@ -17,7 +17,7 @@ import { RealBadge } from '../../components/RealBadge';
 import {
   TIER_ACCENT, altasForPattern, tierForAltas, tierForPattern,
 } from '@maestra/core/constants/realBadge';
-import { CABECALHO_DA_ENTREGA, dinheiroDoRelatorio, fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, PROFILE_BITS } from '@maestra/core/constants/realCopy';
+import { CABECALHO_DA_ENTREGA, dinheiroDoRelatorio, fmtBRL, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, PROFILE_BITS } from '@maestra/core/constants/realCopy';
 import { FIXOS, INTRO_DA_DIMENSAO, LEITURA_DA_DIMENSAO, LEITURAS_CURTAS } from '@maestra/core/constants/realTextos';
 import {
   comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
@@ -195,50 +195,6 @@ const RevenuePie: FC<{ ri: any }> = ({ ri }) => {
         <div className={styles.pieNaoSei}>
           <strong>Não informado:</strong>{' '}
           {resumo.fontes.filter((f) => f.naoSei).map((f) => f.rotulo).join(', ')}. {AVISOS.naoSei}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Engajamento por rede (mostra as 3, com a leitura do corte). §6.3 / §9.4.
-const EngagementGrid: FC<{ engagement: any; deezerFans?: number | null; informativo?: boolean }> = ({ engagement, deezerFans, informativo }) => {
-  const nets: [string, string][] = [['Instagram', 'instagram'], ['TikTok', 'tiktok'], ['YouTube', 'youtube']];
-  return (
-    <div className={styles.engGrid}>
-      <div className={styles.engGridTitle}>
-        Engajamento por rede
-        {/*
-          §8.2 e §11.3.5 — o engajamento está SUSPENSO do cálculo (a API entrega em 21% a 35% dos
-          casos, e a taxa não é autodeclarável). Mostrar sem dizer isso faria o artista atribuir a
-          nota dele a um número que não a moveu.
-        */}
-        {informativo && <span className={styles.engInfo}>{AVISOS.informativo}</span>}
-      </div>
-      {nets.map(([label, key]) => {
-        const e = engagement?.[key];
-        return (
-          <div key={key} className={styles.engRow}>
-            <span className={styles.engNet}>{label}</span>
-            {/*
-              §13.6 — sai o "abaixo do corte de X%". O engajamento está SUSPENSO do índice, e
-              comparar com um corte que não move nota fazia o artista atribuir o resultado dele a
-              um número que não participou da conta. Fica só a taxa.
-            */}
-            {/*
-              ⚠️ AUSÊNCIA NUNCA É ZERO (§8.5 e §12). O travessão dizia "não há nada aqui" com a
-              mesma cara com que um "0,0%" diria "o vínculo é nulo", e as duas coisas são
-              diferentes: uma é a API que não entregou, a outra é a rede que de facto não
-              engaja. "0,0%" só aparece quando a API devolveu zero.
-            */}
-            <span className={styles.engVal}>{e ? fmtPct(e.value) : 'sem dado'}</span>
-          </div>
-        );
-      })}
-      {deezerFans != null && (
-        <div className={styles.engRow}>
-          <span className={styles.engNet}>Fãs no Deezer</span>
-          <span className={styles.engVal}>{fmtNum(Math.round(deezerFans))}</span>
         </div>
       )}
     </div>
@@ -495,13 +451,6 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
       {dk === 'l' && !ehLegado(ri) && ri.flags?.travaL && (
         <div className={styles.dimAviso}>{AVISOS.travaL}</div>
       )}
-      {dk === 'a' && (
-        <EngagementGrid
-          engagement={ri.engagement}
-          deezerFans={ehLegado(ri) ? (ri.inputs?.deezerFans ?? null) : ri.deezerFans}
-          informativo={!ehLegado(ri)}
-        />
-      )}
       {(() => {
         // O legado (v2/v3) segue na narrativa antiga: os gatilhos novos leem estado que aquele
         // cálculo não produzia, e comentar sobre dado que não existe seria inventar.
@@ -558,6 +507,8 @@ interface Props {
   heroSub?: string;
   // Esconde o hero interno (avatar + título + refazer) — a /diagnostico usa o PageHeader padrão.
   hideHero?: boolean;
+  // O dashboard já oferece a ação de refazer no cabeçalho do método; não repete o aviso legado.
+  hideLegacyNotice?: boolean;
   // Conteúdo opcional renderizado logo ABAIXO do card "Seu perfil de carreira" (ex.: banner de refazer).
   belowProfile?: ReactNode;
   // Só para compor o identificador do documento exportado (ver `docId`). Sem ele o id cai no
@@ -569,7 +520,7 @@ interface Props {
 
 // Página de diagnóstico REAL (free tier) — entregue ao artista antes do pagamento.
 // Determinística: consome o realIndex calculado no backend (sem IA). Suporta v1 (antigo) e v2.
-export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true, onRedo, redoLocked = false, heroTitle, heroSub, hideHero = false, belowProfile, artistId, vinculo }) => {
+export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true, onRedo, redoLocked = false, heroTitle, heroSub, hideHero = false, hideLegacyNotice = false, belowProfile, artistId, vinculo }) => {
   const authUser = useAppSelector((s) => s.auth.user);
   const [methodOpen, setMethodOpen] = useState(false);
   // v2 (motor REAL Consolidado) tem `version: 2` + `boletim`; v1 mantém o shape antigo.
@@ -580,7 +531,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
   // Só o que não tem cartão para chamar de seu — hoje, o aviso de versão. Os outros quatro do
   // §11.3 são impressos dentro da dimensão a que pertencem, onde dizem de qual fonte ou de qual
   // campo se trata; aqui em cima eles eram a mesma frase sem a informação que a torna útil.
-  const avisos = avisosSemLugarProprio(riAny);
+  const avisos = avisosSemLugarProprio(riAny).filter((aviso) => !hideLegacyNotice || aviso.chave !== 'legado');
   const { profile, pattern } = realIndex;
   // Acento da página segue a fase REAL (tier da placa) — coerente com a identidade de gamificação.
   const realTier = tierForPattern(pattern);

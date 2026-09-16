@@ -1,14 +1,19 @@
 import { FC, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FiFileText, FiLifeBuoy, FiStar } from 'react-icons/fi';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { FiArrowRight, FiCheck, FiFileText, FiLifeBuoy, FiStar } from 'react-icons/fi';
 
 import { useArtist } from '@maestra/core/hooks/useArtist';
 import { useJourneyState } from '@maestra/core/hooks/useJourneyState';
+import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
+import { useIsPlatformAdmin } from '@maestra/core/hooks/useIsPlatformAdmin';
+import { pilaresDoPainel, type Pilar } from '@maestra/core/nucleo/pilaresDoPainel';
+import type { Artist } from '@maestra/core/interfaces/maestra';
 import { Spinner } from '../../components/spinner/spinner';
 import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
-import { PillarCards } from '../../components/dashboard/PillarCards';
+import { PillarCards, type SecaoDoPainel } from '../../components/dashboard/PillarCards';
 import { PlatformReviewModal } from '../../components/PlatformReviewModal';
+import { DiagnosticReport, type Chartmetric } from '../ArtistCreate/DiagnosticReport';
 
 // A home do artista, e a porta do método.
 //
@@ -23,6 +28,11 @@ import { PlatformReviewModal } from '../../components/PlatformReviewModal';
 
 const fmtNumber = (value?: number | null) =>
   typeof value === 'number' ? value.toLocaleString('pt-BR') : '—';
+
+const secaoDaUrl = (search: string): SecaoDoPainel => {
+  const aba = new URLSearchParams(search).get('aba');
+  return aba === 'diagnostico' || aba === 'execucao' || aba === 'planejamento' ? aba : 'visao-geral';
+};
 
 /** Um cartão do rodapé. Os três levam a algum lugar, então os três são alvo de clique e de foco. */
 const Atalho: FC<{ icone: ReactNode; titulo: string; texto: string; aoAbrir: () => void }> = ({
@@ -41,12 +51,125 @@ const Atalho: FC<{ icone: ReactNode; titulo: string; texto: string; aoAbrir: () 
   </article>
 );
 
+const CabecalhoDoMetodo: FC<{ pilar: Pilar; aoAbrir: () => void }> = ({ pilar, aoAbrir }) => (
+  <header className='method-view-header'>
+    <div>
+      <span>{pilar.rotulo}</span>
+      <h1 id={`method-${pilar.chave}`}>{pilar.titulo}</h1>
+      <p>{pilar.linha}</p>
+    </div>
+    <button type='button' onClick={aoAbrir}>{pilar.cta}<FiArrowRight aria-hidden /></button>
+  </header>
+);
+
+const PainelDoMetodo: FC<{
+  pilar: Pilar;
+  artist: Artist;
+  aoAbrir: () => void;
+  podeRefazer: boolean;
+}> = ({ pilar, artist, aoAbrir, podeRefazer }) => {
+  const content = artist.content || {};
+  const strategies = content.strategies || [];
+  const tasks = strategies.flatMap((strategy) => strategy.tasks || []).filter((task) => task.status !== 'archived');
+  const pending = tasks.filter((task) => task.status !== 'done').slice(0, 5);
+  const objectives = content.objectives || [];
+  const real = content.realIndex;
+
+  if (pilar.chave === 'diagnostico' && real) {
+    return (
+      <section className='method-view method-view-diagnostico method-view-report' aria-labelledby='method-diagnostico'>
+        <CabecalhoDoMetodo pilar={pilar} aoAbrir={aoAbrir} />
+        <DiagnosticReport
+          realIndex={real}
+          chartmetric={content.chartmetricProfile as Chartmetric | null}
+          artistId={artist.id}
+          vinculo={(content as any)?.titularidade?.vinculo}
+          artistName={artist.name}
+          artistImage={content.spotifyProfile?.image ?? null}
+          noSpotify={!content.spotifyProfile?.spotify_artist_id}
+          enableStickyCta={false}
+          showPlanningCta={false}
+          hideHero
+          hideLegacyNotice
+          onRedo={aoAbrir}
+          redoLocked={!podeRefazer}
+        />
+      </section>
+    );
+  }
+
+  return (
+    <section className={`method-view method-view-${pilar.chave}`} aria-labelledby={`method-${pilar.chave}`}>
+      <CabecalhoDoMetodo pilar={pilar} aoAbrir={aoAbrir} />
+
+      {pilar.chave === 'diagnostico' && (
+        <div className='method-diagnostic-grid'>
+          <article className='method-primary-card'>
+            <span>FASE ATUAL</span>
+            <strong>{real?.profile?.name || 'Ainda não medida'}</strong>
+            <p>{real?.profile?.description || pilar.detalhe || 'Faça o diagnóstico para descobrir o momento da sua carreira.'}</p>
+          </article>
+          <article className='method-real-card'>
+            <span>DIMENSÕES REAL</span>
+            <div>{['R', 'E', 'A', 'L'].map((letra, index) => <i key={letra} className={pilar.marcas?.[index] ? 'acesa' : ''}>{letra}</i>)}</div>
+            <p>{pilar.marcas?.filter(Boolean).length || 0} de 4 dimensões acesas</p>
+          </article>
+        </div>
+      )}
+
+      {pilar.chave === 'execucao' && (
+        <div className='method-execution-grid'>
+          <article className='method-progress-card'>
+            <span>PROGRESSO DO PLANO</span>
+            <strong>{pilar.progresso?.pct || 0}%</strong>
+            <div><i style={{ width: `${pilar.progresso?.pct || 0}%` }} /></div>
+            <p>{pilar.detalhe || 'As próximas tarefas aparecem aqui conforme o plano avança.'}</p>
+          </article>
+          <article className='method-list-card'>
+            <header><span>PRÓXIMAS TAREFAS</span><b>{pending.length}</b></header>
+            {(pending.length ? pending : [{ id: 'empty', description: 'Nenhuma tarefa pendente.', status: 'done', deadline: '' }]).map((task) => (
+              <div key={task.id}><i>{task.status === 'done' ? <FiCheck /> : null}</i><span>{task.description}</span><small>{task.deadline || ''}</small></div>
+            ))}
+          </article>
+        </div>
+      )}
+
+      {pilar.chave === 'planejamento' && (
+        <div className='method-planning-grid'>
+          <article className='method-primary-card'>
+            <span>VISÃO</span>
+            <strong>{content.identity?.vision || 'Defina onde você quer chegar.'}</strong>
+            <p>{content.identity?.mission || 'Sua missão e sua visão orientam todas as escolhas do plano.'}</p>
+          </article>
+          <article className='method-list-card'>
+            <header><span>OBJETIVOS DO CICLO</span><b>{objectives.length}</b></header>
+            {(objectives.length ? objectives.slice(0, 5) : ['Nenhum objetivo definido.']).map((objective, index) => (
+              <div key={objective}><i>{String(index + 1).padStart(2, '0')}</i><span>{objective}</span></div>
+            ))}
+          </article>
+          <article className='method-list-card method-strategies-card'>
+            <header><span>ESTRATÉGIAS ATIVAS</span><b>{strategies.length}</b></header>
+            {(strategies.length ? strategies.slice(0, 5).map((item) => item.title) : ['Nenhuma estratégia definida.']).map((strategy, index) => (
+              <div key={strategy}><i>{String(index + 1).padStart(2, '0')}</i><span>{strategy}</span></div>
+            ))}
+          </article>
+        </div>
+      )}
+    </section>
+  );
+};
+
 const Dashboard: FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { artist, loading } = useArtist();
   const journey = useJourneyState(artist);
+  const capabilities = useArtistCapabilities(artist);
+  const isPlatformAdmin = useIsPlatformAdmin();
+  const canRedoDiagnostic = capabilities.manageTasks || isPlatformAdmin;
   // A avaliação abre daqui, com estado próprio: o `reviewOpen` do Layout é privado dele.
   const [avaliando, setAvaliando] = useState(false);
+  const [secao, setSecao] = useState<SecaoDoPainel>(() => secaoDaUrl(location.search));
 
   if (loading && !artist) {
     return <Spinner loading>{null as any}</Spinner>;
@@ -67,14 +190,30 @@ const Dashboard: FC = () => {
     album_image: album.image,
     spotify_url: album.spotify_url,
   }));
+  const pilares = pilaresDoPainel(artist, journey, { ...capabilities, manageTasks: canRedoDiagnostic });
+  const pilarAtivo = pilares.find((pilar) => pilar.chave === secao);
 
   return (
     <div className='board-content page-view music-dashboard'>
-      <PillarCards artist={artist} />
+      <PillarCards artist={artist} ativa={secao} onSelect={setSecao} />
 
-      {/* A consultora vem logo depois das três portas: quem não soube o que fazer com elas
-          pergunta aqui, sem ter de sair da home. */}
-      <NytaDashboardHero />
+      {pilarAtivo ? (
+        <PainelDoMetodo
+          pilar={pilarAtivo}
+          artist={artist}
+          podeRefazer={canRedoDiagnostic}
+          aoAbrir={() => {
+            const rota = pilarAtivo.destino === 'refazerDiagnostico'
+              ? `/artists/${artist.id}/diagnostico/refazer`
+              : pilarAtivo.destino === 'assinatura'
+                ? '/planos'
+              : pilarAtivo.chave === 'execucao'
+                ? `/artists/${artist.id}/action-plan`
+                : `/artists/${artist.id}/perfil`;
+            navigate(rota);
+          }}
+        />
+      ) : <>
 
       <section className='music-stat-grid'>
         {[
@@ -136,6 +275,10 @@ const Dashboard: FC = () => {
         </div>
       </article>
 
+      {/* Depois dos números e das músicas, a Nyta ajuda a interpretar o que a pessoa acabou de
+          ver. A ordem evita que o chat esconda os dados principais na primeira dobra. */}
+      <NytaDashboardHero />
+
       {/* O rodapé encerra a página com o que é da CONTA, não da carreira. Os três levam a algum
           lugar: antes, dois deles eram cartões informativos que não faziam nada, e a pessoa
           clicava neles à espera de que fizessem. Avaliar e Termos também vivem em Configurações;
@@ -160,6 +303,7 @@ const Dashboard: FC = () => {
           aoAbrir={() => navigate('/legal/termos')}
         />
       </section>
+      </>}
 
       <PlatformReviewModal open={avaliando} onClose={() => setAvaliando(false)} />
     </div>

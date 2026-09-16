@@ -57,6 +57,11 @@ const montar = (over: Partial<RealInputsV4> = {}) => render(
 const aparece = (texto: string | RegExp) => screen.getAllByText(texto).length;
 
 describe('§12 o cartão do E na tela da web', () => {
+  it('não expõe o quadro de engajamento por rede no relatório', () => {
+    montar();
+    expect(screen.queryByText('Engajamento por rede')).toBeNull();
+  });
+
   it('no caminho direto não mostra a conta que ninguém informou', () => {
     montar({ saldoFaixa: 5 });
     expect(screen.queryByText('Composição da receita')).toBeNull();
