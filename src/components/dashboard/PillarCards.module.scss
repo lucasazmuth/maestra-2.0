@@ -11,8 +11,8 @@
   padding-top: 10px;
   overflow-x: auto;
   border-bottom: 1px solid #dfe5ef;
-  background: transparent;
-  box-shadow: none;
+  background: var(--canvas);
+  box-shadow: 0 8px 14px -14px rgba(60, 80, 120, .28);
   backdrop-filter: none;
   scrollbar-width: none;
 }
