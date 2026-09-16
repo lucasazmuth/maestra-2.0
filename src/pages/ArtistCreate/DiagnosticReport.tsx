@@ -1,13 +1,12 @@
 import { FC, ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { message } from 'antd';
-import { FiChevronDown, FiArrowRight, FiShare2, FiRefreshCw, FiLock } from 'react-icons/fi';
+import { FiChevronDown, FiArrowRight, FiRefreshCw, FiLock } from 'react-icons/fi';
 import { DownloadIcon } from '../../components/Icons/system';
 
-import { MaestraBrand } from '../../components/MaestraBrand';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import type { RealIndex } from '@maestra/core/interfaces/maestra';
-import { downloadNodePng, downloadPagesPdf, nodeToPngFile, urlToDataUrl } from '../../utils/exportImage';
+import { downloadPagesPdf, urlToDataUrl } from '../../utils/exportImage';
 import DiagnosticDoc from './DiagnosticDoc';
 // O tipo vem do NÚCLEO, e não do componente: reexportar através da fronteira do pacote é o
 // caminho que o webpack não segue.
@@ -546,7 +545,6 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
 
   // Compartilhar / baixar.
   const docRef = useRef<HTMLDivElement>(null);
-  const shareRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
   const [avatarData, setAvatarData] = useState<string | null>(null);
@@ -592,7 +590,6 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
   }, []);
 
   const avatarSrc = avatarData || ARTISTS_DEFAULT_IMAGE;
-  const fileName = `diagnostico-${(name || 'artista').toLowerCase().replace(/\s+/g, '-')}.png`;
 
   // AUTORIA DO DOCUMENTO — ver `Autoria` em DiagnosticDoc para o porquê.
   //
@@ -633,19 +630,6 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
     } finally {
       setBusy(false);
     }
-  };
-  const handleShare = async () => {
-    if (!shareRef.current) return;
-    setBusy(true);
-    try {
-      const file = await nodeToPngFile(shareRef.current, fileName);
-      const nav = navigator as Navigator & { canShare?: (d: unknown) => boolean; share?: (d: unknown) => Promise<void> };
-      if (file && nav.canShare?.({ files: [file] }) && nav.share) {
-        await nav.share({ files: [file], title: `Meu diagnóstico REAL: ${profile.name}` });
-      } else {
-        await downloadNodePng(shareRef.current, fileName);
-      }
-    } catch { /* cancelado */ } finally { setBusy(false); }
   };
 
   // Linhas de dados ("o espelho") por dimensão. `num` ativa o contador animado.
@@ -968,7 +952,6 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
         )}
         <div className={styles.shareActions} data-noexport="1">
           <button className={styles.shareBtn} onClick={handleDownloadPdf} disabled={busy}><DownloadIcon size={18} /> {busy ? LEVAR_O_DIAGNOSTICO.baixando : LEVAR_O_DIAGNOSTICO.baixar}</button>
-          <button className={styles.shareBtn} onClick={handleShare} disabled={busy} aria-label="Compartilhar diagnóstico"><FiShare2 size={15} /> {LEVAR_O_DIAGNOSTICO.compartilhar}</button>
         </div>
         {showPlanningCta && <p className={styles.ctaMicrocopy}>{CHAMADA_DO_PLANEJAMENTO.nota}</p>}
       </div>
@@ -1024,27 +1007,6 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
         <DiagnosticDoc realIndex={realIndex} chartmetric={chartmetric} artistName={name} avatarSrc={avatarSrc} autoria={autoria} />
       </div>
 
-      {/* Cartão de compartilhamento — fora da tela, capturado como PNG */}
-      <div className={styles.shareStage} aria-hidden data-noexport="1">
-        <div ref={shareRef} className={styles.shareCard}>
-          <div className={styles.shareBrand}>
-            <MaestraBrand variant='wordmark' tone='light' />
-          </div>
-          <img className={styles.shareAvatar} src={avatarSrc} alt="" crossOrigin="anonymous" />
-          <div className={styles.shareKicker}>Diagnóstico de carreira</div>
-          <div className={styles.shareName}>{profile.name}</div>
-          <div className={styles.shareTagline}>{clean(profile.description)}</div>
-          <div className={styles.sharePattern}>
-            {DIM_META.map((d) => (
-              <div key={d.key} className={styles.sharePatternItem}>
-                <span className={styles.sharePatternLetter}>{d.letter}</span>
-                <span className={styles.sharePatternDot} style={{ background: pattern[d.key] ? '#9A4FD1' : '#5a5a64' }} />
-              </div>
-            ))}
-          </div>
-          <div className={styles.shareFooter}>maestramanager.com</div>
-        </div>
-      </div>
     </div>
   );
 };
