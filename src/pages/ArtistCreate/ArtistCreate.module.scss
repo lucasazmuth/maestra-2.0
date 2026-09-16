@@ -95,10 +95,50 @@
   .shareBtn { border-color: #b7c8e8; color: #2f5fe0; background: #fff; }
   .signBlock { border: 0; border-radius: 8px; background: linear-gradient(135deg, #121d33, #1d2a47); box-shadow: 0 14px 32px rgba(24, 38, 65, .16); }
 
+  .methodBlock {
+    margin-top: 28px;
+    border: 1px solid #dbe4f1;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+  }
+  .methodToggle {
+    padding: 18px 22px;
+    color: #273f6b;
+    font-size: 14px;
+    font-weight: 800;
+  }
+  .methodToggle:hover { color: #2f6cf6; }
+  .methodBody {
+    margin: 0;
+    padding: 2px 22px 24px;
+    border-top: 1px solid #e4ebf5;
+    color: #52668d;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+  .methodBody p { margin: 14px 0; }
+  .methodDims {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 24px;
+    margin: 20px 0;
+    border-top: 1px solid #e4ebf5;
+  }
+  .methodDim {
+    gap: 12px;
+    padding: 15px 0;
+    border-bottom: 1px solid #e4ebf5;
+  }
+  .methodDimLetter { width: 26px; color: #2f6cf6; }
+  .methodDimName { color: #273f6b; }
+  .methodDimDesc { color: #61749a; }
+
   @media (max-width: 760px) {
     .dimGrid, .audienceGrid { grid-template-columns: 1fr; }
     .audienceGrid > :only-child { grid-column: auto; }
     .reportSectionTitle { font-size: 18px; }
+    .methodDims { grid-template-columns: 1fr; }
   }
 }
 
