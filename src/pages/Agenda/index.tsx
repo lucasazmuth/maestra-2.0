@@ -17,6 +17,7 @@ import { EVENT_TYPES } from '@maestra/core/constants/maestra';
 import * as eventsDb from '@maestra/core/services/db/events';
 import * as membersDb from '@maestra/core/services/db/members';
 import type { AgendaEvent, ArtistContent, ArtistMember } from '@maestra/core/interfaces/maestra';
+import { actionStatusFromChecklist } from '@maestra/core/services/cronogramaV13';
 import { buildAssigneeOptions, eventDurationMinutes, eventMatchesAssignee, getEventStyle, getOverlapColumns, isToday, dateForPointer, type AgendaAssigneeOption, type AgendaEventWithAssignee, SLOT_HEIGHT } from './agendaUtils';
 import './agenda.scss';
 
@@ -130,7 +131,9 @@ const Agenda: FC = () => {
             ...action,
             date: event.date,
             owner,
-            status: event.status === 'completed' ? 'done' : action.status === 'done' ? 'todo' : action.status,
+            // The event can manually complete an action. Reopening it must not
+            // undo a checklist that is already complete.
+            status: event.status === 'completed' ? 'done' : actionStatusFromChecklist(action.tasks),
           };
         }),
         tasks: (strategy.tasks || []).map((task) => {

@@ -23,6 +23,7 @@ describe('migração do plano v3', () => {
     expect(result.migrated).toBe(true);
     expect(result.strategy.actions?.[0]).toMatchObject({ id: 'legacy-1', date: '2026-10-10', status: 'done', owner: 'owner@example.com' });
     expect(result.strategy.actions?.[0].legacyDescription).toBe('Catálogo antigo');
+    expect(result.strategy.actions?.[0].tasks.every((task) => task.status === 'todo')).toBe(true);
   });
 
   it('keeps unmatched legacy tasks instead of dropping them', () => {

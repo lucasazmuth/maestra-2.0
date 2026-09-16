@@ -1,5 +1,6 @@
 import {
   dependencyWarnings,
+  actionStatusFromChecklist,
   buildV13Actions,
   defaultV13Schedule,
   distributeV13Actions,
@@ -19,6 +20,18 @@ const strategy = (bankId: string): Strategy => ({
 });
 
 describe('cronograma v1.3', () => {
+  it('keeps responsibility boundaries between action status and checklist status', () => {
+    const tasks = [
+      { id: 'task-1', description: 'Uma tarefa', status: 'todo' as const },
+      { id: 'task-2', description: 'Outra tarefa', status: 'todo' as const },
+    ];
+    expect(actionStatusFromChecklist(tasks, 'todo')).toBe('todo');
+    expect(actionStatusFromChecklist([{ ...tasks[0], status: 'done' }], 'todo')).toBe('done');
+    expect(actionStatusFromChecklist(tasks.map((task) => ({ ...task, status: 'done' as const })), 'todo')).toBe('done');
+    // A manually completed action may intentionally keep open checklist items.
+    expect(actionStatusFromChecklist(tasks, 'done')).toBe('done');
+  });
+
   it('matches the canonical source counts', () => {
     expect(validateV13Sources()).toEqual([]);
   });
@@ -29,6 +42,26 @@ describe('cronograma v1.3', () => {
     expect(actions[0].title).toBe('Catálogo e conceito do produto fonográfico');
     expect(actions[0].tasks).toHaveLength(3);
     expect(actions[0].tasks[0]).not.toHaveProperty('deadline');
+  });
+
+  it('derives an existing action status from completed checklist items', () => {
+    const actions = buildV13Actions(strategy('1'), defaultV13Schedule('2026-09-16'), {
+      today: '2026-09-16',
+      existing: [{
+        id: 'existing-action',
+        number: 1,
+        title: 'Catálogo e conceito do produto fonográfico',
+        dateType: 'automatica',
+        anchor: 'lancamento',
+        status: 'todo',
+        tasks: [
+          { id: 'a', description: 'a', status: 'done' },
+          { id: 'b', description: 'b', status: 'done' },
+          { id: 'c', description: 'c', status: 'done' },
+        ],
+      }],
+    });
+    expect(actions[0].status).toBe('done');
   });
 
   it('uses the strategy acceptance date for later inicio strategies', () => {

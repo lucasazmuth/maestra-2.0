@@ -3,6 +3,7 @@ import type {
   ActionPlanAction,
   ActionPlanAnchor,
   ActionPlanCadence,
+  ActionPlanChecklistItem,
   ActionPlanDateType,
   ActionPlanMilestoneType,
   ActionPlanV13Schedule,
@@ -137,7 +138,23 @@ const calculatedDate = (
   return action.fim_de_semana ? date : nextBrazilBusinessDay(date);
 };
 
-const statusFor = (value?: string): TaskStatus => value === 'done' || value === 'archived' ? value : 'todo';
+const statusFor = (value?: string): TaskStatus => value === 'done' || value === 'in_progress' || value === 'archived' ? value : 'todo';
+
+/**
+ * A checklist drives the action status when it changes. A `done` action with open
+ * checklist items is still valid: it represents the manual completion allowed by
+ * the v1.3 contract.
+ */
+export const actionStatusFromChecklist = (
+  tasks: ActionPlanChecklistItem[],
+  currentStatus?: TaskStatus
+): TaskStatus => {
+  if (currentStatus === 'archived') return 'archived';
+  if (tasks.length > 0 && tasks.every((task) => task.status === 'done')) return 'done';
+  if (currentStatus === 'done') return 'done';
+  if (tasks.some((task) => task.status === 'done' || task.status === 'in_progress')) return 'in_progress';
+  return currentStatus === 'in_progress' ? 'in_progress' : 'todo';
+};
 
 export interface BuildV13Options {
   today: string;
@@ -182,7 +199,8 @@ export const buildV13Actions = (
       dateType: action.tipo as ActionPlanDateType,
       anchor: definition.ancora as ActionPlanAnchor,
       date: effectiveDate,
-      status: statusFor(existing?.status),
+      status: actionStatusFromChecklist(tasks, statusFor(existing?.status)),
+      owner: existing?.owner,
       tight: tight || undefined,
       milestoneType: action.marco_tipo as ActionPlanMilestoneType | undefined,
       cadence: action.cadencia as ActionPlanCadence | undefined,

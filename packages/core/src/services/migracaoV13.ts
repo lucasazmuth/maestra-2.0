@@ -1,4 +1,4 @@
-import { buildV13Actions, defaultV13Schedule } from './cronogramaV13';
+import { actionStatusFromChecklist, buildV13Actions, defaultV13Schedule } from './cronogramaV13';
 import type {
   ActionPlanAction,
   ActionPlanV13Schedule,
@@ -22,7 +22,9 @@ const mergeLegacyAction = (action: ActionPlanAction, legacy: ActionTask | undefi
     ...action,
     id: legacy.id || action.id,
     date: legacy.deadline || action.date,
-    status: legacy.status,
+    // A legacy `done` action may have open v1.3 checklist items: that is the
+    // supported manual-completion state, so do not invent task completions.
+    status: actionStatusFromChecklist(action.tasks, legacy.status),
     owner: legacy.owner,
     legacyDescription: legacy.description !== action.title ? legacy.description : undefined,
     legacyTaskId: legacy.id,

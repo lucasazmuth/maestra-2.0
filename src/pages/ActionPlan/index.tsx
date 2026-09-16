@@ -23,7 +23,7 @@ import { listMembers } from '@maestra/core/services/db/members';
 import * as eventsDb from '@maestra/core/services/db/events';
 import type { ActionPlanAction, ActionTask, ArtistContent, ArtistMember, Strategy } from '@maestra/core/interfaces/maestra';
 import { migrateContentToV13 } from '@maestra/core/services/migracaoV13';
-import { buildV13Actions, defaultV13Schedule } from '@maestra/core/services/cronogramaV13';
+import { actionStatusFromChecklist, buildV13Actions, defaultV13Schedule } from '@maestra/core/services/cronogramaV13';
 import './actionPlan.scss';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -38,12 +38,25 @@ const ActionPlanScheduleView: FC<{
   canEdit: boolean;
   onBlocked: () => void;
   onChange: (strategyId: string, taskId: string, deadline?: string) => void;
-}> = ({ strategies, canEdit, onBlocked, onChange }) => {
-  const rows = useMemo(
-    () => strategies.flatMap((strategy) => (strategy.tasks || []).filter(isActive).map((task, index) => ({ strategy, task, index }))),
+  onActionChange: (strategyId: string, action: ActionPlanAction, deadline?: string) => void;
+}> = ({ strategies, canEdit, onBlocked, onChange, onActionChange }) => {
+  const rows = useMemo<Array<{ strategy: Strategy; action?: ActionPlanAction; task?: ActionTask; index: number }>>(
+    () => {
+      const result: Array<{ strategy: Strategy; action?: ActionPlanAction; task?: ActionTask; index: number }> = [];
+      strategies.forEach((strategy) => {
+        if (strategy.actions?.length) {
+          strategy.actions
+            .filter((action) => action.status !== 'archived')
+            .forEach((action, index) => result.push({ strategy, action, index }));
+          return;
+        }
+        (strategy.tasks || []).filter(isActive).forEach((task, index) => result.push({ strategy, task, index }));
+      });
+      return result;
+    },
     [strategies]
   );
-  const dates = rows.map(({ task }) => task.deadline).filter(Boolean) as string[];
+  const dates = rows.map(({ action, task }) => action?.date || task?.deadline).filter(Boolean) as string[];
   const orderedDates = dates.map((date) => dayjs(date)).sort((a, b) => a.valueOf() - b.valueOf());
   const start = (orderedDates.length ? orderedDates[0] : dayjs()).startOf('month');
   const endDate = orderedDates.length ? orderedDates[orderedDates.length - 1] : start;
@@ -71,11 +84,11 @@ const ActionPlanScheduleView: FC<{
             <div className="action-plan-gantt-months" style={{ width }}>
               {months.map((month) => <span key={month.format('YYYY-MM')} style={{ width: width / monthCount }}>{month.format('MMM YYYY')}</span>)}
             </div>
-            {rows.map(({ strategy, task, index }) => (
-              <div className="action-plan-gantt-row" key={`${strategy.id}-${task.id || index}`}>
+            {rows.map(({ strategy, action, task, index }) => (
+              <div className="action-plan-gantt-row" key={`${strategy.id}-${action?.id || task?.id || index}`}>
                 <div className="action-plan-gantt-task">
                   <small>{String(index + 1).padStart(2, '0')}</small>
-                  <span><b>{strategy.title}</b>{task.description}</span>
+                  <span><b>{strategy.title}</b>{action?.title || task?.description}</span>
                 </div>
                 <div className="action-plan-gantt-timeline" style={{ width }}>
                   {months.map((month) => <i key={month.format('YYYY-MM')} style={{ width: width / monthCount }} />)}
@@ -83,13 +96,15 @@ const ActionPlanScheduleView: FC<{
                     allowClear
                     inputReadOnly
                     disabled={!canEdit}
-                    aria-label={`Início: ${task.description}`}
+                    aria-label={`Início: ${action?.title || task?.description}`}
                     className="action-plan-gantt-marker"
-                    value={task.deadline ? dayjs(task.deadline) : null}
+                    value={(action?.date || task?.deadline) ? dayjs(action?.date || task?.deadline) : null}
                     onClick={!canEdit ? onBlocked : undefined}
-                    onChange={(value) => onChange(strategy.id, task.id, value?.format('YYYY-MM-DD'))}
+                    onChange={(value) => action
+                      ? onActionChange(strategy.id, action, value?.format('YYYY-MM-DD'))
+                      : onChange(strategy.id, task!.id, value?.format('YYYY-MM-DD'))}
                     format="DD MMM"
-                    style={{ left: `${position(task.deadline)}%` }}
+                    style={{ left: `${position(action?.date || task?.deadline)}%` }}
                   />
                 </div>
               </div>
@@ -366,14 +381,35 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
     if (strategy) syncActionEvent(strategy, action, { date });
   };
 
+  const patchActionOwner = (sid: string, action: ActionPlanAction, owner?: string) => {
+    void commit((ss) => ss.map((s) => s.id !== sid ? s : {
+      ...s,
+      actions: (s.actions || []).map((item) => item.id === action.id ? { ...item, owner } : item),
+    }), editPlanning);
+    const strategy = artist?.content?.strategies?.find((s) => s.id === sid);
+    if (strategy) syncActionEvent(strategy, action, { owner });
+  };
+
   const toggleActionChecklist = (sid: string, actionId: string, taskId: string) => {
+    const strategy = artist?.content?.strategies?.find((s) => s.id === sid);
+    const action = strategy?.actions?.find((item) => item.id === actionId);
+    const task = action?.tasks.find((item) => item.id === taskId);
+    if (!strategy || !action || !task) return;
+    const nextTasks = action.tasks.map((item) => item.id === taskId
+      ? { ...item, status: item.status === 'done' ? 'todo' as const : 'done' as const }
+      : item);
+    const checklistWasComplete = action.tasks.length > 0 && action.tasks.every((item) => item.status === 'done');
+    const manualCompletion = action.status === 'done' && !checklistWasComplete;
+    const nextStatus = actionStatusFromChecklist(nextTasks, manualCompletion ? 'done' : undefined);
     void commit((ss) => ss.map((s) => s.id !== sid ? s : {
       ...s,
       actions: (s.actions || []).map((action) => action.id !== actionId ? action : {
         ...action,
-        tasks: action.tasks.map((task) => task.id === taskId ? { ...task, status: task.status === 'done' ? 'todo' : 'done' } : task),
+        status: nextStatus,
+        tasks: nextTasks,
       }),
     }), editPlanning);
+    syncActionEvent(strategy, action, { status: nextStatus });
   };
   // Marcar como concluída é ACOMPANHAR (não estrutural): liberado pra quem cria/acessa o plano
   // (dono do perfil ou membro com nível plan), via editPlanning em vez de manageTasks.
@@ -638,17 +674,18 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
                       {p.s.actions?.length ? (
                         <ul className="ap-v13-actionlist">
                           {p.s.actions.filter((action) => action.status !== 'archived').map((action) => {
-                            const done = action.status === 'done';
+                            const checklistStatus = actionStatusFromChecklist(action.tasks, action.status);
+                            const done = checklistStatus === 'done';
                             const checklistDone = action.tasks.filter((task) => task.status === 'done').length;
+                            const manuallyDone = done && checklistDone < action.tasks.length;
                             return (
                               <li key={action.id} className={`ap-v13-action${done ? ' is-done' : ''}`}>
                                 <div className="ap-v13-action-head">
                                   <strong>{action.title}</strong>
                                   <span className="ap-v13-action-meta ap-plan-task-meta">
-                                    <TaskOwner className="ap-owner" value={action.owner} assignees={assignees} disabled={!editPlanning} onBlocked={showProRequired} onChange={(owner) => {
-                                      void commit((ss) => ss.map((s) => s.id !== p.s.id ? s : { ...s, actions: (s.actions || []).map((item) => item.id === action.id ? { ...item, owner } : item) }), editPlanning);
-                                    }} />
+                                    <TaskOwner className="ap-owner" value={action.owner} assignees={assignees} disabled={!editPlanning} onBlocked={showProRequired} onChange={(owner) => patchActionOwner(p.s.id, action, owner)} />
                                     <TaskDate className="ap-date" value={action.date} overdue={!!(action.date && action.date < today && !done)} disabled={!editPlanning} onBlocked={showProRequired} onChange={(date) => patchAction(p.s.id, action, date)} />
+                                    {manuallyDone && <span className="ap-action-status">Concluída manualmente</span>}
                                     <span className="ap-schedule-badge">{checklistDone}/{action.tasks.length}</span>
                                   </span>
                                 </div>
@@ -720,6 +757,7 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
           canEdit={editPlanning}
           onBlocked={showProRequired}
           onChange={(strategyId, taskId, deadline) => patchTask(strategyId, taskId, { deadline })}
+          onActionChange={patchAction}
         />
       )}
 
