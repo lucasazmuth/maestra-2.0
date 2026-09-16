@@ -2612,7 +2612,79 @@ $docLow: #8b9ab4;
   .realPatternLetterHigh { color: #ffffff !important; }
   .realPatternLetterLow { color: rgba(255, 255, 255, .55) !important; }
 
-  .dimCard { border-radius: 14px; }
+  // O relatório é uma leitura de carreira, não um painel administrativo. Cada frente ganha
+  // uma assinatura própria, como faixas de um mesmo disco, sem alterar a régua ou os dados.
+  .dimCard {
+    --dim-color: #3361ff;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #dbe4f1 !important;
+    border-left: 5px solid var(--dim-color) !important;
+    border-radius: 8px;
+    box-shadow: 0 12px 28px rgba(45, 65, 105, .08) !important;
+  }
+  .dimr { --dim-color: #2f6cf6; }
+  .dime { --dim-color: #d08a18; }
+  .dima { --dim-color: #e35b76; }
+  .diml { --dim-color: #7a4de0; }
+
+  .dimTop { margin-bottom: 18px; }
+  .dimMono {
+    color: var(--dim-color) !important;
+    background: color-mix(in srgb, var(--dim-color) 9%, white) !important;
+    border-color: color-mix(in srgb, var(--dim-color) 60%, white) !important;
+  }
+  .dimTitle { color: #273f6b !important; font-size: 18px; }
+  .dimSub { color: #7184a5 !important; }
+  .dimScore { color: #273f6b !important; }
+  .dimScoreMax { color: #7184a5 !important; }
+  .dimBadgeHigh { color: #fff; background: var(--dim-color); }
+  .dimBadgeLow { color: #61749a; background: #edf2f8; }
+  .rulerFill { background: var(--dim-color) !important; }
+  .dimStatusLine { color: #52668d !important; }
+  .dimLeitura {
+    border-left: 3px solid var(--dim-color) !important;
+    background: color-mix(in srgb, var(--dim-color) 7%, white) !important;
+    color: #36517f !important;
+  }
+  .dimReveal { border-color: #dce5f1 !important; }
+  .dimRevealHead { color: var(--dim-color) !important; }
+  .dimRevealLead { color: #273f6b !important; }
+
+  .cityChart,
+  .platformPresence,
+  .profileMap,
+  .insightsBlock {
+    border-radius: 8px;
+    border-top: 3px solid #52668d !important;
+    padding: 24px !important;
+  }
+  .cityChart { border-top-color: #2f6cf6 !important; }
+  .platformPresence { border-top-color: #7a4de0 !important; }
+  .profileMap { border-top-color: #d08a18 !important; }
+  .insightsBlock { border-top-color: #e35b76 !important; }
+
+  .ctaBlock {
+    margin: 0 0 28px;
+    padding: 34px 28px;
+    border: 1px solid #dbe4f1;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #f4f7ff 0%, #ffffff 62%, #f6f1ff 100%);
+  }
+  .ctaTitle { color: #273f6b !important; }
+  .ctaParagraph, .ctaMicrocopy { color: #61749a !important; }
+  .shareBtn { border-color: #b7c8e8 !important; color: #2f5fe0 !important; background: #fff !important; }
+  .shareBtn:hover:not(:disabled) { border-color: #2f6cf6 !important; background: #edf3ff !important; }
+
+  .signBlock {
+    border-radius: 8px;
+    border: 0 !important;
+    background: linear-gradient(135deg, #121d33, #1d2a47) !important;
+    box-shadow: 0 14px 32px rgba(24, 38, 65, .16) !important;
+  }
+  .signKicker { color: #b9ccff !important; }
+  .signName, .signHighlight { color: #fff !important; }
+  .signRole, .signPara { color: #c0cbe0 !important; }
 
   .dimMono {
     color: #52668d !important;

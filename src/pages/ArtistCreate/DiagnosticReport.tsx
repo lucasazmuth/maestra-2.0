@@ -251,7 +251,7 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
       },
     ];
   return (
-    <div className={`${styles.dimCard} ${high ? styles.stHigh : styles.stLow}`}>
+    <div className={`${styles.dimCard} ${styles[`dim${dk}`]} ${high ? styles.stHigh : styles.stLow}`}>
       <div className={styles.dimTop}>
         <span className={styles.dimMono}>{meta.letter}</span>
         <div className={styles.dimTitleWrap}>
@@ -791,7 +791,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
               const stateClass = neutral ? styles.stNeutral : high ? styles.stHigh : styles.stLow;
               const [title, sub] = d.name.split(' · ');
               return (
-                <div key={d.key} className={`${styles.dimCard} ${stateClass}`}>
+                <div key={d.key} className={`${styles.dimCard} ${styles[`dim${d.key}`]} ${stateClass}`}>
                   <div className={styles.dimTop}>
                     <span className={styles.dimMono}>{d.letter}</span>
                     <div className={styles.dimTitleWrap}>
