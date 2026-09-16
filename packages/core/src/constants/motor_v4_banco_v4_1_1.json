@@ -1,0 +1,4528 @@
+{
+ "version": "4.1.1",
+ "generated_at": "2026-09-16",
+ "rule": {
+  "summary": "A estratégia entra na lista do artista SE (requires_any_opportunity vazio OU ao menos uma delas marcada) E (triggers vazios OU ao menos uma fraqueza de triggers.weaknesses marcada OU ao menos uma oportunidade de triggers.opportunities marcada).",
+  "notes": [
+   "Dentro de cada lista vale 'qualquer uma': nunca se exige que todas as obrigatórias ou todos os gatilhos estejam marcados.",
+   "Forças e ameaças (info) não disparam nada; são exibidas na visualização como contexto.",
+   "Não existem estratégias universais. Uma estratégia com requires_any_opportunity e triggers vazios nunca dispara (não há nenhuma assim no banco).",
+   "IDs de fraquezas/forças: itens internos 1 a 20. IDs de oportunidades: chips 1 a 22. IDs de ameaças: chips 1 a 13 na ordem da spec da SWOT; conferir contra os IDs internos.",
+   "v4.1: action_plan substituído por actions[] (title, path, date_type, tasks[]). Regra de disparo e priorização inalteradas.",
+   "v4.1.1: ordem das ações alinhada ao cronograma_v1_3.json (5 estratégias reordenadas: #15, #19, #23, #30, #N1). Nenhum texto mudou."
+  ]
+ },
+ "strategies": [
+  {
+   "id": "1",
+   "category": "Lançamentos fonográficos",
+   "title": "Criar uma programação estruturada de lançamentos fonográficos",
+   "subtitle": "Priorizar distribuidora que ofereça atendimento e estratégia de pitching para playlists. Vale avaliar feats e participações especiais para ampliar o alcance de cada lançamento. Ao avaliar suas opções, considere qual demonstra maior interesse em tratar seu trabalho como prioritário. Algumas distribuidoras podem oferecer um adiantamento, dependendo da projeção de receita do seu lançamento.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     3,
+     9,
+     10,
+     11,
+     15,
+     18
+    ],
+    "opportunities": [
+     7,
+     13,
+     14
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     1,
+     8,
+     11,
+     13
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Catálogo e conceito do produto fonográfico",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Organizar o banco de músicas, identificando as prontas e em produção (dica: use a Maestra)",
+      "Definir o conceito artístico do projeto a partir da sua visão, missão e valores",
+      "Avaliar incluir feats e, se fizer sentido, escolher os artistas a convidar"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Planejamento dos lançamentos do ano",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o que vai ser lançado (singles, EP ou álbum)",
+      "Montar o cronograma com a data prevista de cada lançamento"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Contratação da distribuidora",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Listar distribuidoras com atendimento adequadas ao seu nicho",
+      "Apresentar o projeto às de interesse",
+      "Comparar as propostas (atendimento, pitching, adiantamento) e fechar"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Preparação do lançamento fonográfico",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Preparar o plano de marketing do lançamento",
+      "Produzir o conteúdo promocional planejado",
+      "Conferir cadastros e metadados (perfis de artista, ISRC/ISWC, filiação como intérprete e músico)",
+      "Enviar o pitching com quatro semanas de antecedência, com master, ISRC, capa, fotos, release e plano de marketing"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Dia D: lançamento fonográfico",
+     "path": null,
+     "date_type": "marco",
+     "tasks": [
+      "Reenvelopar todas as redes",
+      "Ativar comunidades de fãs",
+      "Ativar rede de network"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Rotina pós-lançamento fonográfico",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Executar o planejado no cronograma de redes sociais",
+      "Publicar feedbacks e repercutir repostagens",
+      "Analisar os relatórios de desempenho"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3",
+   "category": "Distribuição, edição e direitos",
+   "title": "Trabalhar a edição das obras: contratar editora ou constituir editora própria com administração",
+   "subtitle": "A editora é responsável pela arrecadação dos seus direitos de autor. Você pode ter a sua própria editora, o que exige empresa LTDA com CNAE de edição, e fazer um contrato de administração com outra editora para a gestão dos direitos, ou assinar diretamente como autor com uma editora estruturada. A opção de ter e gerir a própria editora só é recomendada nos casos em que a receita gerada pela obra cubra as despesas da operação de gestão.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     18,
+     20
+    ],
+    "opportunities": [
+     13,
+     16
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     8
+    ],
+    "threats": [
+     1,
+     11,
+     12
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Organização das obras para edição",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Entender como funciona uma editora musical e o que ela arrecada",
+      "Listar todas as suas obras (dica: use o catálogo da Maestra)"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Constituição da editora própria",
+     "path": "Editora própria",
+     "date_type": "automatica",
+     "tasks": [
+      "Consultar um contador sobre a constituição da sua editora, ou a inclusão do CNAE correspondente caso já exista uma empresa",
+      "Constituir formalmente a sua editora",
+      "Filiar a editora a uma associação de arrecadação"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Administração da editora própria",
+     "path": "Editora própria",
+     "date_type": "automatica",
+     "tasks": [
+      "Pesquisar editoras que fazem contrato de administração",
+      "Apresentar o catálogo às editoras de interesse",
+      "Avaliar os termos propostos com apoio jurídico",
+      "Assinar o contrato"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Contratação de editora como autor",
+     "path": "Contratar editora",
+     "date_type": "automatica",
+     "tasks": [
+      "Pesquisar editoras estruturadas que atendem autores do seu perfil",
+      "Apresentar o catálogo às editoras de interesse",
+      "Avaliar os termos propostos com apoio jurídico",
+      "Assinar o contrato"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Rotina de arrecadação da editora",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Analisar os relatórios de repasse",
+      "Manter contato com a editora pra prospectar sincronização e gravação por outros artistas"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "4",
+   "category": "Distribuição, edição e direitos",
+   "title": "Prospectar oportunidades de sincronização",
+   "subtitle": "Trilhas para filmes, séries e publicidade são fonte de receita e de alcance. Com o catálogo organizado e os direitos registrados, suas músicas ficam prontas pra responder rápido aos briefings.",
+   "requires_any_opportunity": [
+    16
+   ],
+   "triggers": {
+    "weaknesses": [
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     8,
+     9,
+     10,
+     11,
+     14,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     1,
+     11
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Preparação do catálogo para sync",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Entender o que é sincronização e que tipo de música tem demanda",
+      "Organizar o catálogo com as músicas disponíveis para sync (dica: use a Maestra)",
+      "Checar se os direitos das obras estão registrados",
+      "Preparar uma pasta com as músicas, versões instrumentais e informações"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Cadastro nos canais de sincronização",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Mapear produtoras, agências de publicidade e supervisores musicais do seu nicho",
+      "Cadastrar as músicas em plataformas e bibliotecas de sincronização"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Promoção do catálogo para sync",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Apresentar o catálogo aos contatos mapeados",
+      "Avisar a editora e a distribuidora sobre os próximos lançamentos, pra possíveis conexões",
+      "Fazer follow-up"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Negociação dos licenciamentos de sync",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Negociar cada licenciamento com atenção aos direitos envolvidos",
+      "Registrar cada licenciamento fechado"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Rotina de sincronização",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Manter o catálogo atualizado nas plataformas a cada lançamento",
+      "Repercutir cada sincronização nas redes e no material de venda",
+      "Manter contato com os supervisores musicais"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Divulgação das músicas sincronizadas",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Criar um cronograma de conteúdos para promover a música sincada",
+      "Ativar collabs com os perfis envolvidos para ampliação de audiência"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "6",
+   "category": "Branding e material promocional",
+   "title": "Definir a documentação de referências de branding do projeto (coordenação entre conceito e desdobramentos visuais)",
+   "subtitle": "O branding é a \"embalagem\" do seu lançamento. É a tradução da sua música em identidade visual, fotos, cenário, figurino etc. É esse documento que orienta a capa e a direção de arte das fotos, materiais audiovisuais e promocionais. Você pode fazer isso por sua conta, caso tenha essa habilidade, ou contratar profissional da área.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     11,
+     12,
+     13,
+     15
+    ],
+    "opportunities": [
+     3,
+     4,
+     5
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     8,
+     9,
+     10,
+     11,
+     12,
+     17
+    ],
+    "threats": [
+     8
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Definição do conceito de branding",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Fazer o brainstorm de conceito",
+      "Afunilar as possibilidades até fechar o conceito, lembrando do posicionamento almejado",
+      "Definir o tom de voz do projeto"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Moodboard e referências de branding",
+     "path": "Por conta própria",
+     "date_type": "automatica",
+     "tasks": [
+      "Criar o moodboard (recortes de imagens) que represente o conceito",
+      "Pesquisar referências para a capa",
+      "Pesquisar tipologias para a logo",
+      "Pesquisar referências de direção de arte para as fotos de divulgação",
+      "Pesquisar referências de figurino e visagismo",
+      "Pesquisar referências de cenografia"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Consolidação do documento de branding",
+     "path": "Por conta própria",
+     "date_type": "automatica",
+     "tasks": [
+      "Reunir conceito, tom de voz e referências num documento único",
+      "Escrever o briefing para os demais profissionais (fotógrafo, designer, videomaker)",
+      "Compartilhar o documento com a equipe e os parceiros"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Contratação do profissional de branding",
+     "path": "Com profissional",
+     "date_type": "automatica",
+     "tasks": [
+      "Pesquisar profissionais e consultorias de branding com experiência em música",
+      "Ver portfólios e pedir orçamento e prazo aos mais alinhados",
+      "Escolher e fechar o contrato"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Imersão e aprovação do branding",
+     "path": "Com profissional",
+     "date_type": "automatica",
+     "tasks": [
+      "Entregar ao profissional o conceito, o tom de voz e o seu planejamento (visão, missão, posicionamento)",
+      "Participar da imersão / briefing",
+      "Dar retorno sobre as propostas apresentadas",
+      "Aprovar o documento final e compartilhar com a equipe e os parceiros"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Rotina de conferência da identidade",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Conferir cada peça nova (capa, foto, vídeo, post) contra o documento",
+      "Revisar o documento a cada novo ciclo de lançamento"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "8",
+   "category": "Branding e material promocional",
+   "title": "Produzir novo material promocional baseado em uma coordenação estruturada de branding",
+   "subtitle": "Fotos, release, bio, PDF de apresentação e vídeo de venda do show, tudo alinhado à nova identidade. É o kit que abre portas com contratantes, imprensa e marcas.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     7,
+     10,
+     11,
+     12,
+     13,
+     15
+    ],
+    "opportunities": [
+     3
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     8,
+     9,
+     11,
+     12,
+     13,
+     16,
+     17
+    ],
+    "threats": [
+     8
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Levantamento do material promocional",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Listar o que vai ser produzido (fotos, release, bio, PDF, vídeo)",
+      "Definir o que será feito por conta própria e o que será contratado",
+      "Consultar o documento de branding pra alinhar tudo"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Ensaio de fotos do material promocional",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Pesquisar fotógrafos alinhados à nova identidade",
+      "Fechar o fotógrafo e marcar o ensaio",
+      "Realizar o ensaio",
+      "Selecionar e tratar as melhores imagens"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Redação dos textos promocionais",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Escrever a bio curta e a bio longa a partir do posicionamento",
+      "Escrever o release (avaliar aspas de jornalista ou personalidade) para imprensa",
+      "Escrever o release do pitching para as plataformas"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Montagem do kit de venda",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Montar o PDF de apresentação com fotos, bio e informações do show",
+      "Editar o vídeo de venda do show",
+      "Organizar tudo numa pasta pronta pra envio"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Circulação do material promocional",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Atualizar site, redes e perfis de artista com o material novo",
+      "Enviar o kit aos contatos de venda e de imprensa da sua base",
+      "Revisar o kit a cada lançamento ou mudança no show"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9",
+   "category": "Branding e material promocional",
+   "title": "Criar media kit criativo para lançamentos estratégicos",
+   "subtitle": "O media kit é um material pensado pra provocar reação em influenciadores e veículos, não só informar, com o objetivo de gerar curiosidade para ouvir a música e repercuti-la. Não precisa ser caro, só precisa ser criativo e alinhado com o conceito do seu lançamento.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     11,
+     13,
+     14,
+     15
+    ],
+    "opportunities": [
+     5,
+     13
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     9,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17
+    ],
+    "threats": [
+     1,
+     8
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Conceito e formato do media kit",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o que você quer provocar em quem recebe",
+      "Fazer brainstorm para definir o que vai ser o media kit"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Produção do media kit",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Produzir o material",
+      "Revisar e aprovar a versão final"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Envio do media kit no lançamento",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Mapear os influenciadores e veículos que vão receber",
+      "Personalizar o envio para cada destinatário",
+      "Enviar os media kits"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Repercussão do media kit",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Registrar quem recebeu, respondeu e publicou",
+      "Repostar e agradecer publicamente quem repercutiu"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "10",
+   "category": "Redes sociais e canais próprios",
+   "title": "Estruturar a gestão das redes sociais",
+   "subtitle": "Redes com gestão profissional são a vitrine que sustenta todas as outras frentes. É preciso definir canais prioritários, editorias de conteúdo e verba de tráfego pago nos lançamentos. Você pode fazer isso por conta própria, caso tenha essa habilidade, ou contar com suporte especializado, mesmo que apenas para os períodos de lançamento.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     8,
+     9,
+     10,
+     11,
+     15
+    ],
+    "opportunities": [
+     3,
+     8
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     5,
+     6,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     15,
+     17,
+     19
+    ],
+    "threats": [
+     1,
+     8,
+     13
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Estratégia de conteúdo das redes",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir quais redes são prioritárias para o seu público",
+      "Definir as editorias de conteúdo a partir do posicionamento"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Contratação do suporte de redes",
+     "path": "Com suporte",
+     "date_type": "automatica",
+     "tasks": [
+      "Pesquisar profissionais de social media / marketing digital e ver trabalhos anteriores",
+      "Pedir propostas e comparar",
+      "Fechar e alinhar editorias, verba e metas com o profissional"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Organização da rotina de redes",
+     "path": "Por conta própria",
+     "date_type": "automatica",
+     "tasks": [
+      "Reservar horários fixos na semana pra produzir e publicar",
+      "Escolher uma ferramenta de agendamento de posts",
+      "Separar um banco de conteúdos (fotos, vídeos, bastidores) pra não começar do zero toda semana"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Planejamento mensal das redes",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Montar o cronograma de postagens",
+      "Definir a verba mensal de tráfego pago e os conteúdos a impulsionar",
+      "Planejar a produção do conteúdo"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Produção do conteúdo das redes",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Contratar os profissionais de produção necessários, se for o caso",
+      "Produzir as peças do mês"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Publicação e acompanhamento das redes",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Executar as postagens acompanhando o cronograma",
+      "Responder comentários e mensagens",
+      "Analisar o desempenho dos posts"
+     ]
+    },
+    {
+     "n": 7,
+     "title": "Rotina das redes sociais",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Ajustar editorias e verba conforme as análises",
+      "Repetir o planejamento a cada mês",
+      "Alinhar os picos de conteúdo com os lançamentos e shows do plano"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "12",
+   "category": "Redes sociais e canais próprios",
+   "title": "Criar site com área de captação de contatos e trabalhar gestão de comunidade, avaliando modelos de remuneração recorrente",
+   "subtitle": "Rede social é terreno alugado; site e base de e-mails são seus. A área de captação de leads transforma visitantes em contatos que você pode acionar direto, sem depender de algoritmo. Comunidade é o ativo que o algoritmo não tira de você: os super-fãs que sustentam lançamentos, shows e até receita recorrente (assinatura, clube de apoiadores). Não importa se são poucos, essa é a sua base quente que vale a pena ser alimentada.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     7,
+     10,
+     11,
+     13,
+     15
+    ],
+    "opportunities": [
+     3,
+     5
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     15,
+     17
+    ],
+    "threats": [
+     1,
+     8,
+     13
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Criação do site com cadastro",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Criar o site, mesmo que simples, com área de cadastro",
+      "Ligar o cadastro a uma ferramenta de e-mail",
+      "Fazer uma campanha de inscrições (avaliar oferta de recompensa)"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Desenho da comunidade de fãs",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Escolher onde criar a comunidade (WhatsApp, Telegram, plataforma de assinatura)",
+      "Definir o que a comunidade vai receber de especial, alinhado ao posicionamento",
+      "Definir se vai ter mensalidade e qual valor"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Lançamento da comunidade de fãs",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Configurar a plataforma escolhida",
+      "Criar as regras e a mensagem de boas-vindas",
+      "Convidar primeiro os fãs mais engajados",
+      "Divulgar a comunidade nas redes e nos shows"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Alimentação da comunidade de fãs",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Criar um cronograma de conteúdo e encontros exclusivos",
+      "Manter a frequência de interação",
+      "Usar a comunidade nos lançamentos e shows (pré-venda, bastidores)"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Rotina da comunidade de fãs",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Acompanhar crescimento, retenção e receita recorrente",
+      "Enviar comunicação regular à base de e-mails",
+      "Ajustar o que a comunidade recebe conforme o retorno"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "14",
+   "category": "Redes sociais e canais próprios",
+   "title": "Mapear, organizar e ativar a base de contatos atual e de interesse de network",
+   "subtitle": "Sua rede de contatos é um ativo importante que pode estar sendo subutilizado, se desorganizada. Mapear, segmentar e manter contato constante transforma network dormente em oportunidades reais de show, mídia e parceria.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     9,
+     11,
+     14,
+     15,
+     16
+    ],
+    "opportunities": [
+     3,
+     5
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19
+    ],
+    "threats": [
+     1,
+     8
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Organização da base de contatos",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Mapear todos os contatos que você já tem (celular, e-mail, redes)",
+      "Criar uma planilha única de contatos",
+      "Classificar cada contato por tipo (jornalista, contratante, músico, fã)"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Mapeamento dos contatos que faltam",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Identificar os contatos mais estratégicos para o momento do projeto",
+      "Listar os contatos de interesse que você ainda não tem",
+      "Mapear como chegar em cada um",
+      "Fazer contato de apresentação"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Fluxo de comunicação da base de contatos",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir um fluxo para cada tipo de contato (o quê e com que frequência)",
+      "Criar listas de transmissão ou grupos segmentados",
+      "Preparar o material de cada tipo (release pra jornalista, kit pra contratante)"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Ativação da base de contatos",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Enviar a primeira comunicação de cada grupo",
+      "Responder e interagir com os fãs"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Rotina de relacionamento com a base",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Manter o contato regular conforme o fluxo definido",
+      "Atualizar a planilha a cada evento, show ou lançamento",
+      "Acionar a base nos lançamentos e shows do plano"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "15",
+   "category": "Imprensa, mídia e rádio",
+   "title": "Trabalhar imprensa e mídia nos lançamentos",
+   "subtitle": "Presença na mídia gera legitimação e alcança quem não te encontraria no feed. Você pode contratar assessoria para os períodos de lançamento ou fazer o trabalho por conta própria, mapeando veículos e jornalistas do seu nicho.",
+   "requires_any_opportunity": [
+    17,
+    22
+   ],
+   "triggers": {
+    "weaknesses": [
+     11,
+     14,
+     16
+    ],
+    "opportunities": [
+     5
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17
+    ],
+    "threats": [
+     1,
+     7,
+     8
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Contratação da assessoria de imprensa",
+     "path": "Contratar assessoria",
+     "date_type": "automatica",
+     "tasks": [
+      "Pesquisar assessorias com atuação no seu nicho e pedir cases",
+      "Comparar propostas para o período do lançamento",
+      "Fechar e entregar o kit e o calendário à assessoria"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Mapeamento de veículos e jornalistas",
+     "path": "Por conta própria",
+     "date_type": "automatica",
+     "tasks": [
+      "Listar veículos e jornalistas que cobrem o seu nicho",
+      "Levantar o contato de cada um",
+      "Montar a lista de envio"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Preparação da pauta de imprensa",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o gancho: o que há de novo e por que importa",
+      "Reunir o kit de imprensa (release, fotos, bio, links)",
+      "Alinhar com o plano de marketing e o cronograma do lançamento"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Envio e follow-up com a imprensa",
+     "path": "Por conta própria",
+     "date_type": "automatica",
+     "tasks": [
+      "Enviar o release com antecedência",
+      "Fazer follow-up",
+      "Atender pedidos de entrevista e de material"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Acompanhamento da cobertura de imprensa",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Registrar cada matéria num documento de clipping",
+      "Repercutir as matérias nas redes e agradecer os veículos",
+      "Incluir o clipping no material de venda"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Rotina de relacionamento com a imprensa",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Manter contato com os jornalistas entre os lançamentos",
+      "Avisar de novidades fora do ciclo (show, prêmio, parceria)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "17",
+   "category": "Imprensa, mídia e rádio",
+   "title": "Prospectar participações em podcasts e canais do YouTube",
+   "subtitle": "Podcasts e canais do segmento são vitrines de longa duração: a entrevista fica no ar trabalhando por você. Escolha os alinhados ao seu público e chegue com um bom gancho.",
+   "requires_any_opportunity": [
+    8,
+    17
+   ],
+   "triggers": {
+    "weaknesses": [
+     16
+    ],
+    "opportunities": [
+     5
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     9,
+     10,
+     11,
+     13,
+     14,
+     15,
+     16
+    ],
+    "threats": [
+     1,
+     7
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Mapeamento de podcasts e canais",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Listar podcasts e canais que falam com o seu público",
+      "Observar quais já receberam artistas do seu perfil",
+      "Levantar o contato de cada um"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Proposta de participação em podcasts",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Preparar um pitch curto de apresentação",
+      "Escolher o gancho (lançamento, história, pauta)",
+      "Preparar o material de apoio (bio, links, fotos)"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Prospecção de podcasts",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Propor a participação aos contatos mapeados",
+      "Fazer follow-up",
+      "Agendar as participações confirmadas"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Participação e repercussão nos podcasts",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Preparar os pontos que você quer contar na conversa",
+      "Participar do podcast",
+      "Divulgar a participação nas redes e agradecer o canal"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Rotina de podcasts",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Registrar os contatos e os resultados",
+      "Manter relacionamento informando novidades do trabalho",
+      "Buscar novas participações a cada lançamento"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "18",
+   "category": "Imprensa, mídia e rádio",
+   "title": "Trabalhar rádio no seu nicho",
+   "subtitle": "A rádio segue relevante em muitos nichos e regiões, e abre porta pra públicos que o digital não alcança. Você pode contratar um divulgador do nicho ou construir relação direta com as rádios estratégicas.",
+   "requires_any_opportunity": [
+    7
+   ],
+   "triggers": {
+    "weaknesses": [
+     16
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     9,
+     10,
+     11,
+     13,
+     14,
+     15,
+     17
+    ],
+    "threats": [
+     1,
+     8
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Preparação da música para rádio",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir a música de trabalho",
+      "Preparar o arquivo no padrão de rádio e a ficha da música",
+      "Preparar release curto e fotos"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Contratação do divulgador de rádio",
+     "path": "Contratar divulgador",
+     "date_type": "automatica",
+     "tasks": [
+      "Pesquisar divulgadores do nicho e pedir resultados anteriores",
+      "Comparar propostas",
+      "Fechar e alinhar as metas"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Mapeamento das rádios estratégicas",
+     "path": "Por conta própria",
+     "date_type": "automatica",
+     "tasks": [
+      "Listar as rádios do segmento e da sua região",
+      "Levantar o contato dos programadores",
+      "Entender como cada rádio recebe música"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Envio e follow-up com as rádios",
+     "path": "Por conta própria",
+     "date_type": "automatica",
+     "tasks": [
+      "Enviar a música propondo execução ou parceria (entrevista, sessão ao vivo)",
+      "Fazer follow-up",
+      "Agendar as participações que surgirem"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Acompanhamento da execução nas rádios",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Acompanhar em quais rádios a música entrou",
+      "Repercutir nas redes",
+      "Registrar os resultados"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Rotina de relacionamento com as rádios",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Manter comunicação informando as novidades",
+      "Enviar as próximas músicas de trabalho"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "19",
+   "category": "YouTube e podcast próprio",
+   "title": "Criar programação estruturada de conteúdo para o YouTube",
+   "subtitle": "O YouTube é busca, não só rede: conteúdo bem organizado continua sendo encontrado anos depois. Uma programação estruturada transforma o canal em acervo vivo do projeto, além de facilitar a descoberta de novos fãs.",
+   "requires_any_opportunity": [
+    3,
+    8
+   ],
+   "triggers": {
+    "weaknesses": [
+     15
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     15,
+     17
+    ],
+    "threats": [
+     8,
+     13
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Criação do canal do YouTube",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o objetivo do canal a partir do posicionamento",
+      "Definir os tipos de conteúdo (clipes, bastidores, ao vivo)",
+      "Levantar o que o seu acervo já permite publicar"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Programação do canal do YouTube",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Montar um cronograma de publicação realista",
+      "Alinhar a programação com os lançamentos e shows do plano"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Organização do canal do YouTube",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Padronizar capas e títulos com a identidade do projeto",
+      "Organizar as playlists",
+      "Atualizar descrição, links e trailer do canal"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Produção e publicação no YouTube",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Produzir os conteúdos do mês",
+      "Otimizar título, descrição e tags de cada vídeo",
+      "Publicar conforme o cronograma",
+      "Divulgar os vídeos nas outras redes"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Rotina do canal do YouTube",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Analisar as métricas",
+      "Ajustar a programação",
+      "Responder aos comentários"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "20",
+   "category": "YouTube e podcast próprio",
+   "title": "Lançar podcast (ou videocast) próprio",
+   "subtitle": "Um podcast próprio te coloca do outro lado da mesa: você vira o veículo, cria conexões com convidados e alimenta as redes com cortes. Exige constância, então defina uma frequência que caiba na sua rotina.",
+   "requires_any_opportunity": [
+    17
+   ],
+   "triggers": {
+    "weaknesses": [],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     5,
+     8,
+     9,
+     11,
+     15,
+     17
+    ],
+    "threats": [
+     8
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Desenho do podcast próprio",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o tema e o formato, alinhados ao posicionamento",
+      "Definir uma frequência que caiba na sua rotina",
+      "Listar os primeiros convidados ou pautas"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Preparação da produção do podcast",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o equipamento e o local de gravação",
+      "Criar a identidade do podcast (nome, capa), coerente com o branding",
+      "Escolher onde hospedar (Spotify, YouTube)"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Lançamento do piloto do podcast",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Gravar o episódio piloto",
+      "Editar",
+      "Publicar o primeiro episódio",
+      "Divulgar e aproveitar os cortes nas redes"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Frequência do podcast próprio",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Gravar e publicar conforme a frequência definida",
+      "Convidar pessoas da cena",
+      "Usar os cortes pra alimentar as redes"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Rotina de avaliação do podcast",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Avaliar os resultados a cada mês",
+      "Ajustar formato e pautas",
+      "Registrar os convidados como contatos da sua base"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "22",
+   "category": "Network, mercado e reconhecimento",
+   "title": "Participar de eventos, congressos e showcases do mercado",
+   "subtitle": "É nos eventos do mercado que os contatos que você procura estão reunidos. Presença constante, pitch afiado e follow-up transformam crachá em relacionamento.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     14,
+     19
+    ],
+    "opportunities": [
+     22
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     19
+    ],
+    "threats": [
+     4
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Mapeamento dos eventos do mercado",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Listar os eventos, congressos e showcases do mercado",
+      "Marcar as datas e os prazos de credenciamento no calendário",
+      "Escolher os mais estratégicos para o momento do projeto"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Preparação para o evento do mercado",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Garantir inscrição ou credenciamento",
+      "Preparar o elevator pitch de 60 segundos",
+      "Mapear na programação os conteúdos e as pessoas de interesse",
+      "Preparar o material de apresentação (link ou cartão, kit)"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Participação no evento do mercado",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Procurar os palestrantes após os painéis",
+      "Acessar rodadas de negócio e meet-ups",
+      "Trocar contatos e anotar o contexto de cada um"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Follow-up do evento do mercado",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Contatar quem você conheceu na semana seguinte",
+      "Registrar os contatos na sua base",
+      "Propor próximos passos onde couber"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Rotina de presença na cena",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Interagir digitalmente com a cena entre os eventos",
+      "Repetir o mapeamento a cada ano"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "48",
+   "category": "Network, mercado e reconhecimento",
+   "title": "Fazer pesquisa para compreender o seu público",
+   "subtitle": "Conhecer quem ouve você é vantagem competitiva: quem é o seu fã, onde está, como consome música, o que compartilha e por quê. Pesquisa de público transforma achismo em decisão de conteúdo, lançamento e show.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     10,
+     11,
+     19
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     8,
+     9,
+     10,
+     19
+    ],
+    "threats": [
+     8
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Definição da pesquisa de público",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o que você quer descobrir sobre o seu público (perfil, hábitos, motivações)",
+      "Definir como realizar a pesquisa (questionário, entrevistas, grupo focal)",
+      "Levantar os dados que já existem (Spotify for Artists, YouTube Studio, redes)"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Aplicação da pesquisa de público",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Enviar questionário ou realizar entrevistas / grupo focal"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Análise da pesquisa de público",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Comparar os achados com o que você queria descobrir",
+      "Consolidar as análises num relatório"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Aplicação dos resultados da pesquisa",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Usar as informações para construir a persona",
+      "Direcionar toda a comunicação para a persona constituída",
+      "Analisar resultados"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "49",
+   "category": "Network, mercado e reconhecimento",
+   "title": "Inscrever o projeto em premiações, pitchings e showcases",
+   "subtitle": "Premiações, pitchings e showcases são legitimação: uma seleção curatorial fala por você. Têm calendário próprio, então mapear prazos com antecedência é o que separa quem participa de quem só ouve falar.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     14,
+     19
+    ],
+    "opportunities": [
+     22
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     18,
+     19
+    ],
+    "threats": [
+     1,
+     7
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Mapeamento de premiações e showcases",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Listar os do seu nicho",
+      "Levantar regras, prazos e formatos de inscrição",
+      "Marcar tudo no calendário"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Preparação das inscrições em premiações",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Escolher os mais estratégicos para o momento do projeto",
+      "Preparar o material de inscrição (vídeo, bio, release, números)"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Inscrição em premiações e showcases",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Inscrever o projeto dentro dos prazos",
+      "Acompanhar os resultados"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Participação em premiações e showcases",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Se selecionado, preparar a apresentação ou o show",
+      "Participar e fazer contatos no evento"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Repercussão das premiações",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Comunicar a participação ou o prêmio nas redes e na imprensa",
+      "Incluir no material de venda",
+      "Registrar os contatos para as próximas edições"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "23",
+   "category": "Show e palco",
+   "title": "Montar o show e realizar o show de lançamento com registro audiovisual",
+   "subtitle": "Show pronto e registrado é a base da venda: sem vídeo de qualidade, a prospecção trava. O show de lançamento resolve os dois de uma vez, estreia o espetáculo e gera o material.",
+   "requires_any_opportunity": [
+    6,
+    9,
+    10,
+    11,
+    18
+   ],
+   "triggers": {
+    "weaknesses": [
+     4,
+     5,
+     6,
+     7,
+     10
+    ],
+    "opportunities": [
+     5
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     17
+    ],
+    "threats": [
+     1,
+     7,
+     8,
+     12
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Definição do show de lançamento",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Fechar o repertório, alinhado ao conceito do projeto",
+      "Definir o roteiro e a ordem das músicas",
+      "Definir a formação e a ficha técnica"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Produção do show de lançamento",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Escolher a data e o espaço",
+      "Contratar a equipe técnica (som, luz)",
+      "Contratar o registro em áudio, vídeo e foto",
+      "Organizar a produção do dia (rider, cronograma, equipe)"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Ensaios do show de lançamento",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Realizar os ensaios com a banda ou equipe",
+      "Gravar um ensaio pra avaliar"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Divulgação do show de lançamento",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Preparar e executar a divulgação (redes, base de contatos, imprensa)",
+      "Ativar a comunidade de fãs e o network"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Dia do show: show de lançamento",
+     "path": null,
+     "date_type": "marco",
+     "tasks": [
+      "Fazer a passagem de som",
+      "Realizar o show com o registro completo",
+      "Recolher contatos e feedbacks no dia"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Repercussão do show de lançamento",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Editar o vídeo de venda e os conteúdos pras redes",
+      "Atualizar o kit de venda",
+      "Repercutir o show nas redes e na imprensa"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "24",
+   "category": "Show e palco",
+   "title": "Trabalhar a presença de palco com marcações de roteiro",
+   "subtitle": "Presença de palco se constrói com método, não só talento. Você pode trabalhar com um profissional (preparador, diretor de show) ou por conta própria, gravando e analisando os próprios shows. Marcações de roteiro dão segurança pra performance crescer.",
+   "requires_any_opportunity": [
+    6,
+    9,
+    10,
+    11,
+    18
+   ],
+   "triggers": {
+    "weaknesses": [
+     4,
+     5
+    ],
+    "opportunities": [
+     5,
+     22
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     4,
+     5,
+     9,
+     11,
+     12
+    ],
+    "threats": [
+     8
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Diagnóstico da presença de palco",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Gravar um show ou ensaio e assistir",
+      "Identificar o que você quer melhorar"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Contratação do profissional de palco",
+     "path": "Com profissional",
+     "date_type": "automatica",
+     "tasks": [
+      "Pesquisar preparadores, diretores de show ou coreógrafos",
+      "Ver trabalhos anteriores e pedir orçamento",
+      "Fechar e marcar as sessões"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Preparação de palco com profissional",
+     "path": "Com profissional",
+     "date_type": "automatica",
+     "tasks": [
+      "Participar das sessões",
+      "Definir com o profissional as marcações de roteiro",
+      "Ensaiar com as marcações"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Preparação de palco por conta própria",
+     "path": "Por conta própria",
+     "date_type": "automatica",
+     "tasks": [
+      "Estudar referências de artistas que você admira no palco",
+      "Definir as marcações de roteiro (entradas, falas, movimentação)",
+      "Ensaiar com as marcações"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Aplicação e avaliação no palco",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Aplicar no próximo show",
+      "Gravar e comparar com o diagnóstico",
+      "Ajustar os pontos fracos"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Rotina de preparação de palco",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Manter a rotina de gravar e avaliar",
+      "Revisar as marcações a cada mudança de repertório"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "29",
+   "category": "Venda de shows e circulação",
+   "title": "Prospectar shows em órgãos públicos, como prefeituras, fundações e SESCs",
+   "subtitle": "Prefeituras, SESC e órgãos públicos contratam o ano todo, via edital, chamamento ou convite. É um mercado que pede cadastro, documentação em dia e paciência com processos, mas paga projetos inteiros. O órgão público valoriza a popularidade e o alinhamento do artista ao propósito do evento.",
+   "requires_any_opportunity": [
+    11
+   ],
+   "triggers": {
+    "weaknesses": [
+     6,
+     7,
+     8,
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     3,
+     4,
+     5,
+     6,
+     7,
+     9,
+     10,
+     11,
+     13,
+     14,
+     15,
+     19,
+     20
+    ],
+    "threats": [
+     2,
+     3,
+     4
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Mapeamento dos contratantes públicos",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Listar prefeituras, SESC, SESI e órgãos da região de interesse",
+      "Entender como cada um contrata (edital, chamamento, convite)",
+      "Levantar os contatos das secretarias de cultura"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Documentação para o setor público",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Providenciar os cadastros e a documentação exigidos",
+      "Preparar material de venda adequado ao setor público"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Prospecção de shows públicos",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Enviar material aos contatos",
+      "Mapear editais e chamamentos abertos",
+      "Inscrever o projeto nos correspondentes",
+      "Fazer follow-up"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Fechamento dos shows públicos",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Negociar as condições e formalizar",
+      "Cumprir as exigências de prestação de contas"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Realização do show público",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Realizar o show"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Rotina de presença nos órgãos públicos",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Registrar contatos e resultados",
+      "Repercutir os shows públicos nas redes",
+      "Manter presença constante nos editais e chamamentos"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "30",
+   "category": "Venda de shows e circulação",
+   "title": "Prospectar shows corporativos (shows fechados para convidados, contratados por empresas)",
+   "subtitle": "O mercado corporativo paga bem e valoriza profissionalismo: material impecável, pontualidade e formato adaptável, então se esse é um mercado importante para você, invista nesses diferenciais. Agências de eventos são a porta de entrada mais rápida. O mercado corporativo valoriza o show voltado para o entretenimento, além do prestígio do artista que será associado à marca. Lembre-se que é um público que não escolheu te assistir.",
+   "requires_any_opportunity": [
+    10
+   ],
+   "triggers": {
+    "weaknesses": [
+     6,
+     7,
+     8,
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     11,
+     12,
+     13,
+     14,
+     15,
+     19,
+     20
+    ],
+    "threats": [
+     3,
+     4,
+     9
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Definição da oferta de show corporativo",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Listar os tipos de empresas e eventos corporativos do seu perfil",
+      "Definir o formato do show voltado ao entretenimento",
+      "Definir a faixa de cachê para esse mercado"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Mapeamento de agências corporativas",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Mapear agências de eventos corporativos",
+      "Levantar contatos de RH, marketing e agências",
+      "Registrar na sua base de contatos"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Preparação do material corporativo",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Preparar material específico (PDF, vídeo) com linguagem corporativa",
+      "Incluir clipping e depoimentos"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Prospecção de shows corporativos",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Apresentar e enviar o material de venda",
+      "Ativar um fluxo de e-mails para os contatos mapeados",
+      "Avaliar investimento em tráfego pago",
+      "Fazer follow-up"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Fechamento dos shows corporativos",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Negociar e formalizar o contrato",
+      "Alinhar a produção com a empresa"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Realização do show corporativo",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Realizar o show"
+     ]
+    },
+    {
+     "n": 7,
+     "title": "Rotina de relacionamento corporativo",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Fazer pesquisa de satisfação pós-venda",
+      "Pedir indicações após cada evento",
+      "Manter contato com as agências"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "31",
+   "category": "Venda de shows e circulação",
+   "title": "Prospectar shows particulares (casamentos, aniversários etc.)",
+   "subtitle": "Casamentos e eventos privados são receita constante e previsível, apesar de nem sempre converterem em audiência para o trabalho autoral. Cerimonialistas e produtores de eventos particulares são o ponto de conexão entre contratantes e artistas. Invista em diferenciais de personalização e na oferta de experiências especiais.",
+   "requires_any_opportunity": [
+    18
+   ],
+   "triggers": {
+    "weaknesses": [
+     6,
+     7,
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     11,
+     12,
+     13,
+     14,
+     15,
+     19
+    ],
+    "threats": [
+     3,
+     4,
+     12
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Definição da oferta para particulares",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o show voltado ao entretenimento",
+      "Definir o diferencial personalizado, como o momento especial dos noivos",
+      "Definir a faixa de cachê por tipo de evento"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Preparação do material para particulares",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Preparar material voltado a esse público",
+      "Criar uma página no site com vídeos e depoimentos"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Mapeamento de cerimonialistas",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Mapear cerimonialistas e produtores de eventos particulares",
+      "Levantar os contatos",
+      "Registrar na sua base de contatos"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Prospecção de shows particulares",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Apresentar o serviço aos contatos mapeados",
+      "Avaliar investimento em tráfego pago",
+      "Fazer follow-up"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Fechamento dos shows particulares",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Alinhar os detalhes com o cliente (repertório, momento especial, logística)",
+      "Formalizar"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Realização do show particular",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Realizar o evento"
+     ]
+    },
+    {
+     "n": 7,
+     "title": "Rotina de eventos particulares",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Pedir indicação e depoimento aos clientes satisfeitos",
+      "Atualizar a página de depoimentos",
+      "Manter contato com os cerimonialistas"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "32",
+   "category": "Venda de shows e circulação",
+   "title": "Prospectar shows em casas de show e teatros",
+   "subtitle": "Casas de show e teatros funcionam por cachê, bilheteria ou parceria. É um tipo de cliente que só vale a pena acessar quando você já tem público pagante, a não ser que a própria casa tenha público. Afinal, você não quer tocar para uma casa vazia nem dar prejuízo para o contratante. Entender o modelo de cada casa antes de propor evita desgaste e melhora a negociação.",
+   "requires_any_opportunity": [
+    9
+   ],
+   "triggers": {
+    "weaknesses": [
+     6,
+     7,
+     8,
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     1,
+     4,
+     7,
+     12
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Mapeamento de casas de show e teatros",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Listar casas e teatros do seu perfil e região",
+      "Entender o modelo de cada um (cachê, bilheteria, parceria)",
+      "Levantar os contatos dos programadores"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Preparação da proposta para as casas",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Preparar o material de venda com o vídeo do show",
+      "Definir a proposta para cada modelo (cachê, bilheteria, parceria)"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Prospecção de casas de show e teatros",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Apresentar o show aos programadores",
+      "Fazer follow-up",
+      "Negociar as condições e fechar a data"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Divulgação do show na casa de shows / teatro",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Divulgar nas redes, na base de contatos e na imprensa",
+      "Ativar a comunidade de fãs e o network",
+      "Alinhar a divulgação com a casa"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Realização do show na casa de shows / teatro",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Fazer a passagem de som",
+      "Realizar o show",
+      "Recolher contatos e feedbacks"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Rotina de relacionamento com as casas",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Repercutir nas redes e agradecer a casa",
+      "Manter relacionamento para novas datas",
+      "Registrar os resultados (público, bilheteria)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "33",
+   "category": "Venda de shows e circulação",
+   "title": "Prospectar shows em festivais e junto a produtores de eventos",
+   "subtitle": "Festivais são um tipo de cliente importante para quem está formando audiência, pois os próprios eventos já trazem o seu público. Os line-ups são definidos com bastante antecedência, então para esse tipo de contratante a organização é fundamental.",
+   "requires_any_opportunity": [
+    6
+   ],
+   "triggers": {
+    "weaknesses": [
+     6,
+     7,
+     8,
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     19,
+     20
+    ],
+    "threats": [
+     1,
+     4,
+     7
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Mapeamento de festivais e produtores",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Listar os festivais e produtores do seu nicho",
+      "Marcar os prazos de inscrição e curadoria no calendário",
+      "Levantar os contatos de produtores e curadores"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Preparação do material para festivais",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Preparar material de venda voltado a festivais (vídeo ao vivo, ficha técnica, clipping)",
+      "Adequar o material ao formato de cada inscrição"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Inscrição e prospecção em festivais",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Inscrever o projeto nos festivais com chamada aberta",
+      "Apresentar o projeto aos produtores",
+      "Fazer follow-up"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Confirmação das participações em festivais",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Acompanhar os resultados das curadorias",
+      "Negociar e confirmar as participações",
+      "Organizar a logística"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Participação e repercussão nos festivais",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Realizar o show",
+      "Fazer contatos com produtores e artistas no evento",
+      "Repercutir nas redes"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Rotina de presença nos festivais",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Registrar contatos e resultados",
+      "Manter relacionamento para as próximas edições"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "N5",
+   "category": "Venda de shows e circulação",
+   "title": "Planejar turnê de circulação",
+   "subtitle": "Circular por praças estratégicas constrói público fora da sua cidade, dilui custos de deslocamento e atrai editais e patrocínios de circulação. Aproveite os momentos de visibilidade do lançamento para prospectar shows de lançamento em diferentes cidades, mesmo que poucas.",
+   "requires_any_opportunity": [
+    6,
+    9,
+    11
+   ],
+   "triggers": {
+    "weaknesses": [
+     6,
+     7
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     3,
+     4,
+     10
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Desenho da rota da turnê",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Identificar as praças onde o seu público já existe ou pode existir (dados de streaming e redes)",
+      "Definir a rota e o período (praças próximas agrupadas)",
+      "Definir o formato do show pra estrada (equipe e ficha técnica viáveis)"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Viabilização da turnê de circulação",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Montar o orçamento (deslocamento, hospedagem, equipe, cachês)",
+      "Mapear editais e programas de circulação",
+      "Inscrever o projeto nos editais"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Prospecção das datas da turnê",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Levantar casas, festivais e produtores locais em cada praça",
+      "Propor as datas",
+      "Fechar as datas e a logística"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Divulgação praça a praça da turnê",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Planejar a divulgação local (rádio, imprensa, parceiros)",
+      "Ativar a base e a comunidade em cada cidade"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Realização da turnê de circulação",
+     "path": null,
+     "date_type": "marco",
+     "tasks": [
+      "Realizar os shows",
+      "Registrar e repercutir durante a turnê"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Avaliação e repercussão da turnê",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Avaliar praça por praça",
+      "Repercutir a turnê nas redes e na imprensa",
+      "Registrar os contatos locais na sua base"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "34",
+   "category": "Empresariamento e estrutura",
+   "title": "Procurar empresário/a",
+   "subtitle": "Empresário não se encontra, se conquista: seu projeto precisa estar organizado e com números na mão. Sua música isolada é apenas uma ideia; carreira é projeto. E sintonia vale mais que tamanho do escritório, pois o alinhamento de visão é o que sustenta a parceria. Escolha alguém que vá te escolher também e vestir sua camisa.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     7,
+     8,
+     9,
+     10,
+     17
+    ],
+    "opportunities": [
+     6,
+     9,
+     10,
+     11,
+     18
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     1,
+     6,
+     12
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Definição do que você espera do empresário",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir papéis e limites",
+      "Definir o que você oferece: projeto, números e momento"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Preparação da apresentação para empresários",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Organizar a apresentação e os números (dica: use a Maestra)",
+      "Reunir o material (kit, clipping, plano)"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Mapeamento de empresários e escritórios",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Listar os que cuidam de artistas do seu porte",
+      "Pesquisar a reputação e o elenco de cada um",
+      "Levantar os contatos"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Prospecção de empresários",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Apresentar o projeto aos mais alinhados",
+      "Conversar pra avaliar sintonia e visão de carreira",
+      "Fazer follow-up"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Fechamento da parceria com o empresário",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Avaliar as propostas (percentual, escopo, prazo)",
+      "Alinhar expectativas e responsabilidades",
+      "Formalizar em contrato, com apoio jurídico"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "35",
+   "category": "Empresariamento e estrutura",
+   "title": "Contratar assistente de produção / produtor executivo",
+   "subtitle": "Delegar é o primeiro ato de gestão profissional. Um assistente de produção ou produtor executivo libera seu tempo pro que só você pode fazer, e as tarefas do seu plano ganham dono.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     8,
+     9,
+     10
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     6,
+     10,
+     17
+    ],
+    "threats": [
+     8
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Definição da vaga de assistente",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Listar as atividades e tarefas que você precisa delegar",
+      "Definir o perfil (assistente de produção ou produtor executivo)",
+      "Definir carga horária e forma de pagamento"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Recrutamento do assistente de produção",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Divulgar a vaga ou pedir indicações na cena",
+      "Selecionar e entrevistar os candidatos",
+      "Escolher e formalizar a contratação"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Integração do assistente de produção",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Apresentar o plano estratégico e os processos do projeto (dica: use a Maestra)",
+      "Treinar nas ferramentas e rotinas",
+      "Definir os pontos de acompanhamento semanais"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Delegação das tarefas ao assistente",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Delegar oficialmente as tarefas do plano com prazos",
+      "Acompanhar as entregas"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "36",
+   "category": "Empresariamento e estrutura",
+   "title": "Organizar a parte burocrática e operacional",
+   "subtitle": "Financeiro e jurídico malcuidados cobram caro depois. Terceirizar com quem entende de música (BPO administrativo, assessoria jurídica recorrente) custa menos que um contrato ruim assinado, um cachê não recebido corretamente ou uma conta paga por engano.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     8,
+     9,
+     10,
+     20
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     19
+    ],
+    "threats": [
+     12
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Constituição ou regularização da empresa",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Consultar um contador para constituir a empresa",
+      "Constituir formalmente a empresa (ou regularizar a existente)",
+      "Efetuar o registro da marca, se necessário, com suporte profissional"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Definição dos processos financeiros",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir os processos de contas a pagar e a receber",
+      "Definir os processos de contratações de receitas e despesas",
+      "Avaliar a contratação de BPO (suporte terceirizado de operação financeira)"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Estruturação dos contratos-padrão",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Mapear os contratos recorrentes necessários (show, agenciamento, distribuição, edição)",
+      "Escolher assessoria jurídica especializada para confecção dos contratos-padrão",
+      "Aprovar os modelos"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Organização da produção dos shows",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Criar o checklist de produção dos shows e ações contratados",
+      "Preparar o cronograma"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Rotina da operação da empresa",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Gerar relatórios de acompanhamento",
+      "Mapear e resolver os gargalos",
+      "Revisar os processos a cada semestre"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "37",
+   "category": "Captação de recursos",
+   "title": "Inscrever o projeto em editais alinhados com o posicionamento",
+   "subtitle": "Editais são a porta de captação mais democrática do mercado, mas funcionam por calendário: quem trata como rotina (e não como loteria) aprova mais. Além da viabilização financeira do projeto em si, eles também refletem posicionamento, pois indicam que o seu projeto passou por uma curadoria.",
+   "requires_any_opportunity": [
+    1
+   ],
+   "triggers": {
+    "weaknesses": [
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     1,
+     2,
+     3
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Mapeamento dos editais",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Listar os editais abertos compatíveis com o projeto",
+      "Criar um calendário fixo de editais recorrentes",
+      "Ler as regras e marcar os prazos"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Preparação do projeto-base para editais",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Avaliar se vai inscrever por conta própria ou com profissional de captação",
+      "Reunir a documentação base",
+      "Escrever os textos-base do projeto (apresentação, objetivos, orçamento, contrapartidas)"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Inscrição nos editais",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Adaptar o projeto ao formato de cada edital escolhido",
+      "Preparar os textos conforme o edital",
+      "Inscrever dentro do prazo"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Acompanhamento dos editais",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Acompanhar os resultados",
+      "Responder a diligências",
+      "Se aprovado, organizar a execução e a prestação de contas"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "38",
+   "category": "Captação de recursos",
+   "title": "Criar projeto incentivado para captação de patrocínio",
+   "subtitle": "Leis de incentivo transformam imposto em patrocínio: o projeto aprovado vira produto de captação junto a marcas. Exige fôlego de gestão e prestação de contas, mas viabiliza projetos grandes.",
+   "requires_any_opportunity": [
+    2,
+    4
+   ],
+   "triggers": {
+    "weaknesses": [
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     2,
+     8,
+     9
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Desenho do projeto incentivado",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o conceito e o escopo",
+      "Montar o orçamento",
+      "Definir as contrapartidas (acessibilidade, social, cultural)"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Inscrição na lei de incentivo",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Preparar os textos e planilhas orçamentárias",
+      "Inscrever o projeto na lei correspondente",
+      "Acompanhar a aprovação",
+      "Responder a diligências"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Preparação da captação do incentivado",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Montar o material de venda do projeto para patrocinadores",
+      "Mapear marcas com perfil alinhado e levantar os contatos"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Ativação da prospecção do projeto incentivado",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Apresentar o projeto às marcas",
+      "Fazer follow-up",
+      "Negociar e formalizar"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Execução e prestação de contas do projeto",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Executar o projeto conforme aprovado",
+      "Cumprir as contrapartidas",
+      "Prestar contas"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Rotina com os patrocinadores",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Repercutir o projeto e o patrocinador nas redes",
+      "Manter relacionamento com as marcas",
+      "Registrar aprendizados pro próximo projeto"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "39",
+   "category": "Captação de recursos",
+   "title": "Criar campanha de financiamento coletivo",
+   "subtitle": "Crowdfunding é pré-venda com narrativa: o público banca o projeto antes dele existir, em troca de recompensas e pertencimento. Funciona quando a base é engajada e a meta é realista.",
+   "requires_any_opportunity": [
+    12
+   ],
+   "triggers": {
+    "weaknesses": [
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     3,
+     9
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Desenho da campanha de financiamento",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o objetivo e calcular a meta de arrecadação",
+      "Escolher a plataforma de crowdfunding",
+      "Definir as recompensas por faixa de valor"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Produção da campanha de financiamento",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Produzir o vídeo e o texto da campanha",
+      "Montar a página",
+      "Preparar o plano de divulgação (antes, durante e reta final)"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Aquecimento da base para a campanha",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Avisar a comunidade e a base de contatos",
+      "Publicar teasers nas redes",
+      "Convidar apoiadores"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Dia do lançamento: campanha de financiamento",
+     "path": null,
+     "date_type": "marco",
+     "tasks": [
+      "Publicar a campanha",
+      "Disparar a comunicação pra base e pras redes",
+      "Ativar o network e os parceiros"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Divulgação durante a campanha",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Publicar atualizações e novas recompensas",
+      "Responder aos apoiadores",
+      "Reforçar a divulgação na reta final"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Entrega das recompensas da campanha",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Entregar as recompensas",
+      "Prestar contas aos apoiadores",
+      "Agradecer publicamente"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "40",
+   "category": "Marcas, influenciadores e creators",
+   "title": "Mapear marcas alinhadas e prospectar ativações publicitárias",
+   "subtitle": "Dependendo do segmento e do tamanho do artista, a publicidade pode ser uma fonte de receita importante. Marca boa é a que combina com seus valores, não só a que paga, pois é a sua imagem em jogo. Um material específico mostrando o que você entrega (audiência, imagem, ativações) transforma conversa em contrato.",
+   "requires_any_opportunity": [
+    4,
+    19
+   ],
+   "triggers": {
+    "weaknesses": [
+     7,
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     3,
+     9
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Definição da oferta para marcas",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o que você oferece a uma marca (contrapartidas e ativações)",
+      "Listar marcas alinhadas aos seus valores e ao seu público"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Preparação do material para marcas",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Preparar material específico mostrando audiência, imagem e ativações",
+      "Levantar os contatos de marketing de cada marca"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Prospecção de marcas",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Desenhar uma proposta de parceria para cada marca",
+      "Apresentar a proposta aos contatos",
+      "Fazer follow-up"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Fechamento da parceria com a marca",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Negociar os termos",
+      "Formalizar em contrato"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Entrega e reporte para a marca",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Executar as contrapartidas",
+      "Reportar os resultados à marca",
+      "Repercutir a parceria nas redes"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "41a",
+   "category": "Marcas, influenciadores e creators",
+   "title": "Ativar influenciadores para divulgar o trabalho",
+   "subtitle": "Influenciadores emprestam confiança: a indicação deles chega onde seu anúncio não chega. Engajamento real vale mais que número de seguidores.",
+   "requires_any_opportunity": [
+    19
+   ],
+   "triggers": {
+    "weaknesses": [
+     15,
+     16
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     8,
+     9,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     19
+    ],
+    "threats": [
+     9,
+     13
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Definição da ativação com influenciadores",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o público que você quer atingir",
+      "Listar influenciadores que falam com esse público",
+      "Analisar o engajamento real de cada um",
+      "Definir o formato da parceria (permuta, pago, orgânico)"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Preparação do material para influenciadores",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Preparar o media kit para envio",
+      "Personalizar a proposta para cada influenciador"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Fechamento com os influenciadores",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Apresentar a proposta aos influenciadores",
+      "Combinar conteúdo e data com quem topar",
+      "Enviar o material"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Acompanhamento dos influenciadores",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Acompanhar as publicações",
+      "Repostar e agradecer",
+      "Medir o resultado de cada ativação"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "41b",
+   "category": "Marcas, influenciadores e creators",
+   "title": "Atuar como influenciador junto a marcas",
+   "subtitle": "Seu público é um ativo comercial: marcas pagam pra falar com ele através de você. Posicionar-se como creator abre uma linha de receita que não depende de show nem de lançamento, mas só vale a pena se a ativação reforçar seu posicionamento como artista.",
+   "requires_any_opportunity": [
+    19
+   ],
+   "triggers": {
+    "weaknesses": [
+     17
+    ],
+    "opportunities": [
+     4
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     9,
+     13
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Posicionamento como creator",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o seu nicho de conteúdo",
+      "Organizar as redes para esse posicionamento",
+      "Montar um media kit com números e perfil do público",
+      "Definir a tabela de valores por entregável"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Contratação da agência de creators",
+     "path": "Via agência",
+     "date_type": "automatica",
+     "tasks": [
+      "Pesquisar agências especializadas em creators",
+      "Comparar as propostas",
+      "Fechar"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Prospecção de marcas como creator",
+     "path": "Por conta própria",
+     "date_type": "automatica",
+     "tasks": [
+      "Listar marcas que combinam com o seu conteúdo",
+      "Apresentar-se às marcas",
+      "Fazer follow-up"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Fechamento das publis",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Negociar e fechar as primeiras publis"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Entrega das publis",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Produzir e entregar o conteúdo",
+      "Reportar os resultados"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Rotina de creator",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Manter o media kit e a tabela atualizados",
+      "Repercutir as publis alinhadas ao posicionamento",
+      "Avaliar cada parceria pelo alinhamento com a sua missão"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "42",
+   "category": "Parcerias artísticas",
+   "title": "Fazer parcerias com outros artistas da cena",
+   "subtitle": "Feat é troca de público: cada parceria apresenta seu trabalho pra base do outro artista, fortalecendo a cena como um todo.",
+   "requires_any_opportunity": [
+    13
+   ],
+   "triggers": {
+    "weaknesses": [
+     2,
+     6,
+     14,
+     15
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     19
+    ],
+    "threats": [
+     1
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Mapeamento de artistas parceiros",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Listar artistas que combinam com o seu trabalho",
+      "Priorizar por afinidade e troca de público",
+      "Mapear como chegar em cada um"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Preparação do convite de parceria",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o tipo de parceria (feat, abertura, show conjunto, turnê)",
+      "Preparar a proposta ou o convite"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Prospecção de parcerias artísticas",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Apresentar a ideia aos artistas",
+      "Combinar os detalhes com quem topar",
+      "Formalizar o combinado (divisão de direitos, custos e divulgação)"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Realização da parceria artística",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Realizar (gravação, show)",
+      "Divulgar em conjunto"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Rotina de parcerias artísticas",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Manter a relação pra novas trocas",
+      "Registrar os parceiros na sua base de contatos"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "N2",
+   "category": "Parcerias artísticas",
+   "title": "Ativar parcerias de composição",
+   "subtitle": "Compor com outras pessoas é prática de mercado, não sinal de fraqueza: parcerias trazem repertório novo, ampliam a rede e podem gerar direitos pra ambos. Afinidade artística vem antes de tudo.",
+   "requires_any_opportunity": [
+    13
+   ],
+   "triggers": {
+    "weaknesses": [
+     2
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     14
+    ],
+    "threats": [
+     1
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Definição das parcerias de composição",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o que você busca na parceria (letra, melodia, produção, gênero)",
+      "Listar compositores e artistas com afinidade",
+      "Ouvir o trabalho de cada um e selecionar os de interesse"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Convite aos parceiros de composição",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Fazer o convite propondo uma sessão de composição",
+      "Combinar data e formato"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Sessões de composição",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Realizar as sessões",
+      "Combinar a divisão de direitos autorais antes de finalizar"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Registro das obras em parceria",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Registrar as obras com a divisão correta",
+      "Selecionar o que entra no repertório e nos lançamentos"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Rotina de parcerias de composição",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Manter as parcerias que funcionaram",
+      "Ampliar a rede de coautores ao longo do tempo"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "43",
+   "category": "Produtos e educação",
+   "title": "Criar a Lojinha do/da [nome do artista]",
+   "subtitle": "A lojinha transforma fã em fonte de receita e outdoor ambulante. Você pode começar enxuto (sob demanda ou tiragem pequena) para testar o que o seu público realmente veste e usa.",
+   "requires_any_opportunity": [
+    15
+   ],
+   "triggers": {
+    "weaknesses": [
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     5,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     15,
+     17,
+     19,
+     20
+    ],
+    "threats": [
+     1,
+     3,
+     8
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Definição dos produtos da lojinha",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir os produtos (camiseta, vinil, acessórios), alinhados ao conceito do projeto",
+      "Pesquisar fornecedores ou parceiros de licenciamento",
+      "Pedir orçamentos e amostras"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Definição de preços e canais da lojinha",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir os preços de cada produto",
+      "Escolher onde vender (loja online, nos shows)"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Montagem da lojinha",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Montar a loja online ou o ponto de venda",
+      "Produzir um estoque inicial enxuto (ou sob demanda)",
+      "Fotografar os produtos com a identidade do projeto"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Preparação do lançamento da lojinha",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Montar o cronograma da campanha",
+      "Produzir os materiais"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Lançamento da lojinha",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Divulgar nas redes, na comunidade e nos shows",
+      "Alinhar o lançamento da loja com um lançamento musical ou show"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Rotina da lojinha",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Controlar estoque, vendas e reposição",
+      "Testar novos produtos conforme o retorno"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "54",
+   "category": "Produtos e educação",
+   "title": "Lançar cursos, aulas ou mentorias",
+   "subtitle": "Seu conhecimento é produto: aulas, cursos e mentorias geram receita recorrente sem depender de show, e reforçam sua autoridade no nicho. Comece com o que você já domina e o que já te perguntam.",
+   "requires_any_opportunity": [
+    20
+   ],
+   "triggers": {
+    "weaknesses": [
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     5,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     19,
+     20
+    ],
+    "threats": [
+     3,
+     8
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Desenho da oferta de cursos",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Listar o que você sabe ensinar e o que já te perguntam",
+      "Escolher o formato (aula individual, curso online, mentoria, workshop)",
+      "Definir o público-alvo"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Montagem do conteúdo do curso",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Montar o conteúdo e o programa",
+      "Definir preço e forma de pagamento",
+      "Escolher a plataforma ou o espaço"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Produção do material do curso",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Produzir vídeos, apostilas e exercícios",
+      "Montar a página de inscrição"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Divulgação e inscrições do curso",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Divulgar nas redes, na comunidade e no site",
+      "Abrir as inscrições"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Entrega do curso ou mentoria",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Realizar as aulas ou sessões",
+      "Coletar feedback"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Rotina de cursos e mentorias",
+     "path": null,
+     "date_type": "rotina",
+     "tasks": [
+      "Mapear melhorias",
+      "Manter a divulgação"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "55",
+   "category": "Produtos e educação",
+   "title": "Atuar como palestrante",
+   "subtitle": "Sua trajetória é conteúdo: eventos, escolas, empresas e festivais pagam por histórias reais. Palestras posicionam você como referência e abrem portas que o show sozinho não abre.",
+   "requires_any_opportunity": [
+    20
+   ],
+   "triggers": {
+    "weaknesses": [
+     17
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     5,
+     7,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     19,
+     20
+    ],
+    "threats": [
+     8
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Definição da palestra-base",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir os temas que você domina e que interessam a um público",
+      "Estruturar a palestra-base (roteiro, duração, mensagem central)"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Preparação do material de palestrante",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Preparar bio, temas e vídeo de apresentação",
+      "Definir o cachê por tipo de evento"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Prospecção de palestras",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Mapear eventos, escolas, empresas e festivais que contratam palestrantes",
+      "Levantar os contatos",
+      "Apresentar-se e enviar o material",
+      "Fazer follow-up"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Realização das palestras",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Realizar as entregas",
+      "Registrar em vídeo"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Repercussão das palestras",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Usar o registro para atualizar o material de venda",
+      "Divulgar nas redes"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "50",
+   "category": "Internacionalização",
+   "title": "Prospectar bookers e agentes internacionais para turnê no exterior",
+   "subtitle": "Turnê internacional é projeto de médio prazo: começa por mapear bookers e agentes dos mercados onde seu som conversa, e por ter material em inglês. Funciona melhor quando show, branding e network já são forças.",
+   "requires_any_opportunity": [
+    21
+   ],
+   "triggers": {
+    "weaknesses": [
+     6,
+     14,
+     19
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     3,
+     4
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Definição dos mercados internacionais",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir os mercados internacionais onde o seu som conversa",
+      "Pesquisar bookers e agentes que trabalham esses mercados"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Preparação do material internacional",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Preparar o material de venda em inglês (e no idioma local, se necessário)",
+      "Ter o vídeo de show pronto e legendado"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Prospecção de bookers internacionais",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Apresentar o projeto aos bookers e agentes",
+      "Fazer follow-up"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Fechamento da turnê internacional",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Negociar as condições (cachês, logística, vistos)",
+      "Fechar as datas e organizar a viagem"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Realização da turnê internacional",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Realizar os shows",
+      "Divulgar nas redes durante a turnê"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Repercussão da turnê no Brasil",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Repercutir a turnê na imprensa e nas redes",
+      "Atualizar o kit de venda com a experiência internacional"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "51",
+   "category": "Internacionalização",
+   "title": "Inscrever o projeto em festivais internacionais e editais de mobilidade",
+   "subtitle": "Festivais internacionais e editais de mobilidade (fundações, embaixadas, órgãos públicos e privados) pagam passagem e cachê pra artistas brasileiros circularem. Prazos longos, inscrição bem-feita, e a porta se abre.",
+   "requires_any_opportunity": [
+    21
+   ],
+   "triggers": {
+    "weaknesses": [
+     6,
+     17
+    ],
+    "opportunities": [
+     1,
+     6
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     3,
+     4,
+     8
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Mapeamento de festivais internacionais",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Listar festivais internacionais alinhados ao seu perfil",
+      "Mapear editais de mobilidade (fundações, embaixadas, órgãos públicos e privados)",
+      "Marcar os prazos de inscrição no calendário"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Preparação do material em inglês",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Preparar bio, release, vídeo e ficha técnica em inglês",
+      "Adequar o material ao formato de cada inscrição"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Inscrição em festivais internacionais",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Inscrever o projeto nos festivais com chamada aberta",
+      "Inscrever o projeto nos editais de mobilidade",
+      "Fazer follow-up"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Organização da viagem ao festival",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Se selecionado, organizar logística, vistos e passagens",
+      "Alinhar a ficha técnica com o festival"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Participação no festival internacional",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Realizar o show",
+      "Fazer contatos com os programadores presentes",
+      "Repercutir nas redes"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Repercussão do festival internacional",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Repercutir na imprensa e nas redes no Brasil",
+      "Registrar contatos e resultados para as próximas edições"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "53",
+   "category": "Empreendimentos próprios",
+   "title": "Criar evento, festival ou label próprios",
+   "subtitle": "Quando você cria o evento, você deixa de esperar convite: vira contratante de si mesmo e dos parceiros, constrói marca e ocupa a agenda nos seus termos. Você fomenta a cena e protagoniza a cena ao mesmo tempo. Exige gestão de produção e fôlego financeiro, então funciona melhor quando comercial e network já são forças.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     6,
+     7
+    ],
+    "opportunities": [
+     6
+    ]
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     3,
+     7,
+     8
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Desenho do evento próprio",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o conceito, alinhado ao posicionamento",
+      "Definir formato, porte e periodicidade",
+      "Definir o modelo de receita (bilheteria, patrocínio, edital, bar)"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Planejamento da produção do evento",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Montar o orçamento (produção, cachês, estrutura, divulgação)",
+      "Escolher local e data",
+      "Convidar artistas parceiros"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Viabilização do evento próprio",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Buscar patrocínio ou edital",
+      "Contratar produção e estrutura técnica",
+      "Formalizar os contratos com artistas e fornecedores"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Divulgação do evento próprio",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Preparar o plano de divulgação",
+      "Ativar comunidade, base de contatos e imprensa"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Dia do evento: evento próprio",
+     "path": null,
+     "date_type": "marco",
+     "tasks": [
+      "Coordenar a produção do dia",
+      "Realizar o evento",
+      "Registrar em foto e vídeo"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Fechamento e repercussão do evento",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Prestar contas a patrocinadores e parceiros",
+      "Repercutir nas redes e na imprensa",
+      "Avaliar pra próxima edição"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "N1",
+   "category": "Estrutura ao redor da arte",
+   "title": "Buscar formação artística complementar",
+   "subtitle": "Formação é estrutura, não julgamento: aulas de canto, instrumento, teoria ou linguagem musical dão ferramenta pra você expressar melhor o que já é seu. Expressão corporal também entra aqui e pode melhorar sua performance de palco. Você define o que quer desenvolver.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     1,
+     5
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     9,
+     10,
+     11,
+     17
+    ],
+    "threats": [
+     8
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Definição da formação artística",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Identificar o que você quer desenvolver (voz, instrumento, teoria, expressão corporal)",
+      "Pesquisar professores, escolas ou cursos nessa área"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Escolha da formação artística",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Avaliar as opções levantadas em relação ao custo",
+      "Escolher e fechar"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Prática da formação artística",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Montar uma rotina de estudo e prática",
+      "Pedir feedback ao professor"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Aplicação da formação artística",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Aplicar o aprendizado nos ensaios e no repertório",
+      "Gravar e comparar a sua evolução"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Avaliação do ciclo de formação",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Manter a constância por pelo menos um ciclo (6 meses)",
+      "Avaliar os resultados e definir o próximo passo"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "N3",
+   "category": "Estrutura ao redor da arte",
+   "title": "Trabalhar com produtor musical com boa capacidade técnica e alinhado ao seu estilo musical",
+   "subtitle": "Produção é onde a música vira fonograma competitivo. Um produtor com afinidade com seu gênero e um estúdio adequado ao projeto fazem diferença que o mercado percebe e valoriza; e o ouvinte sente, mesmo sem saber explicar.",
+   "requires_any_opportunity": [],
+   "triggers": {
+    "weaknesses": [
+     3
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     4,
+     5,
+     6,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20
+    ],
+    "threats": [
+     1,
+     11
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Definição da produção musical",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o que você espera da produção (referências sonoras do seu gênero)",
+      "Listar produtores com experiência no seu estilo"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Escolha do produtor e do estúdio",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Ouvir trabalhos anteriores e conversar com os mais alinhados",
+      "Pedir orçamentos e prazos",
+      "Escolher e formalizar (contrato, prazos, direitos)"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Pré-produção musical",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Preparar as músicas e as referências",
+      "Realizar a pré-produção e os ensaios"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Gravação, mixagem e masterização",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Gravar",
+      "Acompanhar mixagem e masterização"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Finalização dos fonogramas",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Receber os arquivos finais (master, ISRC)",
+      "Organizar no catálogo (dica: use a Maestra)",
+      "Entregar à distribuidora conforme o cronograma de lançamentos"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "N6",
+   "category": "Conteúdo audiovisual",
+   "title": "Produzir o conteúdo audiovisual para os lançamentos",
+   "subtitle": "Música hoje é vista, além de ser ouvida: clipe, visualizer, session ao vivo e bastidores são ativos para o lançamento prosperar nas redes e no YouTube. Não precisa ser caro, precisa ser coerente com o branding e planejado junto com o lançamento, não depois.",
+   "requires_any_opportunity": [
+    3,
+    8,
+    14
+   ],
+   "triggers": {
+    "weaknesses": [
+     12,
+     13,
+     15
+    ],
+    "opportunities": []
+   },
+   "info": {
+    "strengths": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     9,
+     10,
+     11,
+     12,
+     13,
+     15,
+     17,
+     18,
+     19
+    ],
+    "threats": [
+     8,
+     13
+    ]
+   },
+   "actions": [
+    {
+     "n": 1,
+     "title": "Planejamento das peças audiovisuais",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir, para cada lançamento do cronograma, quais peças vão existir (clipe, visualizer, lyric video, session, bastidores)",
+      "Definir o conceito visual a partir do documento de branding"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "Viabilização da produção audiovisual",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Montar o orçamento",
+      "Decidir o que será feito por conta própria e o que será contratado",
+      "Pesquisar e fechar diretor, videomaker ou produtora alinhados ao conceito"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "Pré-produção do conteúdo audiovisual",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Definir o roteiro",
+      "Definir a locação",
+      "Definir figurino e beleza",
+      "Definir a equipe",
+      "Criar o cronograma"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "Gravação e finalização do audiovisual",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Realizar a gravação",
+      "Acompanhar edição, cor e finalização",
+      "Receber os arquivos finalizados"
+     ]
+    },
+    {
+     "n": 5,
+     "title": "Publicação do conteúdo audiovisual",
+     "path": null,
+     "date_type": "informada",
+     "tasks": [
+      "Produzir os cortes e versões para cada rede (vertical, teaser, trecho)",
+      "Publicar conforme o plano de marketing do lançamento"
+     ]
+    },
+    {
+     "n": 6,
+     "title": "Análise do conteúdo audiovisual",
+     "path": null,
+     "date_type": "automatica",
+     "tasks": [
+      "Analisar o desempenho",
+      "Alimentar o planejamento do próximo lançamento"
+     ]
+    }
+   ]
+  }
+ ],
+ "action_model": {
+  "action": "etapa datável da estratégia; title no padrão fase + objeto (≤45 caracteres); path = opção da pergunta de caminho (null = comum); date_type ∈ {automatica, marco, rotina, informada}; a datação, a cadência das rotinas e as dependências vêm do cronograma_v1_3.json; a ordem de actions[] é a mesma do cronograma",
+  "task": "checklist dentro da ação, sem data; checklist completo conclui a ação; conclusão manual permitida, tarefas abertas permanecem abertas",
+  "path_questions": {
+   "3": "Você vai constituir a sua própria editora ou contratar uma editora com administração?",
+   "6": "Você vai montar a documentação de branding por conta própria ou com um profissional?",
+   "10": "Você vai cuidar das redes por conta própria ou com o suporte de um profissional?",
+   "15": "Você vai contratar uma assessoria de imprensa ou fazer por conta própria?",
+   "18": "Você vai contratar um divulgador de rádio ou fazer por conta própria?",
+   "24": "Você vai trabalhar a presença de palco com um profissional ou por conta própria?",
+   "41b": "Você vai se apresentar às marcas por conta própria ou por meio de uma agência?"
+  }
+ }
+}

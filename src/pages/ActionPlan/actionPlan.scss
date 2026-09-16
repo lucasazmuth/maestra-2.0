@@ -1658,6 +1658,70 @@
   list-style: none;
 }
 
+.ap-v13-actionlist {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ap-v13-action {
+  padding: 14px 16px;
+  border: 1px solid rgba(130, 150, 190, .18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .035);
+}
+
+.ap-v13-action-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ap-v13-action-head > strong {
+  min-width: 0;
+  flex: 1;
+  color: #e6edff;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.ap-v13-checklist {
+  display: grid;
+  gap: 7px;
+  margin: 12px 0 0 35px;
+  padding: 10px 0 0;
+  border-top: 1px solid rgba(130, 150, 190, .14);
+  list-style: none;
+}
+
+.ap-v13-checklist li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #aebbd3;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.ap-v13-checklist li button {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  margin-top: 1px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #7898ff;
+  cursor: pointer;
+}
+
+.ap-v13-checklist li.is-done span {
+  color: #71809b;
+  text-decoration: line-through;
+}
+
 .ap-plan-task {
   display: flex;
   align-items: flex-start;

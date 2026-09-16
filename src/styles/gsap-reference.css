@@ -1882,6 +1882,11 @@
   font-size: 11px;
 }
 
+.calendar-all-day-list > .calendar-all-day-empty {
+  align-self: flex-start;
+  width: fit-content;
+}
+
 .calendar-all-day-event i {
   display: grid;
   width: 16px;

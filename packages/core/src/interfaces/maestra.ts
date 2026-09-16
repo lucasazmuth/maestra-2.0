@@ -86,6 +86,58 @@ export interface ActionTask {
   };
 }
 
+/** Checklist item of the action-plan v3 model. Checklist items are not dated. */
+export interface ActionPlanChecklistItem {
+  id: string;
+  description: string;
+  status: TaskStatus;
+  comments?: TaskComment[];
+  owner?: string;
+}
+
+export type ActionPlanDateType = 'automatica' | 'marco' | 'rotina' | 'informada';
+export type ActionPlanAnchor = 'lancamento' | 'inicio' | 'propria';
+export type ActionPlanCadence = 'semanal' | 'quinzenal' | 'mensal' | 'trimestral' | 'semestral' | 'anual';
+export type ActionPlanMilestoneType = 'lancamento' | 'show' | 'turne' | 'campanha' | 'evento';
+
+/** Dated unit of work introduced by cronograma v1.3. */
+export interface ActionPlanAction {
+  id: string;
+  number: number;
+  sourceNumber?: number;
+  title: string;
+  path?: string | null;
+  dateType: ActionPlanDateType;
+  anchor: ActionPlanAnchor;
+  date?: string;
+  status: TaskStatus;
+  owner?: string;
+  legacyDescription?: string;
+  legacyTaskId?: string;
+  tight?: boolean;
+  milestoneType?: ActionPlanMilestoneType;
+  cadence?: ActionPlanCadence;
+  recurrenceEnd?: string;
+  informedDate?: string;
+  tasks: ActionPlanChecklistItem[];
+}
+
+export interface ActionPlanV13StrategyState {
+  acceptedAt?: string;
+  ownDate?: string;
+  selectedPath?: string;
+  informedDates?: Record<number, string>;
+  endedRoutines?: Record<number, string>;
+  manualDates?: Record<number, string>;
+}
+
+export interface ActionPlanV13Schedule {
+  version: 'v1.3';
+  releaseDate?: string;
+  startDate?: string;
+  strategies: Record<string, ActionPlanV13StrategyState>;
+}
+
 export interface ScheduleStrategyState {
   accepted?: boolean;
   ownDate?: string;
@@ -122,6 +174,11 @@ export interface Strategy {
   // Itens da SWOT que esta estratégia responde (rótulos), exibidos no tooltip "responde a…".
   swotRefs?: { strengths?: string[]; weaknesses?: string[]; opportunities?: string[] };
   tasks: ActionTask[];
+  // Plano v3: ações datadas com checklist interno. `tasks` permanece para leitura legada durante
+  // a migração progressiva dos artistas existentes.
+  actions?: ActionPlanAction[];
+  actionPlanVersion?: 'v3';
+  legacyTasks?: ActionTask[];
   score?: number;
   // Priorização (etapa 7): score 0-10 por índice de objetivo; finalScore = soma.
   objectiveScores?: Record<number, number>;
@@ -381,6 +438,8 @@ export interface ArtistContent {
   planMonths?: number;
   // Cronograma determinístico v1. Só é criado para novos planejamentos.
   actionPlanSchedule?: ActionPlanSchedule;
+  // Cronograma v1.3: mantido separado durante a migração dos planos legados.
+  actionPlanScheduleV13?: ActionPlanV13Schedule;
   revenueGoals?: any[];
   executiveSummary?: string;
   spotifyProfile?: SpotifyProfile;

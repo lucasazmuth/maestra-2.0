@@ -25,6 +25,7 @@ import {
 } from '@maestra/core/wizard/dados';
 import * as engine from '@maestra/core/wizard/motores';
 import { defaultSchedule, CRONOGRAMA_TEXTS } from '@maestra/core/services/cronograma';
+import { buildV13Actions, defaultV13Schedule } from '@maestra/core/services/cronogramaV13';
 import { SWOT_INTERNAL, SWOT_OPPORTUNITIES, SWOT_THREATS } from '@maestra/core/wizard/swot';
 import {
   FinalSummaryCard,
@@ -56,6 +57,7 @@ import type {
   Artist,
   ArtistContent,
   ArtistIdentity,
+  ActionPlanV13Schedule,
   MissionFinancialTier,
   MissionParts,
   ReferenceHorizons as ReferenceHorizonsData,
@@ -948,13 +950,22 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
             onProgress={(strategies) => { persist({ strategies }); }}
             onConfirm={(scored, selectedIds) => {
               pushUser('Prioridades definidas');
-              // Só as estratégias selecionadas ganham tarefas (plano de ação, sem datas). As demais
-              // ficam salvas sem tarefas. Avança direto pro Resumo (passo 8) — não há mais cronograma.
+              // Só as estratégias selecionadas ganham tarefas e ações v1.3. As demais ficam
+              // salvas sem plano para continuarem arquivadas no painel.
               const sel = new Set(selectedIds);
+              const today = new Date().toISOString().slice(0, 10);
+              const v13Schedule = defaultV13Schedule(today);
               const withTasks = scored.map((s) =>
-                sel.has(s.id) ? { ...s, tasks: engine.buildActionPlan(s) } : s
+                sel.has(s.id)
+                  ? {
+                    ...s,
+                    tasks: engine.buildActionPlan(s),
+                    actions: buildV13Actions(s, v13Schedule, { today }),
+                    actionPlanVersion: 'v3' as const,
+                  }
+                  : s
               );
-              persist({ strategies: withTasks }, 8);
+              persist({ strategies: withTasks, actionPlanScheduleV13: v13Schedule }, 8);
             }}
           />
         );
@@ -966,7 +977,23 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
             schedule={draft.actionPlanSchedule || defaultSchedule(today)}
             onConfirm={(schedule, strategies) => {
               pushUser('Cronograma aprovado');
-              void persist({ actionPlanSchedule: schedule, strategies }, 8).then(() => Promise.all(
+              const previousV13 = draft.actionPlanScheduleV13 || defaultV13Schedule(today);
+              const v13Schedule: ActionPlanV13Schedule = {
+                ...previousV13,
+                releaseDate: schedule.releaseDate,
+                startDate: schedule.startDate,
+                strategies: Object.fromEntries(Object.entries(schedule.strategies).map(([id, state]) => [id, {
+                  ...previousV13.strategies[id],
+                  acceptedAt: state.accepted ? new Date().toISOString() : previousV13.strategies[id]?.acceptedAt,
+                  ownDate: state.ownDate,
+                  selectedPath: state.path,
+                  manualDates: state.manualDates,
+                }])),
+              };
+              const scheduledStrategies = strategies.map((strategy) => strategy.actions?.length
+                ? { ...strategy, actions: buildV13Actions(strategy, v13Schedule, { today, existing: strategy.actions }) }
+                : strategy);
+              void persist({ actionPlanSchedule: schedule, actionPlanScheduleV13: v13Schedule, strategies: scheduledStrategies }, 8).then(() => Promise.all(
                 strategies.flatMap((strategy) => strategy.tasks.map((task) => syncActionPlanTaskEvent({
                   artistId: artist.id,
                   taskId: task.id,

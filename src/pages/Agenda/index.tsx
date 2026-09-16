@@ -123,6 +123,16 @@ const Agenda: FC = () => {
       ...artist.content,
       strategies: (artist.content.strategies || []).map((strategy) => ({
         ...strategy,
+        actions: (strategy.actions || []).map((action) => {
+          if (action.id !== event.task_id) return action;
+          found = true;
+          return {
+            ...action,
+            date: event.date,
+            owner,
+            status: event.status === 'completed' ? 'done' : action.status === 'done' ? 'todo' : action.status,
+          };
+        }),
         tasks: (strategy.tasks || []).map((task) => {
           if (task.id !== event.task_id) return task;
           found = true;
@@ -158,6 +168,12 @@ const Agenda: FC = () => {
       ...artist.content,
       strategies: (artist.content.strategies || []).map((strategy) => ({
         ...strategy,
+        actions: (strategy.actions || []).map((action) => {
+          if (action.id !== event.task_id) return action;
+          found = true;
+          // Remover o evento não apaga a ação nem o checklist: somente retira a data.
+          return { ...action, date: undefined };
+        }),
         tasks: (strategy.tasks || []).map((task) => {
           if (task.id !== event.task_id) return task;
           found = true;
@@ -301,7 +317,7 @@ const Agenda: FC = () => {
                 {isTaskEvent(event) && <i className={event.status === 'completed' ? 'is-completed' : ''} aria-hidden="true">{event.status === 'completed' ? <FiCheck size={11} /> : null}</i>}
                 <strong>{calendarTitle(event.title, 72)}</strong>
               </button>
-            )) : <strong>Planeje sua semana</strong>}
+            )) : <strong className="calendar-all-day-empty">Planeje sua semana</strong>}
           </div>
         </div>
       )}
