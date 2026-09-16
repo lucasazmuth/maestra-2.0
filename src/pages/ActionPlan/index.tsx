@@ -1,4 +1,4 @@
-import { FC, useEffect, useMemo, useState } from 'react';
+import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { App, DatePicker, message } from 'antd';
 import { createPortal } from 'react-dom';
@@ -21,7 +21,8 @@ import { TaskDetailModal } from './TaskDetailModal';
 import { TASK_OWNER_SELF, isOnboardingComplete } from '@maestra/core/constants/maestra';
 import { listMembers } from '@maestra/core/services/db/members';
 import * as eventsDb from '@maestra/core/services/db/events';
-import type { ActionTask, ArtistContent, ArtistMember, Strategy } from '@maestra/core/interfaces/maestra';
+import type { ActionPlanAction, ActionTask, ArtistContent, ArtistMember, Strategy } from '@maestra/core/interfaces/maestra';
+import { migrateContentToV13 } from '@maestra/core/services/migracaoV13';
 import './actionPlan.scss';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -189,6 +190,7 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const { openWithPrompt } = useNytaModal(); // botão "Nova estratégia" abre a Nyta com o protocolo
   const [, setSaving] = useState(false);
   const showProRequired = () => setProModalOpen(true);
+  const migrationStarted = useRef(false);
 
   // Equipe ativa do artista — alimenta o seletor de responsável das tarefas.
   const [members, setMembers] = useState<ArtistMember[]>([]);
@@ -263,6 +265,22 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artist?.id]);
 
+  // Converte planos antigos somente quando o usuário pode editá-los. A conversão mantém `tasks`
+  // para compatibilidade e grava as ações v1.3 em paralelo, permitindo rollback por versão.
+  useEffect(() => {
+    if (!artist || !editPlanning || migrationStarted.current) return;
+    if (!artist.content?.strategies?.some((strategy) => strategy.bankId && !strategy.actions?.length)) return;
+    migrationStarted.current = true;
+    const migrated = migrateContentToV13(artist.content, todayStr());
+    if (!migrated.report.migratedStrategyIds.length) return;
+    dispatch(artistsActions.setArtistContentLocal({ id: artist.id, content: migrated.content }));
+    void dispatch(artistsActions.updateArtistContent({ id: artist.id, content: migrated.content })).unwrap().catch(() => {
+      message.warning('O plano antigo continua disponível, mas a migração v1.3 será repetida depois.');
+    });
+  // `artist` is intentionally read from the current snapshot; the ref prevents duplicate migrations.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [artist?.id, editPlanning, dispatch]);
+
   // Edições da tarefa e acompanhamento usam editPlanning: manter tarefas existentes
   // não exige assinatura PRO; criação/remoção de estruturas continua usando manageTasks.
   // Criação/remoção de estruturas continua usando manageTasks (PRO).
@@ -307,11 +325,60 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
     });
   };
 
+  const syncActionEvent = (strategy: Strategy, action: ActionPlanAction, patch: Partial<ActionPlanAction>) => {
+    if (!artist) return;
+    const nextAction = { ...action, ...patch };
+    void eventsDb.syncActionPlanTaskEvent({
+      artistId: artist.id,
+      taskId: action.id,
+      title: nextAction.title,
+      strategyTitle: strategy.title,
+      deadline: nextAction.date,
+      completed: nextAction.status === 'done',
+      recurrence: nextAction.cadence === 'semanal' ? 'weekly' : undefined,
+      assigneeKind: nextAction.owner ? (nextAction.owner === TASK_OWNER_SELF ? 'owner' : 'unassigned') : 'unassigned',
+      assigneeMemberId: null,
+    }).catch((error: unknown) => {
+      console.error('[ActionPlan] Não foi possível sincronizar a ação v1.3 na Agenda:', error);
+      toast.error('A ação foi salva, mas a Agenda não foi sincronizada.');
+    });
+  };
+
   const patchTask = (sid: string, tid: string, patch: Partial<ActionTask>) => {
     const strategy = artist?.content?.strategies?.find((s) => s.id === sid);
     const task = strategy?.tasks?.find((t) => t.id === tid);
     commit((ss) => ss.map((s) => (s.id !== sid ? s : { ...s, tasks: (s.tasks || []).map((t) => (t.id === tid ? { ...t, ...patch } : t)) })), editPlanning);
     if (strategy && task) syncTaskEvent(strategy, task, patch);
+  };
+
+  const toggleAction = (sid: string, action: ActionPlanAction) => {
+    const nextStatus = action.status === 'done' ? 'todo' : 'done';
+    void commit((ss) => ss.map((s) => s.id !== sid ? s : {
+      ...s,
+      actions: (s.actions || []).map((item) => item.id === action.id ? { ...item, status: nextStatus } : item),
+    }), editPlanning);
+    const strategy = artist?.content?.strategies?.find((s) => s.id === sid);
+    if (strategy) syncActionEvent(strategy, action, { status: nextStatus });
+    toast.success(nextStatus === 'done' ? 'Ação concluída.' : 'Ação reaberta.');
+  };
+
+  const patchAction = (sid: string, action: ActionPlanAction, date?: string) => {
+    void commit((ss) => ss.map((s) => s.id !== sid ? s : {
+      ...s,
+      actions: (s.actions || []).map((item) => item.id === action.id ? { ...item, date } : item),
+    }), editPlanning);
+    const strategy = artist?.content?.strategies?.find((s) => s.id === sid);
+    if (strategy) syncActionEvent(strategy, action, { date });
+  };
+
+  const toggleActionChecklist = (sid: string, actionId: string, taskId: string) => {
+    void commit((ss) => ss.map((s) => s.id !== sid ? s : {
+      ...s,
+      actions: (s.actions || []).map((action) => action.id !== actionId ? action : {
+        ...action,
+        tasks: action.tasks.map((task) => task.id === taskId ? { ...task, status: task.status === 'done' ? 'todo' : 'done' } : task),
+      }),
+    }), editPlanning);
   };
   // Marcar como concluída é ACOMPANHAR (não estrutural): liberado pra quem cria/acessa o plano
   // (dono do perfil ou membro com nível plan), via editPlanning em vez de manageTasks.
@@ -417,7 +484,22 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
     !q || normalizar(t.title || '').includes(q) || normalizar(t.description || '').includes(q);
 
   const info = ranked.map((s) => {
-    const ts = (s.tasks || []).filter(isActive).filter(casa);
+    const v13Rows: ActionTask[] = (s.actions || []).filter((action) => action.status !== 'archived').map((action) => ({
+      id: action.id,
+      description: action.title,
+      owner: action.owner,
+      deadline: action.date,
+      status: action.status,
+      schedule: {
+        anchor: action.anchor,
+        order: action.number,
+        tight: action.tight,
+        continuous: action.dateType === 'rotina',
+        recurrence: action.cadence === 'semanal' ? 'weekly' : undefined,
+        strategyId: s.id,
+      },
+    }));
+    const ts = (s.actions?.length ? v13Rows : s.tasks || []).filter(isActive).filter(casa);
     const done = ts.filter(isDone).length;
     return { s, ts, done, total: ts.length, complete: ts.length > 0 && done === ts.length };
   });
@@ -546,7 +628,41 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
                           cabeçalho só ocupava altura pra repetir contexto que já estava a poucos
                           pixels dali. O "Adicionar tarefa" desce pro fim da lista, onde uma ação
                           de "adicionar mais um item" costuma ficar. */}
-                      {p.ts.length === 0 ? (
+                      {p.s.actions?.length ? (
+                        <ul className="ap-v13-actionlist">
+                          {p.s.actions.filter((action) => action.status !== 'archived').map((action) => {
+                            const done = action.status === 'done';
+                            const checklistDone = action.tasks.filter((task) => task.status === 'done').length;
+                            return (
+                              <li key={action.id} className={`ap-v13-action${done ? ' is-done' : ''}`}>
+                                <div className="ap-v13-action-head">
+                                  <button type="button" className={`action-task-check${done ? ' is-done' : ''}`} title={done ? 'Reabrir ação' : 'Concluir ação'} onClick={() => editPlanning ? toggleAction(p.s.id, action) : showProRequired()}>
+                                    {done ? <FiCheckCircle size={25} /> : <FiCircle size={25} />}
+                                  </button>
+                                  <strong>{action.title}</strong>
+                                  <span className="ap-plan-task-meta">
+                                    <TaskOwner className="ap-owner" value={action.owner} assignees={assignees} disabled={!editPlanning} onBlocked={showProRequired} onChange={(owner) => {
+                                      void commit((ss) => ss.map((s) => s.id !== p.s.id ? s : { ...s, actions: (s.actions || []).map((item) => item.id === action.id ? { ...item, owner } : item) }), editPlanning);
+                                    }} />
+                                    <TaskDate className="ap-date" value={action.date} overdue={!!(action.date && action.date < today && !done)} disabled={!editPlanning} onBlocked={showProRequired} onChange={(date) => patchAction(p.s.id, action, date)} />
+                                    <span className="ap-schedule-badge">{checklistDone}/{action.tasks.length}</span>
+                                  </span>
+                                </div>
+                                <ul className="ap-v13-checklist" aria-label={`Checklist de ${action.title}`}>
+                                  {action.tasks.map((task) => (
+                                    <li key={task.id} className={task.status === 'done' ? 'is-done' : ''}>
+                                      <button type="button" aria-label={task.status === 'done' ? `Reabrir ${task.description}` : `Concluir ${task.description}`} onClick={() => editPlanning ? toggleActionChecklist(p.s.id, action.id, task.id) : showProRequired()}>
+                                        {task.status === 'done' ? <FiCheck size={13} /> : <FiCircle size={13} />}
+                                      </button>
+                                      <span>{task.description}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ) : p.ts.length === 0 ? (
                         <div className="ap-empty-tasks">Nenhuma ação ainda. Crie a primeira com a Nyta no botão abaixo.</div>
                       ) : (
                         <ul className="ap-plan-tasklist">

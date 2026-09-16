@@ -39,6 +39,9 @@ export const migrateStrategyToV13 = (
   }
 
   const legacy = strategy.tasks || [];
+  if (!legacy.length) {
+    return { strategy, preservedLegacyTasks: [], migrated: false };
+  }
   const canonical = buildV13Actions(strategy, schedule, { today });
   const legacyByOrder = new Map(legacy.map((task, index) => [legacyOrder(task, index), task]));
   const actions = canonical.map((action) => mergeLegacyAction(action, legacyByOrder.get(action.number)));

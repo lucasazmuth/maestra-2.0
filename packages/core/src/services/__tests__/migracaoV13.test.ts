@@ -35,14 +35,14 @@ describe('migração do plano v3', () => {
   });
 
   it('does not migrate a strategy twice', () => {
-    const first = migrateStrategyToV13(strategy(), defaultV13Schedule('2026-09-16'), '2026-09-16');
+    const first = migrateStrategyToV13(strategy([{ id: 'legacy-1', description: 'Ação antiga', status: 'todo' }]), defaultV13Schedule('2026-09-16'), '2026-09-16');
     const second = migrateStrategyToV13(first.strategy, defaultV13Schedule('2026-09-16'), '2026-09-16');
     expect(second.migrated).toBe(false);
     expect(second.strategy.actions).toEqual(first.strategy.actions);
   });
 
   it('reports all migrated strategies at content level', () => {
-    const content = { strategies: [strategy()] } as ArtistContent;
+    const content = { strategies: [strategy([{ id: 'legacy-1', description: 'Ação antiga', status: 'todo' }])] } as ArtistContent;
     const result = migrateContentToV13(content, '2026-09-16');
     expect(result.report.migratedStrategyIds).toEqual(['strategy-1']);
     expect(result.content.actionPlanScheduleV13?.version).toBe('v1.3');
