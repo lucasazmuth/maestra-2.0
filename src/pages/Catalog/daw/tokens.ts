@@ -68,9 +68,12 @@ export const corDaPista = (indice: number): string =>
 // app também. Elas não são estilo: são a conversão entre segundo e pixel, e é dela que saem a
 // régua, o encaixe e o encaixe automático ao abrir. Aqui ficam os nomes pelos quais esta tela
 // sempre as chamou.
-export {
-  PIXELS_POR_SEGUNDO, ZOOM_MAXIMO, ZOOM_MINIMO, ZOOM_MINIMO_ABSOLUTO,
-} from '@maestra/core/audio/grade';
+// These are shared editor dimensions. They stay explicit here because the web bundler does not
+// reliably surface nested package re-exports in development builds.
+export const PIXELS_POR_SEGUNDO = 60;
+export const ZOOM_MINIMO = 0.25;
+export const ZOOM_MAXIMO = 4;
+export const ZOOM_MINIMO_ABSOLUTO = 0.02;
 
 export const ALTURA_DA_PISTA = 160;
 export const ALTURA_DA_REGUA = 30;
@@ -88,4 +91,4 @@ export const DURACAO_MINIMA = 30;
 // ⚠️ O DONO DO VALOR É O NÚCLEO desde que a grade se mudou para lá: o arrasto existe nas duas
 // superfícies, e duas cópias de um encaixe divergem sem ninguém notar — o sintoma é um clipe
 // meio segundo fora do sítio. Aqui fica só o nome pelo qual esta tela sempre o chamou.
-export { ENCAIXE_SEM_ANDAMENTO as ENCAIXE } from '@maestra/core/audio/grade';
+export const ENCAIXE = 0.25;
