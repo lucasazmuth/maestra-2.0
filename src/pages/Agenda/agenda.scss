@@ -78,6 +78,38 @@
   color: #5f7197;
 }
 
+.agenda-week-board {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  min-height: 620px;
+  overflow: hidden;
+  background: #fff;
+}
+.agenda-week-head,
+.agenda-week-all-day,
+.agenda-week-grid { display: grid; grid-template-columns: 64px repeat(7, minmax(112px, 1fr)); }
+.agenda-week-head { border-bottom: 1px solid #e5eaf3; }
+.agenda-week-head button { border: 0; border-left: 1px solid #e5eaf3; background: #fff; padding: 10px 6px; color: #6b7ea3; cursor: pointer; }
+.agenda-week-head button strong { display: block; color: #334d7c; font-size: 17px; }
+.agenda-week-head button.is-today { background: #f0f5ff; color: #2861ff; }
+.agenda-week-gutter { border-right: 1px solid #e5eaf3; }
+.agenda-week-all-day { min-height: 58px; border-bottom: 1px solid #e5eaf3; }
+.agenda-week-all-day > span { padding: 12px 8px; font-size: 11px; font-weight: 700; color: #7890b6; }
+.agenda-week-all-day > div { min-width: 0; border-left: 1px solid #e5eaf3; padding: 7px 5px; }
+.agenda-week-all-day button { display: block; width: 100%; overflow: hidden; border: 0; border-left: 3px solid var(--event-color, #2f63ff); background: #f1f5ff; color: #405b88; text-align: left; padding: 5px 6px; margin-bottom: 3px; border-radius: 4px; white-space: nowrap; text-overflow: ellipsis; cursor: pointer; }
+.agenda-week-grid { min-height: 528px; overflow-y: auto; }
+.agenda-week-hours { border-right: 1px solid #e5eaf3; background: #fbfcff; }
+.agenda-week-hours span { display: block; height: 88px; padding: 7px 8px; color: #7186aa; font-size: 11px; font-weight: 700; }
+.agenda-week-column { position: relative; min-width: 0; height: 2112px; border-left: 1px solid #e5eaf3; background: repeating-linear-gradient(to bottom, transparent 0, transparent 21px, #f0f3f8 22px); cursor: crosshair; }
+.agenda-week-slot { position: absolute; left: 0; right: 0; height: 22px; pointer-events: none; }
+.agenda-week-event { position: absolute; z-index: 2; overflow: hidden; min-width: 0; padding: 5px 6px; text-align: left; border-radius: 5px; }
+.agenda-week-event strong, .agenda-week-event small { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+@media (max-width: 760px) {
+  .agenda-week-board { min-height: 520px; overflow-x: auto; }
+  .agenda-week-head, .agenda-week-all-day, .agenda-week-grid { min-width: 720px; }
+  .agenda-week-grid { max-height: 560px; }
+}
+
 // Virar o dia media 11x11px: a regra base de `.calendar-tools > div button` serve aos botoes de
 // TEXTO da barra ("Hoje", "Dia/Mes/Ano") e por isso da font-size 11px com padding 0. O icone do
 // react-icons e 1em, entao ele virava o alvo inteiro. A navegacao sempre funcionou — o que falhava
@@ -275,6 +307,88 @@
   .agenda-month-board { overflow-x: auto; padding: 18px; }
   .agenda-month-weekdays, .agenda-month-grid { min-width: 610px; }
   .agenda-year-board { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 18px; }
+}
+
+// Scheduler próprio: a grade usa intervalos de 15 minutos, mas rotula apenas as horas para
+// manter leitura profissional sem adicionar uma dependência de calendário comercial.
+.task-app:not(.public-app) .agenda-reference-page .calendar-tools > div {
+  grid-template-columns: auto auto auto minmax(150px, 1fr) auto auto;
+}
+
+.calendar-assignee-filter {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  color: #8192af;
+}
+
+.calendar-assignee-filter svg { flex: 0 0 auto; }
+.calendar-assignee-filter select {
+  max-width: 190px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #60749a;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-events {
+  position: relative;
+  display: block;
+  min-height: 2112px;
+  overflow: hidden;
+  background-image: repeating-linear-gradient(to bottom, transparent 0 87px, #eef1f5 88px), repeating-linear-gradient(to bottom, transparent 0 21px, rgba(238,241,245,.45) 22px);
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-hours {
+  grid-template-rows: repeat(24, 88px);
+  min-height: 2112px;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-slot {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 0;
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px dashed transparent;
+  border-radius: 0;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-event {
+  position: absolute;
+  z-index: 2;
+  min-width: 90px;
+  margin: 0 4px 0 0;
+  padding: 8px 10px;
+  overflow: hidden;
+  border-left-width: 3px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-event[draggable='true'] { cursor: grab; }
+.task-app:not(.public-app) .agenda-reference-page .calendar-event[draggable='true']:active { cursor: grabbing; }
+.calendar-event small { display: flex; align-items: center; gap: 4px; margin-top: 5px; color: #91a2bd; font-size: 9px; font-weight: 800; }
+.calendar-event-resize { position: absolute; right: 0; bottom: 0; left: 0; height: 7px; cursor: ns-resize; }
+.calendar-event-resize::after { position: absolute; right: 8px; bottom: 3px; left: 8px; height: 2px; border-radius: 2px; background: currentColor; content: ''; opacity: .3; }
+.calendar-now-line { position: absolute; right: 0; left: 0; z-index: 3; height: 2px; background: #3361ff; pointer-events: none; }
+.calendar-now-line::before { position: absolute; top: -3px; left: -1px; width: 8px; height: 8px; border-radius: 50%; background: #3361ff; content: ''; }
+
+@media (max-width: 700px) {
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div { grid-template-columns: auto auto auto minmax(0, 1fr); }
+  .calendar-assignee-filter { grid-column: 1 / -1; padding: 0 0 5px; }
+  .calendar-assignee-filter select { max-width: none; width: 100%; }
+  .task-app:not(.public-app) .agenda-reference-page .calendar-timeline { grid-template-columns: 58px minmax(0, 1fr); }
+  .task-app:not(.public-app) .agenda-reference-page .calendar-event { min-width: 0; padding: 7px; }
+  .task-app:not(.public-app) .agenda-reference-page .calendar-event strong { font-size: 10px; }
 }
 
 // Cabeçalho da agenda: data e modos de visualização pertencem ao mesmo grupo.

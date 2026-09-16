@@ -1,6 +1,6 @@
 import { FC } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FiCheck } from 'react-icons/fi';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { FiArrowLeft, FiCheck } from 'react-icons/fi';
 
 import { LOCKED_FEATURE_CONFIG, type LockedFeatureKey } from './config';
 import { usePlanPrices } from '@maestra/core/hooks/usePlanPrices';
@@ -13,6 +13,7 @@ interface LockedFeatureProps {
 
 export const LockedFeature: FC<LockedFeatureProps> = ({ feature }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { onceFmt, monthlyFmt } = usePlanPrices();
   const config = LOCKED_FEATURE_CONFIG[feature];
   const Icon = config.icon;
@@ -32,6 +33,23 @@ export const LockedFeature: FC<LockedFeatureProps> = ({ feature }) => {
 
   return (
     <div className={styles.container}>
+      {feature === 'nyta' && (
+        <button
+          type='button'
+          className={styles.back}
+          aria-label='Voltar para o perfil'
+          onClick={() => {
+            if (location.key !== 'default') {
+              navigate(-1);
+              return;
+            }
+            const artistId = /^\/artists\/([^/]+)/.exec(location.pathname)?.[1];
+            navigate(artistId ? `/artists/${artistId}` : '/artists');
+          }}
+        >
+          <FiArrowLeft size={21} />
+        </button>
+      )}
       <div className={styles.content}>
         {/* A tela da Nyta mostra a própria Nyta: o ícone genérico de tendência não dizia de quem
             era o recurso. Os outros bloqueios seguem com o ícone do módulo no menu. */}

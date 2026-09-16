@@ -3,8 +3,9 @@ import { Button, DatePicker, Input, Modal, Popconfirm, Select, Tabs } from 'antd
 import dayjs from 'dayjs';
 import { FiCheck, FiEdit2, FiMessageSquare, FiSend, FiTrash2, FiX } from 'react-icons/fi';
 
+import { TASK_TYPES } from '@maestra/core/constants/maestra';
 import type { ActionTask, TaskComment } from '@maestra/core/interfaces/maestra';
-import { TASK_TYPES, type Assignee } from './TaskControls';
+import type { Assignee } from './TaskControls';
 // Mesmo casco das fichas de música e de compromisso: cartão, cabeçalho (kicker + título +
 // subtítulo), abas, campos e rodapé vêm todos daqui. O módulo local guarda só o que é
 // exclusivo desta tela — a lista de comentários, que nenhum outro modal tem.
@@ -81,7 +82,7 @@ const CommentList: FC<{
       <div className={styles.emptyComments}>
         <FiMessageSquare size={24} />
         <strong>Nenhum comentário ainda</strong>
-        <span>Use este espaço para registrar contexto, decisões e atualizações da tarefa.</span>
+        <span>Use este espaço para registrar contexto, decisões e atualizações da ação.</span>
       </div>
     );
   }
@@ -277,7 +278,7 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
     <div className={modalStyles.footer}>
       {canDelete && (
         <Popconfirm
-          title="Excluir esta tarefa?"
+          title="Excluir esta ação?"
           description="Esta ação não pode ser desfeita."
           okText="Excluir"
           cancelText="Cancelar"
@@ -285,7 +286,7 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
           onConfirm={onDelete}
         >
           <Button className={modalStyles.dangerButton} danger type="text" icon={<FiTrash2 />}>
-            Excluir tarefa
+            Excluir ação
           </Button>
         </Popconfirm>
       )}
@@ -304,10 +305,10 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
       onCancel={onClose}
       title={
         <div className={modalStyles.heading}>
-          <span className={modalStyles.kicker}>Tarefa</span>
+          <span className={modalStyles.kicker}>Ação</span>
           <span className={modalStyles.title}>
             <i className={modalStyles.titleDot} aria-hidden />
-            {task?.description || 'Detalhes da tarefa'}
+            {task?.description || 'Detalhes da ação'}
           </span>
           {strategyTitle && <span className={modalStyles.subtitle}>{strategyTitle}</span>}
         </div>
@@ -336,7 +337,7 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
                     autoSize={{ minRows: 3, maxRows: 7 }}
                     maxLength={500}
                     disabled={!canEdit}
-                    placeholder="Descreva a tarefa"
+                    placeholder="Descreva a ação"
                   />
                 </label>
 

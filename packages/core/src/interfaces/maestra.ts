@@ -684,6 +684,11 @@ export interface CatalogProjectMessage {
 
 export type EventType = 'release' | 'rehearsal' | 'studio' | 'meeting' | 'interview' | 'task' | 'other';
 export type EventStatus = 'scheduled' | 'completed' | 'cancelled';
+export type AgendaAssigneeKind = 'owner' | 'member' | 'unassigned';
+export type AgendaEventSource = 'manual' | 'action_plan' | 'google_calendar' | string;
+export type CalendarProvider = 'google' | string;
+export type CalendarSyncDirection = 'import' | 'export' | 'bidirectional';
+export type CalendarSyncStatus = 'idle' | 'syncing' | 'connected' | 'error' | 'revoked';
 
 export interface AgendaEvent {
   id: string;
@@ -699,10 +704,77 @@ export interface AgendaEvent {
   // Sincronização com o Plano de Ação: task_id liga o evento à tarefa de origem;
   // source distingue evento criado na Agenda ('manual') do gerado por tarefa ('action_plan').
   task_id?: string | null;
-  source?: 'manual' | 'action_plan' | string;
+  source?: AgendaEventSource;
+  assignee_kind?: AgendaAssigneeKind | string;
+  assignee_member_id?: string | null;
   recurrence_rule?: 'weekly' | null;
+  timezone?: string | null;
+  provider?: CalendarProvider | null;
+  external_id?: string | null;
+  external_etag?: string | null;
+  external_ical_uid?: string | null;
+  external_calendar_id?: string | null;
+  sync_status?: CalendarSyncStatus | null;
+  reminders?: Array<{ method: 'email' | 'popup' | string; minutes: number }> | null;
+  attendees?: Array<{ email: string; displayName?: string | null; responseStatus?: string | null }> | null;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface CalendarConnection {
+  id: string;
+  user_id: string;
+  provider: CalendarProvider;
+  provider_account_id?: string | null;
+  account_email?: string | null;
+  status: CalendarSyncStatus;
+  scopes?: string[] | null;
+  token_expires_at?: string | null;
+  last_error?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CalendarSource {
+  id: string;
+  artist_id: string;
+  connection_id: string;
+  provider: CalendarProvider;
+  external_calendar_id: string;
+  name: string;
+  description?: string | null;
+  color?: string | null;
+  timezone?: string | null;
+  is_primary: boolean;
+  import_enabled: boolean;
+  export_enabled: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CalendarEventLink {
+  id: string;
+  event_id: string;
+  source_id: string;
+  external_event_id: string;
+  external_etag?: string | null;
+  external_ical_uid?: string | null;
+  direction: CalendarSyncDirection;
+  conflict_status?: 'none' | 'local_changed' | 'remote_changed' | 'conflict' | string;
+  last_synced_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CalendarSyncState {
+  id: string;
+  source_id: string;
+  sync_token?: string | null;
+  last_synced_at?: string | null;
+  next_sync_at?: string | null;
+  status: CalendarSyncStatus;
+  last_error?: string | null;
+  consecutive_failures: number;
 }
 
 // ---- Métricas (ChatMetrics) ----------------------------------------------------------------

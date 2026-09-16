@@ -5,9 +5,15 @@ import { FiTrash2 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
 import type { AgendaEvent } from '@maestra/core/interfaces/maestra';
+import type { AgendaAssigneeKind } from '../pages/Agenda/agendaUtils';
 import { EVENT_TYPE_OPTIONS, EVENT_STATUS } from '@maestra/core/constants/maestra';
 import * as eventsDb from '@maestra/core/services/db/events';
 import modalStyles from './StandardModal.module.scss';
+
+type DraftEvent = Partial<AgendaEvent> & {
+  assignee_kind?: AgendaAssigneeKind | string;
+  assignee_member_id?: string | null;
+};
 
 interface Props {
   open: boolean;
@@ -23,9 +29,10 @@ interface Props {
   onDeleteEvent?: (event: AgendaEvent) => Promise<void>;
   deleteLabel?: string;
   deleteConfirmTitle?: string;
+  assigneeOptions?: Array<{ value: string; label: string; kind: AgendaAssigneeKind; memberId?: string | null }>;
 }
 
-const empty = (date?: string, time?: string): Partial<AgendaEvent> => ({
+const empty = (date?: string, time?: string): DraftEvent => ({
   title: '',
   type: 'other',
   date: date || dayjs().format('YYYY-MM-DD'),
@@ -34,6 +41,8 @@ const empty = (date?: string, time?: string): Partial<AgendaEvent> => ({
   // abrir mais um seletor para o caso mais comum. Continua editável.
   end_time: time ? dayjs(time, 'HH:mm:ss').add(1, 'hour').format('HH:mm:ss') : null,
   status: 'scheduled',
+  assignee_kind: 'owner',
+  assignee_member_id: null,
 });
 
 export const EventModal: FC<Props> = ({
@@ -48,16 +57,21 @@ export const EventModal: FC<Props> = ({
   onDeleteEvent,
   deleteLabel = 'Excluir',
   deleteConfirmTitle = 'Excluir evento?',
+  assigneeOptions = [],
 }) => {
-  const [draft, setDraft] = useState<Partial<AgendaEvent>>(empty(defaultDate, defaultTime));
+  const [draft, setDraft] = useState<DraftEvent>(empty(defaultDate, defaultTime));
   const [saving, setSaving] = useState(false);
   const titleRef = useRef<InputRef>(null);
 
   useEffect(() => {
-    if (open) setDraft(event ? { ...event } : empty(defaultDate, defaultTime));
+    if (open) {
+      const next: DraftEvent = event ? { ...event } : empty(defaultDate, defaultTime);
+      if (!next.assignee_kind) next.assignee_kind = event?.source === 'action_plan' ? 'unassigned' : 'owner';
+      setDraft(next);
+    }
   }, [open, event, defaultDate, defaultTime]);
 
-  const set = (patch: Partial<AgendaEvent>) => setDraft((d) => ({ ...d, ...patch }));
+  const set = (patch: Partial<DraftEvent>) => setDraft((d) => ({ ...d, ...patch }));
 
   const handleSave = async () => {
     if (!draft.title?.trim()) {
@@ -76,6 +90,8 @@ export const EventModal: FC<Props> = ({
         location: draft.location || null,
         description: draft.description || null,
         status: draft.status || 'scheduled',
+        assignee_kind: draft.assignee_kind || 'unassigned',
+        assignee_member_id: draft.assignee_kind === 'member' ? draft.assignee_member_id || null : null,
       };
       const saved = event
         ? await eventsDb.updateEvent(event.id, payload)
@@ -186,6 +202,21 @@ export const EventModal: FC<Props> = ({
             />
           </label>
         </div>
+        <label className={modalStyles.field}>
+          <span>Responsável</span>
+          <Select
+            placeholder='Selecione o responsável'
+            value={`${draft.assignee_kind || 'unassigned'}:${draft.assignee_member_id || ''}`}
+            options={assigneeOptions.map((option) => ({
+              value: `${option.kind}:${option.memberId || ''}`,
+              label: option.label,
+            }))}
+            onChange={(value) => {
+              const [kind, memberId] = String(value).split(':');
+              set({ assignee_kind: kind as AgendaAssigneeKind, assignee_member_id: memberId || null });
+            }}
+          />
+        </label>
         <div className={modalStyles.fieldGridThree}>
           <label className={modalStyles.field}>
             <span>Data</span>

@@ -24,7 +24,10 @@ export const criarOfflineWeb = (canais: number, quadros: number, taxa: number): 
 // muda entre as duas superfícies é só o invólucro — `Blob` aqui, ficheiro lá —, e duas cópias
 // de um codificador divergem na primeira afinação de qualidade, com o sintoma a aparecer só num
 // dos lados e só depois de alguém reparar que a guia de um soa diferente da do outro.
-export { caminhoDaGuia } from '@maestra/core/audio/exportar';
+// Keep this browser-facing export explicit. Webpack's workspace resolver does not reliably
+// expose nested package re-exports during the dev build.
+export const caminhoDaGuia = (artistaId: string, projetoId: string): string =>
+  `${artistaId}/${projetoId}/guia.mp3`;
 
 /** O buffer renderizado, em MP3, pronto para subir. `aoAndar` recebe 0..1 pelo caminho. */
 export const paraMp3 = async (
@@ -32,4 +35,3 @@ export const paraMp3 = async (
   aoAndar?: (parte: number) => void,
 ): Promise<Blob> =>
   new Blob([await bytesDoMp3(buffer, aoAndar)], { type: 'audio/mpeg' });
-

@@ -1,5 +1,5 @@
-import { FC, useCallback, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { FiAlertCircle } from 'react-icons/fi';
 
 import './styles.scss';
@@ -39,10 +39,20 @@ const NytaChatPage: FC = () => {
   } = useNytaChat('route', handleConversation);
   const { artist } = useArtist();
   const navigate = useNavigate();
+  const location = useLocation();
+  const promptSent = useRef(false);
   const usuario = useAppSelector((st) => st.auth.user);
   const quemEntrou = (usuario?.user_metadata as Record<string, unknown> | undefined);
   const nome = (quemEntrou?.full_name || quemEntrou?.name) as string | undefined;
   // A carga inicial (e o reset ao trocar de artista) é feita pelo useNytaChat.
+
+  useEffect(() => {
+    const prompt = new URLSearchParams(location.search).get('prompt')?.trim();
+    if (!prompt || promptSent.current || loadingHistory) return;
+    promptSent.current = true;
+    void sendMessage(prompt);
+    navigate(location.pathname, { replace: true });
+  }, [loadingHistory, location.pathname, location.search, navigate, sendMessage]);
 
   const handleDelete = useCallback(async (id: string) => {
     const ok = await remove(id);

@@ -104,6 +104,15 @@
   line-height: 18px;
 }
 
+.filterButtonLabel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 .popoverOverlay {
   padding-top: 6px;
 }

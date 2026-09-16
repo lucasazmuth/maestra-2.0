@@ -24,6 +24,7 @@
   padding: 0;
   background: transparent;
 }
+.hero :global(.nyta-input-bar__textarea--animated)::placeholder { opacity: 1; }
 .suggestions { margin-top: 24px; }
 .suggestion {
   display: flex;

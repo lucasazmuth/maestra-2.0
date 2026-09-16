@@ -15,7 +15,17 @@ import { bytesDoWav } from '@maestra/core/audio/exportar';
 // ⚠️ O WAV E O NOME DO FICHEIRO MUDARAM-SE PARA O NÚCLEO quando o app passou a exportar
 // também: o cabeçalho RIFF e a conversão das amostras são os mesmos nas duas superfícies, e o
 // que muda é só o invólucro — `Blob` e link de download aqui, ficheiro e folha de partilha lá.
-export { nomeDoArquivoDaPista } from '@maestra/core/audio/exportar';
+const higienizarNome = (nome: string): string => {
+  const limpo = nome
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-zA-Z0-9 _-]/g, '_')
+    .trim();
+  return /[a-zA-Z0-9]/.test(limpo) ? limpo : 'pista';
+};
+
+export const nomeDoArquivoDaPista = (nomeDaPista: string, extensao: 'wav' | 'mp3'): string =>
+  `${higienizarNome(nomeDaPista)}.${extensao}`;
 
 /** O WAV desta montagem como `Blob`, pronto para o ZIP ou para o download. */
 export const paraWav = (buffer: BufferDeAudio): Blob =>

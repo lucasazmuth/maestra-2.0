@@ -85,15 +85,15 @@ export function useJourneyState(artist?: Artist | null): JourneyState {
     } else if (tasksPending > 0 || tasksTotal === 0) {
       next = {
         stage: 'tasks', kicker: 'Plano de Ação', accent: ACTION, to: 'action-plan',
-        title: tasksTotal === 0 ? 'Monte suas tarefas no Plano de Ação' : `Suas tarefas de hoje · ${tasksPending} pendente${tasksPending === 1 ? '' : 's'}`,
+        title: tasksTotal === 0 ? 'Monte suas ações no Plano de Ação' : `Suas ações de hoje · ${tasksPending} pendente${tasksPending === 1 ? '' : 's'}`,
         desc: tasksTotal === 0 ? 'Transforme suas estratégias em passos práticos.' : 'Avance um passo de cada vez e veja sua carreira andar.',
-        ctaLabel: tasksTotal === 0 ? 'Abrir plano' : 'Ver minhas tarefas',
+        ctaLabel: tasksTotal === 0 ? 'Abrir plano' : 'Ver minhas ações',
       };
     } else {
       next = {
         stage: 'evolution', kicker: 'Evolução', accent: REAL, to: 'diagnostico/refazer',
         title: 'Tudo em dia! Hora de medir sua evolução',
-        desc: 'Você concluiu suas tarefas. Refaça o diagnóstico e veja o quanto avançou.',
+        desc: 'Você concluiu suas ações. Refaça o diagnóstico e veja o quanto avançou.',
         ctaLabel: 'Refazer diagnóstico',
       };
     }

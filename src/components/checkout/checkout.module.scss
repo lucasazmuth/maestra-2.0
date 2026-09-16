@@ -15,7 +15,9 @@ $muted2: #93a4c0;
   grid-template-columns: minmax(0, 1fr) 384px;
   gap: 24px;
   width: 100%;
-  max-width: 1080px;
+  // A página já define a margem segura do conteúdo. O teto antigo deixava o checkout
+  // artificialmente estreito em telas largas, enquanto o restante do painel preenchia a área.
+  max-width: none;
   margin: 0 auto;
   align-items: start;
   text-align: left;
@@ -292,8 +294,17 @@ $muted2: #93a4c0;
 .compareSub { font-size: 15px; color: $muted; margin-top: 10px; b { color: $green; } }
 
 .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; @media (max-width: 760px) { grid-template-columns: 1fr; } }
-.compareCol { background: $card; border: 1px solid $cardBorder; border-radius: 18px; padding: 26px; position: relative; }
-.compareColPro { border-color: rgba(154, 79, 209, 0.45); box-shadow: 0 0 0 1px rgba(154, 79, 209, 0.25), 0 16px 50px rgba(0, 0, 0, 0.4); }
+.compareCol {
+  background: linear-gradient(118deg, #e5edf7 0%, #e9effb 48%, #f1eafa 100%);
+  border: 1px solid #d8e2f2;
+  border-radius: 18px;
+  padding: 26px;
+  position: relative;
+}
+.compareColPro {
+  border-color: #b9c9e4;
+  box-shadow: 0 0 0 1px rgba(125, 155, 209, .2), 0 16px 38px rgba(87, 111, 157, .16);
+}
 .proBadge {
   position: absolute; top: -11px; left: 26px; padding: 4px 12px; border-radius: 9999px;
   background: $green; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.06em;

@@ -9,12 +9,17 @@
 // próprios espaçamentos, então pedir a altura da janela inteira sempre estoura por essa
 // diferença. `100%` ocupa o que existe.
 .container {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
   min-height: 100%;
   padding: 40px 20px;
+}
+
+.back {
+  display: none;
 }
 
 .content {
@@ -104,6 +109,26 @@
 }
 
 @media (max-width: 480px) {
+  .back {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border: 1px solid #e1e8f2;
+    border-radius: 50%;
+    background: #fff;
+    color: #52668d;
+    cursor: pointer;
+    box-shadow: 0 5px 16px rgba(64, 89, 133, .08);
+  }
+
+  .back:active {
+    transform: translateX(-1px);
+  }
+
   .content {
     padding: 4px;
   }

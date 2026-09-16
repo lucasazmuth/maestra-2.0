@@ -299,7 +299,10 @@
 .ap-tl-item.is-done .ap-task-desc { color: #6f6f6f; text-decoration: line-through; }
 
 .ap-task-desc {
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 28px;
   font-size: 14px;
   line-height: 1.45;
   color: #ededed;
@@ -1014,6 +1017,434 @@
   text-align: left;
 }
 
+/* Timeline vertical das estratégias: cada marco representa uma frente do plano e abre
+   suas ações no próprio eixo, mantendo a leitura de cima para baixo. */
+.action-plan-page--embedded .ap-plan-list {
+  position: relative;
+  gap: 14px;
+  padding: 8px 0 18px 34px;
+}
+
+.action-plan-page--embedded .ap-plan-list::before {
+  position: absolute;
+  top: 25px;
+  bottom: 34px;
+  left: 11px;
+  width: 2px;
+  background: linear-gradient(180deg, #3361ff 0 var(--action-plan-progress, 0%), #cbd5e1 var(--action-plan-progress, 0%) 100%);
+  content: '';
+  transform-origin: top;
+  animation: actionPlanTimelineIn .8s cubic-bezier(.2,.8,.2,1) both, actionPlanProgressGlow 2.4s ease-in-out .8s;
+  transition: background .55s ease;
+}
+
+.action-plan-page--embedded .ap-plan-row {
+  position: relative;
+  overflow: visible;
+  border: 1px solid #dfe7f4;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(244,247,255,.96), rgba(255,255,255,.8) 62%, rgba(246,241,255,.92));
+  box-shadow: 0 6px 16px rgba(82,106,151,.06);
+  opacity: 0;
+  animation: actionPlanTimelineItem .45s cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+.action-plan-page--embedded .ap-plan-row::before {
+  position: absolute;
+  top: 23px;
+  left: -34px;
+  z-index: 2;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #a8b4c5;
+  box-shadow: 0 0 0 2px #e2e8f0, 0 4px 10px rgba(82,106,151,.12);
+  color: #fff;
+  content: counter(action-plan-step, decimal-leading-zero);
+  counter-increment: action-plan-step;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.action-plan-page--embedded .ap-plan-row.is-complete::before {
+  background: #3361ff;
+  box-shadow: 0 0 0 2px #b9c8ff, 0 4px 10px rgba(51,97,255,.2);
+  animation: actionPlanStepComplete .5s ease both;
+}
+
+.action-plan-page--embedded .ap-plan-row.is-current::before {
+  background: #3361ff;
+  box-shadow: 0 0 0 2px #b9c8ff, 0 4px 10px rgba(51,97,255,.2);
+}
+
+@keyframes actionPlanStepComplete {
+  0% { transform: scale(.72); opacity: .45; }
+  70% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes actionPlanProgressGlow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.16); }
+}
+
+/* Ajustes finais do cabeçalho incorporado: esta folha é carregada depois dos estilos globais
+   da casca e por isso é o ponto certo para fixar a hierarquia visual desta tela. */
+.action-plan-page--embedded > .module-page-heading {
+  display: flex;
+  flex-direction: column;
+  min-height: 278px;
+  margin: 0 0 18px;
+  padding: 30px 32px 24px;
+  border: 1px solid #dfe8f5;
+  border-radius: 14px;
+  background: linear-gradient(118deg, #e2efff 0%, #e7ecff 52%, #dff7f3 100%);
+  color: #344b73;
+}
+.action-plan-page--embedded {
+  padding: 0 !important;
+  background: transparent;
+}
+.action-plan-page--embedded .action-plan-header-top { display: flex; width: 100%; align-items: flex-start; justify-content: space-between; gap: 28px; margin-left: 0; }
+.action-plan-page--embedded .action-plan-header-copy { width: 100%; max-width: none; margin-left: 0; }
+.action-plan-page--embedded .action-plan-header-copy > p { margin: 0; color: #7286aa !important; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.action-plan-page--embedded .action-plan-header-result { margin-top: 14px; }
+.action-plan-page--embedded .action-plan-header-result small { display: block; color: rgba(255,255,255,.6); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.action-plan-page--embedded .action-plan-header-result h1 { margin: 3px 0 4px; color: #344b73 !important; font-size: 31px; line-height: 1.05; }
+.action-plan-page--embedded .action-plan-header-result span { display: block; max-width: 660px; margin: 0; color: #6f82a4 !important; font-size: 13px; line-height: 1.4; }
+.action-plan-page--embedded .action-plan-header-summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: auto; padding-top: 17px; border-top: 1px solid rgba(82, 104, 143, .18); }
+.action-plan-page--embedded .action-plan-header-status { color: #6f82a4; font-size: 13px; line-height: 1.4; }
+.action-plan-page--embedded .action-plan-new-strategy {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  margin: 0;
+  padding: 0 15px;
+  border: 1px solid rgba(51, 97, 255, .22);
+  border-radius: 999px;
+  background: rgba(255,255,255,.76);
+  box-shadow: 0 7px 16px rgba(51,97,255,.1);
+  color: #3361ff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+  transition: background-color .15s ease;
+}
+.action-plan-page--embedded .action-plan-new-strategy:hover,
+.action-plan-page--embedded .action-plan-new-strategy:focus-visible {
+  background: #fff;
+  outline: 0;
+}
+.action-plan-page--embedded .action-plan-header-side { display: grid; justify-items: end; gap: 8px; min-width: 164px; text-align: right; }
+.action-plan-page--embedded .action-plan-header-side span { color: #7286aa !important; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.action-plan-page--embedded .action-plan-header-side strong { display: inline-grid; min-width: 64px; min-height: 34px; place-items: center; border: 1px solid #bdcbe1; border-radius: 999px; background: rgba(255,255,255,.48); color: #40577f; font-size: 16px; line-height: 1; }
+
+.action-plan-page--embedded .ap-plan-row:nth-child(2) { animation-delay: .08s; }
+.action-plan-page--embedded .ap-plan-row:nth-child(3) { animation-delay: .16s; }
+.action-plan-page--embedded .ap-plan-row:nth-child(4) { animation-delay: .24s; }
+.action-plan-page--embedded .ap-plan-row:nth-child(5) { animation-delay: .32s; }
+.action-plan-page--embedded .ap-plan-row:nth-child(n + 6) { animation-delay: .38s; }
+.action-plan-page--embedded .ap-plan-list { counter-reset: action-plan-step; }
+.action-plan-page--embedded .ap-plan-row.is-complete::before,
+.action-plan-page--embedded .ap-plan-row.is-current::before { background: #3361ff; box-shadow: 0 0 0 2px #b9c8ff, 0 4px 10px rgba(51,97,255,.2); }
+.action-plan-page--embedded .ap-plan-row.is-open { border-color: #9eb5ff; box-shadow: 0 10px 22px rgba(51,97,255,.1); }
+
+.action-plan-tabs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 0 22px;
+}
+
+.action-plan-view-tabs {
+  display: inline-flex;
+  gap: 3px;
+  margin: 0;
+  padding: 3px;
+  border: 1px solid #e0e7f2;
+  border-radius: 7px;
+  background: #f7f9fc;
+}
+
+.action-plan-archived-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 13px;
+  border: 1px solid #d6e0ef;
+  border-radius: 999px;
+  background: #fff;
+  color: #657a9f;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: border-color .2s ease, background-color .2s ease, color .2s ease, box-shadow .2s ease;
+}
+
+.action-plan-archived-button:hover,
+.action-plan-archived-button:focus-visible {
+  border-color: #b9c9e4;
+  background: #f7f9ff;
+  color: #3361ff;
+  box-shadow: 0 5px 12px rgba(51,97,255,.1);
+}
+
+.action-plan-archived-button:focus-visible {
+  outline: 2px solid #9db7ff;
+  outline-offset: 2px;
+}
+
+.action-plan-view-tabs button {
+  min-width: 112px;
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #8798b3;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.action-plan-view-tabs button.is-active {
+  background: #fff;
+  color: #3361ff;
+  box-shadow: 0 2px 6px rgba(51,97,255,.12);
+}
+
+.action-plan-view-tabs button:focus-visible {
+  outline: 2px solid #9db7ff;
+  outline-offset: 1px;
+}
+
+// A nave e o conteudo usam uma unica regua vertical. A margem antiga da secao somava com a
+// margem das abas e com o padding da timeline, deixando um vao maior antes da primeira estrategia.
+.action-plan-page--embedded .action-strategy-overview {
+  margin-top: 0;
+}
+
+@media (max-width: 560px) {
+  .action-plan-tabs-row {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .action-plan-view-tabs {
+    flex: 1 1 100%;
+  }
+
+  .action-plan-view-tabs button {
+    flex: 1 1 0;
+  }
+
+  .action-plan-archived-button {
+    margin-left: auto;
+  }
+}
+
+.action-plan-page--embedded .ap-plan-list {
+  padding-top: 0;
+}
+
+.action-plan-schedule {
+  overflow: hidden;
+  margin-bottom: 24px;
+  border: 1px solid #e1e8f3;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.action-plan-schedule-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid #e1e8f3;
+  background: linear-gradient(135deg, #f4f7ff 0%, #fff 62%, #f6f1ff 100%);
+}
+
+.action-plan-schedule-header span {
+  color: #91a5c7;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.action-plan-schedule-header h2 {
+  margin: 6px 0 4px;
+  color: #52688f;
+  font-size: 20px;
+}
+
+.action-plan-schedule-header p {
+  margin: 0;
+  color: #8a9ab5;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.action-plan-schedule-header > strong {
+  display: grid;
+  min-width: 58px;
+  gap: 3px;
+  color: #3361ff;
+  font-size: 22px;
+  line-height: 1;
+  text-align: right;
+}
+
+.action-plan-schedule-header > strong small {
+  color: #8a9ab5;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.action-plan-gantt {
+  max-width: 100%;
+  overflow: auto;
+}
+
+.action-plan-gantt-content {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  min-width: 1020px;
+}
+
+.action-plan-gantt-corner,
+.action-plan-gantt-months {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  height: 44px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #e1e8f3;
+  background: #f7f9fd;
+}
+
+.action-plan-gantt-corner {
+  left: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-right: 1px solid #e1e8f3;
+  color: #8a9ab5;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.action-plan-gantt-months { display: flex; }
+.action-plan-gantt-months span {
+  display: grid;
+  place-items: center;
+  border-right: 1px solid #e1e8f3;
+  color: #8a9ab5;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.action-plan-gantt-row { display: contents; }
+
+.action-plan-gantt-task {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-content: center;
+  min-height: 66px;
+  gap: 8px;
+  padding: 10px 16px;
+  box-sizing: border-box;
+  border-right: 1px solid #e1e8f3;
+  border-bottom: 1px solid #edf1f5;
+  background: #fff;
+}
+
+.action-plan-gantt-task small {
+  color: #a5b2c8;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.action-plan-gantt-task span {
+  display: grid;
+  gap: 3px;
+  color: #52688f;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.action-plan-gantt-task b {
+  overflow: hidden;
+  color: #91a5c7;
+  font-size: 9px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.action-plan-gantt-timeline {
+  position: relative;
+  display: flex;
+  min-height: 66px;
+  border-bottom: 1px solid #edf1f5;
+  box-sizing: border-box;
+  background: repeating-linear-gradient(to right, transparent 0 calc(25% - 1px), #f0f3f8 25% 25.2%);
+}
+
+.action-plan-gantt-timeline > i {
+  flex-shrink: 0;
+  border-right: 1px solid rgba(225,232,243,.72);
+}
+
+.action-plan-gantt-marker.ant-picker {
+  position: absolute;
+  top: 18px;
+  z-index: 2;
+  width: 72px;
+  height: 30px;
+  transform: translateX(-36px);
+  border-color: #aec0ff;
+  border-radius: 15px;
+  background: #fff;
+  padding: 0 9px;
+  box-shadow: 0 3px 10px rgba(51,97,255,.12);
+}
+
+.action-plan-gantt-marker.ant-picker:hover { border-color: #3361ff; }
+.action-plan-gantt-marker .ant-picker-input input { color: #3361ff; font-size: 11px; font-weight: 800; text-align: center; }
+.action-plan-gantt-marker .ant-picker-suffix { display: none; }
+
+.action-plan-schedule-empty {
+  padding: 42px 24px;
+  color: #8a9ab5;
+  font-size: 13px;
+  text-align: center;
+}
+
+@keyframes actionPlanTimelineIn { from { opacity: 0; transform: scaleY(0); } to { opacity: 1; transform: scaleY(1); } }
+@keyframes actionPlanTimelineItem { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .action-plan-page--embedded .ap-plan-list::before,
+  .action-plan-page--embedded .ap-plan-row { animation: none; opacity: 1; transform: none; }
+}
+
 .ap-plan-list .action-task-check {
   display: grid;
   width: 32px;
@@ -1021,9 +1452,36 @@
 }
 
 .ap-plan-list .action-task-more {
-  display: grid;
-  width: 28px;
-  height: 28px;
+  display: inline-grid;
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  flex: 0 0 28px;
+  place-items: center;
+  margin: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 50%;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #93a3bc;
+  line-height: 1;
+  text-align: center;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+.ap-plan-list .action-task-more svg {
+  display: block;
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.ap-plan-list .action-task-more:hover,
+.ap-plan-list .action-task-more:focus-visible {
+  background: #edf2ff !important;
+  color: var(--blue);
+  outline: 0;
 }
 
 // Chips de tipo/prazo/status: pílula compacta com borda e cantos arredondados, medida própria
@@ -1048,6 +1506,12 @@
   white-space: nowrap;
 }
 
+.ap-plan-task-meta .ap-type,
+.ap-plan-task-meta .ap-date {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 .ap-plan-task-meta b.priority-alta,
 .ap-plan-task-meta b.priority-média,
 .ap-plan-task-meta b.priority-normal {
@@ -1059,11 +1523,34 @@
 // `.ap-owner-foto` é width/height 100%, que sem um continente com tamanho próprio não restringe
 // nada), daí a caixa vazia enorme que apareceu na primeira tentativa.
 .ap-plan-task-meta .ap-owner {
+  position: relative;
   display: grid;
+  place-items: center;
+  line-height: 0;
   width: 26px;
   height: 26px;
   border: 1px solid #dde5f1;
   border-radius: 50%;
+  overflow: hidden;
+  background: #f1f4f8;
+  color: #8c9ab0;
+}
+
+.ap-plan-task-meta .ap-owner-foto {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.ap-plan-task-meta .ap-owner-empty-icon {
+  position: absolute;
+  inset: 0;
+  display: block;
+  margin: auto;
+  width: 14px;
+  height: 14px;
 }
 
 .ap-plan-chevron {
@@ -1111,6 +1598,14 @@
   color: #52668d;
   font-size: 14px;
   line-height: 1.35;
+  text-transform: none;
+}
+
+.ap-plan-row-description {
+  color: #8fa0ba;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
   text-transform: none;
 }
 

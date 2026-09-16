@@ -37,8 +37,8 @@ export const UPSELL_CONFIG: Record<UpsellContext, UpsellConfig> = {
     title: 'Assine o Maestra Pro',
     description: 'Desbloqueie a edição e a gestão completa do seu Plano de Ação.',
     benefits: [
-      'Adicionar tarefas e estratégias',
-      'Editar prazos, categorias e responsáveis',
+      'Adicionar ações e estratégias',
+      'Organizar estratégias e ações do seu plano',
       'Acompanhar seu plano com a Nyta IA',
     ],
     icon: FiCheckSquare,

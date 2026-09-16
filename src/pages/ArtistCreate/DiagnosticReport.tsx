@@ -1,13 +1,12 @@
 import { FC, ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { message } from 'antd';
-import { FiChevronDown, FiArrowRight, FiShare2, FiRefreshCw, FiLock } from 'react-icons/fi';
+import { FiChevronDown, FiArrowRight, FiRefreshCw, FiLock } from 'react-icons/fi';
 import { DownloadIcon } from '../../components/Icons/system';
 
-import { MaestraBrand } from '../../components/MaestraBrand';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import type { RealIndex } from '@maestra/core/interfaces/maestra';
-import { downloadNodePng, downloadPagesPdf, nodeToPngFile, urlToDataUrl } from '../../utils/exportImage';
+import { downloadPagesPdf, urlToDataUrl } from '../../utils/exportImage';
 import DiagnosticDoc from './DiagnosticDoc';
 // O tipo vem do NÚCLEO, e não do componente: reexportar através da fronteira do pacote é o
 // caminho que o webpack não segue.
@@ -251,7 +250,7 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
       },
     ];
   return (
-    <div className={`${styles.dimCard} ${high ? styles.stHigh : styles.stLow}`}>
+    <div className={`${styles.dimCard} ${styles[`dim${dk}`]} ${high ? styles.stHigh : styles.stLow}`}>
       <div className={styles.dimTop}>
         <span className={styles.dimMono}>{meta.letter}</span>
         <div className={styles.dimTitleWrap}>
@@ -507,6 +506,8 @@ interface Props {
   heroSub?: string;
   // Esconde o hero interno (avatar + título + refazer) — a /diagnostico usa o PageHeader padrão.
   hideHero?: boolean;
+  // O dashboard incorpora o resumo de perfil no cabeçalho do método e evita repeti-lo abaixo.
+  hideProfile?: boolean;
   // O dashboard já oferece a ação de refazer no cabeçalho do método; não repete o aviso legado.
   hideLegacyNotice?: boolean;
   // Conteúdo opcional renderizado logo ABAIXO do card "Seu perfil de carreira" (ex.: banner de refazer).
@@ -520,7 +521,7 @@ interface Props {
 
 // Página de diagnóstico REAL (free tier) — entregue ao artista antes do pagamento.
 // Determinística: consome o realIndex calculado no backend (sem IA). Suporta v1 (antigo) e v2.
-export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true, onRedo, redoLocked = false, heroTitle, heroSub, hideHero = false, hideLegacyNotice = false, belowProfile, artistId, vinculo }) => {
+export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true, onRedo, redoLocked = false, heroTitle, heroSub, hideHero = false, hideProfile = false, hideLegacyNotice = false, belowProfile, artistId, vinculo }) => {
   const authUser = useAppSelector((s) => s.auth.user);
   const [methodOpen, setMethodOpen] = useState(false);
   // v2 (motor REAL Consolidado) tem `version: 2` + `boletim`; v1 mantém o shape antigo.
@@ -544,7 +545,6 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
 
   // Compartilhar / baixar.
   const docRef = useRef<HTMLDivElement>(null);
-  const shareRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
   const [avatarData, setAvatarData] = useState<string | null>(null);
@@ -590,7 +590,6 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
   }, []);
 
   const avatarSrc = avatarData || ARTISTS_DEFAULT_IMAGE;
-  const fileName = `diagnostico-${(name || 'artista').toLowerCase().replace(/\s+/g, '-')}.png`;
 
   // AUTORIA DO DOCUMENTO — ver `Autoria` em DiagnosticDoc para o porquê.
   //
@@ -632,19 +631,6 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
       setBusy(false);
     }
   };
-  const handleShare = async () => {
-    if (!shareRef.current) return;
-    setBusy(true);
-    try {
-      const file = await nodeToPngFile(shareRef.current, fileName);
-      const nav = navigator as Navigator & { canShare?: (d: unknown) => boolean; share?: (d: unknown) => Promise<void> };
-      if (file && nav.canShare?.({ files: [file] }) && nav.share) {
-        await nav.share({ files: [file], title: `Meu diagnóstico REAL: ${profile.name}` });
-      } else {
-        await downloadNodePng(shareRef.current, fileName);
-      }
-    } catch { /* cancelado */ } finally { setBusy(false); }
-  };
 
   // Linhas de dados ("o espelho") por dimensão. `num` ativa o contador animado.
   const dataLines: Record<'r' | 'e' | 'a' | 'l', { label: string; value?: string; num?: number | null }[]> = {
@@ -670,7 +656,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
     row.num != null ? <CountUp value={row.num} /> : (row.value ?? '–');
 
   return (
-    <div className={styles.realWrap} style={{ ['--real-accent' as string]: realAccent } as React.CSSProperties}>
+    <div className={`${styles.realWrap} ${hideProfile ? styles.dashboardReport : ''}`} style={{ ['--real-accent' as string]: realAccent } as React.CSSProperties}>
       {/* SEÇÃO 1 — Hero (oculto na /diagnostico, que usa o PageHeader padrão) */}
       {!hideHero && (
         <div className={`${styles.realHero} ${styles.reveal}`} style={{ animationDelay: '0s' }}>
@@ -695,7 +681,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
       )}
 
       {/* SEÇÃO 2 — O perfil REAL */}
-      <div ref={profileRef} className={`${styles.realProfileCard} ${styles.reveal}`} style={{ animationDelay: '0.1s' }}>
+      {!hideProfile && <div ref={profileRef} className={`${styles.realProfileCard} ${styles.reveal}`} style={{ animationDelay: '0.1s' }}>
         {/* Refazer diagnóstico: sutil, no canto do card (não exportado no PDF/share). */}
         {onRedo && !hideHero && (
           <button
@@ -744,7 +730,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
             })}
           </div>
         </div>
-      </div>
+      </div>}
 
       {belowProfile}
 
@@ -789,7 +775,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
               const stateClass = neutral ? styles.stNeutral : high ? styles.stHigh : styles.stLow;
               const [title, sub] = d.name.split(' · ');
               return (
-                <div key={d.key} className={`${styles.dimCard} ${stateClass}`}>
+                <div key={d.key} className={`${styles.dimCard} ${styles[`dim${d.key}`]} ${stateClass}`}>
                   <div className={styles.dimTop}>
                     <span className={styles.dimMono}>{d.letter}</span>
                     <div className={styles.dimTitleWrap}>
@@ -819,10 +805,13 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
             })}
       </div>
 
-      {/* SEÇÃO EXTRA — Onde seus ouvintes estão (dado real do Chartmetric) */}
-      {!!cities?.length && (
-        <div className={`${styles.cityChart} ${styles.reveal}`} style={{ animationDelay: '0.24s', marginBottom: 28 }}>
-          <div className={styles.cityChartLabel}>Onde seus ouvintes estão</div>
+      {/* Distribuição da audiência e presença editorial: dois lados da mesma leitura musical. */}
+      {(!!cities?.length || !!chartmetric?.playlists?.top?.length || !!chartmetric?.audience?.top_countries?.length) && (
+        <div className={`${styles.audienceGrid} ${styles.reveal}`} style={{ animationDelay: '0.24s' }}>
+          {!!cities?.length && (
+            <section className={styles.cityChart}>
+              <div className={styles.reportEyebrow}>Território</div>
+              <h2 className={styles.reportSectionTitle}>Onde sua música encontra gente</h2>
           {cities.slice(0, 5).map((c) => {
             const max = cities[0].listeners || 1;
             const pct = Math.max(6, Math.round((c.listeners / max) * 100));
@@ -834,13 +823,13 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
               </div>
             );
           })}
-        </div>
-      )}
+            </section>
+          )}
 
-      {/* SEÇÃO EXTRA — Presença nas plataformas (enriquecimento Chartmetric, só pós-pago) */}
-      {(!!chartmetric?.playlists?.top?.length || !!chartmetric?.audience?.top_countries?.length) && (
-        <div className={`${styles.platformPresence} ${styles.reveal}`} style={{ animationDelay: '0.27s', marginBottom: 28 }}>
-          <div className={styles.cityChartLabel}>Sua presença nas plataformas</div>
+          {(!!chartmetric?.playlists?.top?.length || !!chartmetric?.audience?.top_countries?.length) && (
+            <section className={styles.platformPresence}>
+              <div className={styles.reportEyebrow}>Distribuição</div>
+              <h2 className={styles.reportSectionTitle}>Sua presença nas plataformas</h2>
 
           {!!chartmetric?.playlists?.top?.length && (
             <div className={styles.platformSection}>
@@ -876,12 +865,15 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
               })}
             </div>
           )}
+            </section>
+          )}
         </div>
       )}
 
       {/* SEÇÃO EXTRA — Mapa dos 16 perfis (onde você está) */}
       <div className={`${styles.profileMap} ${styles.reveal}`} style={{ animationDelay: '0.3s' }}>
-        <div className={styles.profileMapTitle}>Sua posição entre os 16 perfis</div>
+        <div className={styles.reportEyebrow}>Trajetória</div>
+        <h2 className={styles.reportSectionTitle}>Sua posição entre os 16 perfis</h2>
         {PROFILE_MAP.map((row) => (
           <div key={row.tier} className={styles.mapRow}>
             <RealBadge tier={tierForAltas(row.altas)} label={String(row.altas)} size={38} />
@@ -960,7 +952,6 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
         )}
         <div className={styles.shareActions} data-noexport="1">
           <button className={styles.shareBtn} onClick={handleDownloadPdf} disabled={busy}><DownloadIcon size={18} /> {busy ? LEVAR_O_DIAGNOSTICO.baixando : LEVAR_O_DIAGNOSTICO.baixar}</button>
-          <button className={styles.shareBtn} onClick={handleShare} disabled={busy} aria-label="Compartilhar diagnóstico"><FiShare2 size={15} /> {LEVAR_O_DIAGNOSTICO.compartilhar}</button>
         </div>
         {showPlanningCta && <p className={styles.ctaMicrocopy}>{CHAMADA_DO_PLANEJAMENTO.nota}</p>}
       </div>
@@ -1016,27 +1007,6 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
         <DiagnosticDoc realIndex={realIndex} chartmetric={chartmetric} artistName={name} avatarSrc={avatarSrc} autoria={autoria} />
       </div>
 
-      {/* Cartão de compartilhamento — fora da tela, capturado como PNG */}
-      <div className={styles.shareStage} aria-hidden data-noexport="1">
-        <div ref={shareRef} className={styles.shareCard}>
-          <div className={styles.shareBrand}>
-            <MaestraBrand variant='wordmark' tone='light' />
-          </div>
-          <img className={styles.shareAvatar} src={avatarSrc} alt="" crossOrigin="anonymous" />
-          <div className={styles.shareKicker}>Diagnóstico de carreira</div>
-          <div className={styles.shareName}>{profile.name}</div>
-          <div className={styles.shareTagline}>{clean(profile.description)}</div>
-          <div className={styles.sharePattern}>
-            {DIM_META.map((d) => (
-              <div key={d.key} className={styles.sharePatternItem}>
-                <span className={styles.sharePatternLetter}>{d.letter}</span>
-                <span className={styles.sharePatternDot} style={{ background: pattern[d.key] ? '#9A4FD1' : '#5a5a64' }} />
-              </div>
-            ))}
-          </div>
-          <div className={styles.shareFooter}>maestramanager.com</div>
-        </div>
-      </div>
     </div>
   );
 };

@@ -14,6 +14,156 @@
   padding: 32px 24px 64px;
 }
 
+// O mesmo relatório entra no dashboard sem o shell `.pageReal`. Este escopo garante que a
+// experiência incorporada receba a direção editorial completa, sem vazar para a criação.
+.dashboardReport {
+  .dimGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 28px;
+  }
+  .dimCard {
+    --dim-color: #2f6cf6;
+    min-height: 100%;
+    padding: 24px 22px 26px;
+    overflow: hidden;
+    border: 1px solid #dbe4f1;
+    border-left: 5px solid var(--dim-color);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 12px 28px rgba(45, 65, 105, .08);
+  }
+  .dimr { --dim-color: #2f6cf6; }
+  .dime { --dim-color: #d08a18; }
+  .dima { --dim-color: #e35b76; }
+  .diml { --dim-color: #7a4de0; }
+  .dimMono {
+    color: var(--dim-color);
+    background: color-mix(in srgb, var(--dim-color) 9%, white);
+    border-color: color-mix(in srgb, var(--dim-color) 60%, white);
+  }
+  .dimTitle, .dimScore, .dimRevealLead { color: #273f6b; }
+  .dimSub, .dimStatLabel, .dimStatusLine, .dimRevealPara { color: #61749a; }
+  .dimBadgeHigh { color: #fff; background: var(--dim-color); }
+  .dimBadgeLow { color: #61749a; background: #edf2f8; }
+  .ruler, .dimLevel, .cityBarTrack { background: #e8eef7; }
+  .rulerFill, .dimLevelFill { background: var(--dim-color) !important; opacity: 1; }
+  .dimLeitura { border-left: 3px solid var(--dim-color); background: color-mix(in srgb, var(--dim-color) 7%, white); color: #36517f; }
+  .dimReveal { border-color: #dce5f1; }
+  .dimRevealHead { color: var(--dim-color); }
+
+  .audienceGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 28px;
+  }
+  .audienceGrid > * { min-width: 0; margin: 0 !important; }
+  .audienceGrid > :only-child { grid-column: 1 / -1; }
+  .cityChart, .platformPresence, .profileMap, .insightsBlock {
+    box-sizing: border-box;
+    border: 1px solid #dbe4f1;
+    border-top: 3px solid #2f6cf6;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 12px 28px rgba(45, 65, 105, .07);
+    padding: 24px;
+  }
+  .platformPresence { border-top-color: #7a4de0; }
+  .profileMap { border-top-color: #d08a18; }
+  .insightsBlock { border-top-color: #e35b76; }
+  .reportEyebrow { margin-bottom: 7px; color: #7184a5; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+  .reportSectionTitle { margin: 0 0 20px; color: #273f6b; font-family: var(--font-display); font-size: 20px; font-weight: 800; line-height: 1.15; }
+  .cityRow { padding: 9px 0; }
+  .cityBar { background: #2f6cf6; }
+  .platformSection + .platformSection { border-top: 1px solid #e4ebf5; margin-top: 18px; padding-top: 18px; }
+  .platformSectionTitle { color: #36517f; font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+  .platformList { display: flex; flex-direction: column; gap: 6px; }
+  .platformPlaylistRow { display: flex; align-items: center; gap: 10px; min-width: 0; font-size: 13px; }
+  .platformRank { width: 18px; flex: 0 0 18px; color: #7184a5; text-align: right; }
+  .platformName { min-width: 0; flex: 1; color: #52668d; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .platformEditorial { border: 1px solid #b9ccff; border-radius: 4px; color: #2f5fe0; font-size: 10px; font-weight: 700; padding: 1px 5px; }
+  .platformFollowers { color: #61749a; }
+  .profileMapTitle { display: none; }
+  .mapRow { padding: 11px 0; border-color: #e9eef6; }
+  .mapChip,
+  .mapChipName,
+  .mapChipLeitura { color: #52668d; text-decoration: none; }
+  .mapChip { background: #f8faff; }
+  .mapChipOn { color: #273f6b; border-color: #d08a18; background: #fff8e7; }
+  .mapDot { color: #7184a5; background: #e3eaf5; }
+  .mapDotOn { color: #fff; background: #52668d; }
+
+  .ctaBlock { margin: 0 0 28px; padding: 34px 28px; border: 1px solid #dbe4f1; border-radius: 8px; background: linear-gradient(135deg, #f4f7ff 0%, #ffffff 62%, #f6f1ff 100%); }
+  .ctaTitle { color: #273f6b; }
+  .shareBtn { border-color: #b7c8e8; color: #2f5fe0; background: #fff; }
+  .signBlock { border: 0; border-radius: 8px; background: linear-gradient(135deg, #121d33, #1d2a47); box-shadow: 0 14px 32px rgba(24, 38, 65, .16); }
+
+  .methodBlock {
+    margin-top: 28px;
+    border: 1px solid #dbe4f1;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+  }
+  .methodToggle {
+    padding: 18px 22px;
+    color: #273f6b;
+    font-size: 14px;
+    font-weight: 800;
+  }
+  .methodToggle:hover { color: #2f6cf6; }
+  .methodBody {
+    margin: 0;
+    padding: 2px 22px 24px;
+    border-top: 1px solid #e4ebf5;
+    color: #52668d;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+  .methodBody p { margin: 14px 0; }
+  .methodDims {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 24px;
+    margin: 20px 0;
+    border-top: 1px solid #e4ebf5;
+  }
+  .methodDim {
+    gap: 12px;
+    padding: 15px 0;
+    border-bottom: 1px solid #e4ebf5;
+  }
+  .methodDimLetter { width: 26px; color: #2f6cf6; }
+  .methodDimName { color: #273f6b; }
+  .methodDimDesc { color: #61749a; }
+
+  @media (max-width: 760px) {
+    .dimGrid, .audienceGrid { grid-template-columns: 1fr; }
+    .audienceGrid > :only-child { grid-column: auto; }
+    .reportSectionTitle { font-size: 18px; }
+    .methodDims { grid-template-columns: 1fr; }
+  }
+}
+
+// Superfície oficial do diagnóstico REAL: a mesma luz azul/lavanda do CTA de planejamento.
+// Ela cria continuidade entre leitura, decisão e próximo passo sem transformar tudo em branco.
+.pageReal,
+.dashboardReport {
+  --real-card-surface: linear-gradient(135deg, #f4f7ff 0%, #ffffff 62%, #f6f1ff 100%);
+
+  .dimCard,
+  .cityChart,
+  .platformPresence,
+  .profileMap,
+  .insightsBlock,
+  .methodBlock,
+  .ctaBlock {
+    background: var(--real-card-surface) !important;
+  }
+}
+
 // Criação de perfil segue a superfície clara do gsap-app. O diagnóstico passa a
 // usar .pageReal logo após a escolha do artista e mantém sua ambientação própria.
 .page:not(.pageReal) {
@@ -26,7 +176,7 @@
   // As três superfícies da entrega (criar perfil, desbloquear e o módulo do perfil) têm que
   // medir igual: é o mesmo produto, e a diferença só aparece quando se vai de uma para a outra.
   .topBar {
-    max-width: 1180px;
+    max-width: none;
     min-height: 94px;
     margin: 0 0 32px;
     padding: 0 4px;
@@ -56,6 +206,9 @@
   // No checkout isso deixava a classe como letra morta: presente no markup, sem efeito nenhum,
   // e a tela ficava visivelmente mais estreita que o diagnostico logo antes dela, no mesmo fluxo.
   .step:not(.stepWide) { max-width: 760px; }
+  .stepWide,
+  .interactionWide,
+  .realWrap { max-width: none; }
 
   .line {
     max-width: 700px;
@@ -1251,11 +1404,23 @@
   padding: 0 24px 64px;
   overflow-y: auto;
 
+  // O relatório deve acompanhar a mesma régua lateral do cabeçalho. O teto herdado da etapa
+  // larga deixava o diagnóstico centralizado numa coluna menor, com duas sobras visíveis nas
+  // laterais em telas grandes.
+  .stepWide,
+  .realWrap {
+    max-width: none;
+  }
+
+  .stepWide {
+    align-self: stretch;
+  }
+
   // A folga depois do fio do cabeçalho: 32px, e não os 64 de antes. O ambiente do diagnóstico é
   // um DOCUMENTO longo, e não uma pergunta centralizada como as etapas do quiz — deixar meia tela
   // vazia entre o fio e a primeira linha fazia o cabeçalho parecer de outra página.
   .topBar {
-    max-width: 1180px;
+    max-width: none;
     min-height: 94px;
     margin: 0 0 32px;
     padding: 0 4px;
@@ -1465,6 +1630,13 @@
   .payFeatureDetails { border-color: #e9eef7; }
 }
 
+.pageCheckout {
+  .stepWide {
+    max-width: none;
+    align-self: stretch;
+  }
+}
+
 @media (max-width: 640px) {
   .pageReal {
     padding: 0 16px 40px;
@@ -1558,6 +1730,25 @@
   border: 1px solid rgba(var(--real-accent, 154, 79, 209), 0.28);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
   overflow: hidden;
+}
+
+// O relatório exibido no fluxo de desbloqueio usa a mesma superfície visual do Diagnóstico REAL
+// dentro do perfil. O tema claro mantém a continuidade entre as duas entradas do relatório.
+.pageReal .realProfileCard {
+  border-color: #d8e2f2;
+  background: linear-gradient(118deg, #e5edf7 0%, #e9effb 48%, #f1eafa 100%);
+  box-shadow: 0 12px 30px rgba(87, 111, 157, .09);
+}
+.pageReal .realProfileKicker { color: #7286aa; }
+.pageReal .realProfileName { color: #344b73; }
+.pageReal .realProfileDesc { color: #6f82a4; }
+.pageReal .realPatternRow { border-top-color: rgba(82, 104, 143, .18); }
+.pageReal .realPatternWord { color: #7286aa; }
+.pageReal .realProfileCard > button {
+  border-color: rgba(51, 97, 255, .22) !important;
+  background: rgba(255, 255, 255, .76) !important;
+  color: #3361ff !important;
+  box-shadow: 0 7px 16px rgba(51, 97, 255, .1);
 }
 .realProfileKicker { display: block; font-family: var(--font-mono); font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: rgb(var(--real-accent, 154, 79, 209)); margin-bottom: 10px; }
 .realProfileName { font-family: var(--font-display); font-weight: 800; font-size: 38px; line-height: 1; color: #fff; margin: 0 0 14px; letter-spacing: -0.01em; }
@@ -1842,6 +2033,18 @@
   border-color: rgb(var(--real-accent, 154, 79, 209));
   font-weight: 800;
   box-shadow: 0 4px 16px rgba(var(--real-accent, 154, 79, 209), 0.25);
+}
+
+// No relatório claro, só o perfil atual recebe uma superfície contínua; os demais mantêm
+// o fundo suave original do mapa.
+.profileMap .mapChipOn {
+  color: #273f6b !important;
+  background: #eaf0ff !important;
+  border-color: #9db7ff !important;
+}
+
+.profileMap .mapChipOn > * {
+  background: transparent !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2579,12 +2782,10 @@ $docLow: #8b9ab4;
   // O roxo entra só como LINHA no anel. Ele é institucional; a cor de ação é o azul.
   .realProfileCard {
     overflow: hidden;
-    border: 0 !important;
+    border: 1px solid #d8e2f2 !important;
     border-radius: 14px;
-    background:
-      radial-gradient(circle at 50% -40%, #315de8 0, transparent 45%),
-      linear-gradient(135deg, #121c38, #18254d) !important;
-    box-shadow: none !important;
+    background: linear-gradient(118deg, #e5edf7 0%, #e9effb 48%, #f1eafa 100%) !important;
+    box-shadow: 0 12px 30px rgba(87, 111, 157, .09) !important;
 
     &::after {
       position: absolute;
@@ -2592,27 +2793,100 @@ $docLow: #8b9ab4;
       top: -104px;
       width: 190px;
       height: 190px;
-      border: 2px solid rgba(157, 87, 255, 0.8);
+      border: 2px solid rgba(79, 111, 190, .13);
       border-radius: 50%;
       content: '';
     }
 
     > * { position: relative; z-index: 1; }
   }
-  // A escala tipográfica é a do herói do painel: rótulo 10/800/1.1, título 34, apoio 12/17.
-  .realProfileKicker { color: #bcd0ff !important; }
-  .realProfileName { color: #ffffff !important; }
-  .realProfileDesc { color: #c4d0ed !important; }
+  // O card agora é claro: manter os textos brancos do tema antigo deixava o diagnóstico
+  // praticamente ilegível sobre o degradê azul/lavanda.
+  .realProfileKicker { color: #7286aa !important; }
+  .realProfileName { color: #273f6b !important; }
+  .realProfileDesc { color: #52668d !important; }
 
   // A opacidade do item saiu: ela multiplicava a cor da letra apagada e o resultado era 5% de
   // branco sobre o navy. Quem separa aceso de apagado é a COR, uma vez só.
   .realPatternItem { opacity: 1; }
-  .realPatternItemHigh .realPatternWord { color: #bcd0ff !important; font-weight: 800; }
-  .realPatternItemLow .realPatternWord { color: rgba(255, 255, 255, .5) !important; }
-  .realPatternLetterHigh { color: #ffffff !important; }
-  .realPatternLetterLow { color: rgba(255, 255, 255, .55) !important; }
+  .realPatternItemHigh .realPatternWord { color: #52668d !important; font-weight: 800; }
+  .realPatternItemLow .realPatternWord { color: #9aa9c2 !important; }
+  .realPatternLetterHigh { color: #344b73 !important; }
+  .realPatternLetterLow { color: #9aa9c2 !important; }
 
-  .dimCard { border-radius: 14px; }
+  // O relatório é uma leitura de carreira, não um painel administrativo. Cada frente ganha
+  // uma assinatura própria, como faixas de um mesmo disco, sem alterar a régua ou os dados.
+  .dimCard {
+    --dim-color: #3361ff;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #dbe4f1 !important;
+    border-left: 5px solid var(--dim-color) !important;
+    border-radius: 8px;
+    box-shadow: 0 12px 28px rgba(45, 65, 105, .08) !important;
+  }
+  .dimr { --dim-color: #2f6cf6; }
+  .dime { --dim-color: #d08a18; }
+  .dima { --dim-color: #e35b76; }
+  .diml { --dim-color: #7a4de0; }
+
+  .dimTop { margin-bottom: 18px; }
+  .dimMono {
+    color: var(--dim-color) !important;
+    background: color-mix(in srgb, var(--dim-color) 9%, white) !important;
+    border-color: color-mix(in srgb, var(--dim-color) 60%, white) !important;
+  }
+  .dimTitle { color: #273f6b !important; font-size: 18px; }
+  .dimSub { color: #7184a5 !important; }
+  .dimScore { color: #273f6b !important; }
+  .dimScoreMax { color: #7184a5 !important; }
+  .dimBadgeHigh { color: #fff; background: var(--dim-color); }
+  .dimBadgeLow { color: #61749a; background: #edf2f8; }
+  .rulerFill { background: var(--dim-color) !important; }
+  .dimStatusLine { color: #52668d !important; }
+  .dimLeitura {
+    border-left: 3px solid var(--dim-color) !important;
+    background: color-mix(in srgb, var(--dim-color) 7%, white) !important;
+    color: #36517f !important;
+  }
+  .dimReveal { border-color: #dce5f1 !important; }
+  .dimRevealHead { color: var(--dim-color) !important; }
+  .dimRevealLead { color: #273f6b !important; }
+
+  .cityChart,
+  .platformPresence,
+  .profileMap,
+  .insightsBlock {
+    border-radius: 8px;
+    border-top: 3px solid #52668d !important;
+    padding: 24px !important;
+  }
+  .cityChart { border-top-color: #2f6cf6 !important; }
+  .platformPresence { border-top-color: #7a4de0 !important; }
+  .profileMap { border-top-color: #d08a18 !important; }
+  .insightsBlock { border-top-color: #e35b76 !important; }
+
+  .ctaBlock {
+    margin: 0 0 28px;
+    padding: 34px 28px;
+    border: 1px solid #dbe4f1;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #f4f7ff 0%, #ffffff 62%, #f6f1ff 100%);
+  }
+  .ctaTitle { color: #273f6b !important; }
+  .ctaParagraph, .ctaMicrocopy { color: #61749a !important; }
+  .shareBtn { border-color: #b7c8e8 !important; color: #2f5fe0 !important; background: #fff !important; }
+  .shareBtn:hover:not(:disabled) { border-color: #2f6cf6 !important; background: #edf3ff !important; }
+
+  .signBlock {
+    border-radius: 8px;
+    border: 0 !important;
+    background: linear-gradient(135deg, #121d33, #1d2a47) !important;
+    box-shadow: 0 14px 32px rgba(24, 38, 65, .16) !important;
+  }
+  .signKicker { color: #b9ccff !important; }
+  .signName, .signHighlight { color: #fff !important; }
+  .signRole, .signPara { color: #c0cbe0 !important; }
 
   .dimMono {
     color: #52668d !important;
@@ -2732,4 +3006,78 @@ $docLow: #8b9ab4;
   }
   .healthLabel, .pieLegendLabel { color: #61749a !important; }
   .healthVal, .pieLegendVal { color: #52668d !important; }
+
+  // Grade editorial: cada dimensão é uma faixa do diagnóstico. Em telas grandes, as quatro
+  // frentes se leem em paralelo; em telas estreitas elas voltam para uma coluna sem cortar dados.
+  .dimGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .dimCard {
+    min-height: 100%;
+    padding: 24px 22px 26px;
+  }
+  .dimMono {
+    color: var(--dim-color) !important;
+    background: color-mix(in srgb, var(--dim-color) 9%, white) !important;
+    border-color: color-mix(in srgb, var(--dim-color) 60%, white) !important;
+  }
+
+  .reportEyebrow {
+    margin-bottom: 7px;
+    color: #7184a5;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  .reportSectionTitle {
+    margin: 0 0 20px;
+    color: #273f6b;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+  .audienceGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 28px;
+  }
+  .audienceGrid > * { min-width: 0; margin: 0 !important; }
+  .audienceGrid > :only-child { grid-column: 1 / -1; }
+  .cityChart,
+  .platformPresence {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+  .cityRow { padding: 9px 0; }
+  .platformSectionTitle { color: #36517f !important; }
+  .profileMapTitle { display: none; }
+  .profileMap { padding: 26px !important; }
+  .mapRow { padding: 11px 0; }
+  .mapChip { background: #f8faff !important; }
+  .mapChipOn { border-color: #d08a18 !important; background: #fff8e7 !important; }
+
+  @media (max-width: 760px) {
+    .dimGrid,
+    .audienceGrid { grid-template-columns: 1fr; }
+    .audienceGrid > :only-child { grid-column: auto; }
+    .reportSectionTitle { font-size: 18px; }
+  }
+}
+
+// Override final da superfície no dashboard e no fluxo de criação, depois das regras legadas.
+.pageReal,
+.dashboardReport {
+  .dimCard,
+  .cityChart,
+  .platformPresence,
+  .profileMap,
+  .insightsBlock,
+  .methodBlock,
+  .ctaBlock { background: linear-gradient(135deg, #f4f7ff 0%, #ffffff 62%, #f6f1ff 100%) !important; }
+  .dimCard { border-left: 1px solid #dbe4f1 !important; }
 }
