@@ -365,10 +365,11 @@ const Dashboard: FC = () => {
         />
       ) : <>
 
-      <VisaoGeralDoArtista artist={artist} onSelect={setSecao} />
-
-      {/* A Nyta introduz a leitura do momento da carreira antes do conteúdo musical. */}
+      {/* A Nyta orienta a próxima ação antes de apresentar o painel de comando. */}
       <NytaDashboardHero artistName={artist.name} />
+
+      {/* O painel de comando vem depois da conversa, como uma segunda camada de decisão. */}
+      <VisaoGeralDoArtista artist={artist} onSelect={setSecao} />
 
       {/* O rodapé encerra a página com atalhos de apoio e colaboração do artista. */}
       <section className='music-footer'>
