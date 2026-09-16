@@ -340,8 +340,8 @@ const ProfileUnlock: FC = () => {
         )}
 
         {step === 'pagamento' && (
-          // Mesmo frame (1080px centralizado) do checkout, pra headline/"Voltar"/colunas alinharem.
-          <div style={{ width: '100%', maxWidth: 1080, margin: '0 auto' }}>
+          // O checkout acompanha toda a largura útil da tela; o espaçamento vem do shell da página.
+          <div style={{ width: '100%', margin: '0 auto' }}>
             {realIndex && (
               <div style={{ textAlign: 'left', marginBottom: 18 }}>
                 <button

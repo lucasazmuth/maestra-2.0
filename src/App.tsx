@@ -57,6 +57,7 @@ const ProjectSpace = lazy(() => import('./pages/Catalog/ProjectSpace'));
 const Agenda = lazy(() => import('./pages/Agenda'));
 const Team = lazy(() => import('./pages/Team'));
 const Marketing = lazy(() => import('./pages/Marketing'));
+const Financeiro = lazy(() => import('./pages/Financeiro'));
 const Nyta = lazy(() => import('./pages/NytaChat'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Support = lazy(() => import('./pages/Support'));
@@ -359,6 +360,7 @@ const AppRoutes: FC = () => {
             <Route path='/artists/:id/diagnostico' element={<DiagnosticView />} />
             <Route path='/artists/:id/team' element={<Team />} />
             <Route path='/artists/:id/marketing' element={<Marketing />} />
+            <Route path='/artists/:id/financeiro' element={<Financeiro />} />
             <Route path='/artists/:id/nyta' element={<Nyta />} />
           </Route>
           {/* /profile foi fundido na home do artista (Dashboard) */}

@@ -87,8 +87,13 @@
   .platformFollowers { color: #61749a; }
   .profileMapTitle { display: none; }
   .mapRow { padding: 11px 0; border-color: #e9eef6; }
+  .mapChip,
+  .mapChipName,
+  .mapChipLeitura { color: #52668d; text-decoration: none; }
   .mapChip { background: #f8faff; }
-  .mapChipOn { border-color: #d08a18; background: #fff8e7; }
+  .mapChipOn { color: #273f6b; border-color: #d08a18; background: #fff8e7; }
+  .mapDot { color: #7184a5; background: #e3eaf5; }
+  .mapDotOn { color: #fff; background: #52668d; }
 
   .ctaBlock { margin: 0 0 28px; padding: 34px 28px; border: 1px solid #dbe4f1; border-radius: 8px; background: linear-gradient(135deg, #f4f7ff 0%, #ffffff 62%, #f6f1ff 100%); }
   .ctaTitle { color: #273f6b; }
@@ -142,6 +147,23 @@
   }
 }
 
+// Superfície oficial do diagnóstico REAL: a mesma luz azul/lavanda do CTA de planejamento.
+// Ela cria continuidade entre leitura, decisão e próximo passo sem transformar tudo em branco.
+.pageReal,
+.dashboardReport {
+  --real-card-surface: linear-gradient(135deg, #f4f7ff 0%, #ffffff 62%, #f6f1ff 100%);
+
+  .dimCard,
+  .cityChart,
+  .platformPresence,
+  .profileMap,
+  .insightsBlock,
+  .methodBlock,
+  .ctaBlock {
+    background: var(--real-card-surface) !important;
+  }
+}
+
 // Criação de perfil segue a superfície clara do gsap-app. O diagnóstico passa a
 // usar .pageReal logo após a escolha do artista e mantém sua ambientação própria.
 .page:not(.pageReal) {
@@ -154,7 +176,7 @@
   // As três superfícies da entrega (criar perfil, desbloquear e o módulo do perfil) têm que
   // medir igual: é o mesmo produto, e a diferença só aparece quando se vai de uma para a outra.
   .topBar {
-    max-width: 1180px;
+    max-width: none;
     min-height: 94px;
     margin: 0 0 32px;
     padding: 0 4px;
@@ -184,6 +206,9 @@
   // No checkout isso deixava a classe como letra morta: presente no markup, sem efeito nenhum,
   // e a tela ficava visivelmente mais estreita que o diagnostico logo antes dela, no mesmo fluxo.
   .step:not(.stepWide) { max-width: 760px; }
+  .stepWide,
+  .interactionWide,
+  .realWrap { max-width: none; }
 
   .line {
     max-width: 700px;
@@ -1379,11 +1404,23 @@
   padding: 0 24px 64px;
   overflow-y: auto;
 
+  // O relatório deve acompanhar a mesma régua lateral do cabeçalho. O teto herdado da etapa
+  // larga deixava o diagnóstico centralizado numa coluna menor, com duas sobras visíveis nas
+  // laterais em telas grandes.
+  .stepWide,
+  .realWrap {
+    max-width: none;
+  }
+
+  .stepWide {
+    align-self: stretch;
+  }
+
   // A folga depois do fio do cabeçalho: 32px, e não os 64 de antes. O ambiente do diagnóstico é
   // um DOCUMENTO longo, e não uma pergunta centralizada como as etapas do quiz — deixar meia tela
   // vazia entre o fio e a primeira linha fazia o cabeçalho parecer de outra página.
   .topBar {
-    max-width: 1180px;
+    max-width: none;
     min-height: 94px;
     margin: 0 0 32px;
     padding: 0 4px;
@@ -1593,6 +1630,13 @@
   .payFeatureDetails { border-color: #e9eef7; }
 }
 
+.pageCheckout {
+  .stepWide {
+    max-width: none;
+    align-self: stretch;
+  }
+}
+
 @media (max-width: 640px) {
   .pageReal {
     padding: 0 16px 40px;
@@ -1686,6 +1730,25 @@
   border: 1px solid rgba(var(--real-accent, 154, 79, 209), 0.28);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
   overflow: hidden;
+}
+
+// O relatório exibido no fluxo de desbloqueio usa a mesma superfície visual do Diagnóstico REAL
+// dentro do perfil. O tema claro mantém a continuidade entre as duas entradas do relatório.
+.pageReal .realProfileCard {
+  border-color: #d8e2f2;
+  background: linear-gradient(118deg, #e5edf7 0%, #e9effb 48%, #f1eafa 100%);
+  box-shadow: 0 12px 30px rgba(87, 111, 157, .09);
+}
+.pageReal .realProfileKicker { color: #7286aa; }
+.pageReal .realProfileName { color: #344b73; }
+.pageReal .realProfileDesc { color: #6f82a4; }
+.pageReal .realPatternRow { border-top-color: rgba(82, 104, 143, .18); }
+.pageReal .realPatternWord { color: #7286aa; }
+.pageReal .realProfileCard > button {
+  border-color: rgba(51, 97, 255, .22) !important;
+  background: rgba(255, 255, 255, .76) !important;
+  color: #3361ff !important;
+  box-shadow: 0 7px 16px rgba(51, 97, 255, .1);
 }
 .realProfileKicker { display: block; font-family: var(--font-mono); font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: rgb(var(--real-accent, 154, 79, 209)); margin-bottom: 10px; }
 .realProfileName { font-family: var(--font-display); font-weight: 800; font-size: 38px; line-height: 1; color: #fff; margin: 0 0 14px; letter-spacing: -0.01em; }
@@ -1970,6 +2033,18 @@
   border-color: rgb(var(--real-accent, 154, 79, 209));
   font-weight: 800;
   box-shadow: 0 4px 16px rgba(var(--real-accent, 154, 79, 209), 0.25);
+}
+
+// No relatório claro, só o perfil atual recebe uma superfície contínua; os demais mantêm
+// o fundo suave original do mapa.
+.profileMap .mapChipOn {
+  color: #273f6b !important;
+  background: #eaf0ff !important;
+  border-color: #9db7ff !important;
+}
+
+.profileMap .mapChipOn > * {
+  background: transparent !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2707,12 +2782,10 @@ $docLow: #8b9ab4;
   // O roxo entra só como LINHA no anel. Ele é institucional; a cor de ação é o azul.
   .realProfileCard {
     overflow: hidden;
-    border: 0 !important;
+    border: 1px solid #d8e2f2 !important;
     border-radius: 14px;
-    background:
-      radial-gradient(circle at 50% -40%, #315de8 0, transparent 45%),
-      linear-gradient(135deg, #121c38, #18254d) !important;
-    box-shadow: none !important;
+    background: linear-gradient(118deg, #e5edf7 0%, #e9effb 48%, #f1eafa 100%) !important;
+    box-shadow: 0 12px 30px rgba(87, 111, 157, .09) !important;
 
     &::after {
       position: absolute;
@@ -2720,25 +2793,26 @@ $docLow: #8b9ab4;
       top: -104px;
       width: 190px;
       height: 190px;
-      border: 2px solid rgba(157, 87, 255, 0.8);
+      border: 2px solid rgba(79, 111, 190, .13);
       border-radius: 50%;
       content: '';
     }
 
     > * { position: relative; z-index: 1; }
   }
-  // A escala tipográfica é a do herói do painel: rótulo 10/800/1.1, título 34, apoio 12/17.
-  .realProfileKicker { color: #bcd0ff !important; }
-  .realProfileName { color: #ffffff !important; }
-  .realProfileDesc { color: #c4d0ed !important; }
+  // O card agora é claro: manter os textos brancos do tema antigo deixava o diagnóstico
+  // praticamente ilegível sobre o degradê azul/lavanda.
+  .realProfileKicker { color: #7286aa !important; }
+  .realProfileName { color: #273f6b !important; }
+  .realProfileDesc { color: #52668d !important; }
 
   // A opacidade do item saiu: ela multiplicava a cor da letra apagada e o resultado era 5% de
   // branco sobre o navy. Quem separa aceso de apagado é a COR, uma vez só.
   .realPatternItem { opacity: 1; }
-  .realPatternItemHigh .realPatternWord { color: #bcd0ff !important; font-weight: 800; }
-  .realPatternItemLow .realPatternWord { color: rgba(255, 255, 255, .5) !important; }
-  .realPatternLetterHigh { color: #ffffff !important; }
-  .realPatternLetterLow { color: rgba(255, 255, 255, .55) !important; }
+  .realPatternItemHigh .realPatternWord { color: #52668d !important; font-weight: 800; }
+  .realPatternItemLow .realPatternWord { color: #9aa9c2 !important; }
+  .realPatternLetterHigh { color: #344b73 !important; }
+  .realPatternLetterLow { color: #9aa9c2 !important; }
 
   // O relatório é uma leitura de carreira, não um painel administrativo. Cada frente ganha
   // uma assinatura própria, como faixas de um mesmo disco, sem alterar a régua ou os dados.
@@ -2993,4 +3067,17 @@ $docLow: #8b9ab4;
     .audienceGrid > :only-child { grid-column: auto; }
     .reportSectionTitle { font-size: 18px; }
   }
+}
+
+// Override final da superfície no dashboard e no fluxo de criação, depois das regras legadas.
+.pageReal,
+.dashboardReport {
+  .dimCard,
+  .cityChart,
+  .platformPresence,
+  .profileMap,
+  .insightsBlock,
+  .methodBlock,
+  .ctaBlock { background: linear-gradient(135deg, #f4f7ff 0%, #ffffff 62%, #f6f1ff 100%) !important; }
+  .dimCard { border-left: 1px solid #dbe4f1 !important; }
 }

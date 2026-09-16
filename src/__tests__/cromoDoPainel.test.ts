@@ -1,13 +1,12 @@
 import fs from 'fs';
 import path from 'path';
 
-import { COR_PAINEL, CORES_DOS_LANCAMENTOS, CORES_DOS_NUMEROS } from '@maestra/core/constants/design';
+import { COR_PAINEL } from '@maestra/core/constants/design';
 
 // Mesmo papel dos testes de cromo da barra e do cabeçalho, para a home do artista.
 //
-// Aqui as cores vêm de DOIS lugares: o CSS de referência desenha os cartões, e o próprio
-// Dashboard carrega as cores das bolinhas e das faixas em arrays inline. O app precisa bater com
-// os dois, então o teste lê os dois.
+// A Visão geral mantém a leitura operacional; os indicadores e a lista de lançamentos vivem
+// nos módulos específicos para não duplicar a tela inicial.
 
 const ler = (...p: string[]) => fs.readFileSync(path.join(__dirname, '..', ...p), 'utf8');
 
@@ -24,19 +23,7 @@ describe('cromo do painel do artista', () => {
     expect(fontes).toContain(semEspacos(valor));
   });
 
-  // A ORDEM importa tanto quanto os valores: a bolinha verde é a de ouvintes, a azul a de
-  // seguidores, e assim por diante. Trocar a ordem não mudaria nenhuma cor e mudaria o sentido.
-  it('as bolinhas dos números estão na mesma ordem da web', () => {
-    expect(semEspacos(dashboard)).toContain(semEspacos(`[${CORES_DOS_NUMEROS.map((c) => `'${c}'`).join(', ')}]`));
-  });
-
-  // As duas primeiras faixas saem do array do Dashboard; a 3ª e a 4ª o CSS sobrescreve por
-  // `nth-child`. É por isso que esta lista NÃO é igual à de lá — e é o tipo de detalhe que se
-  // perde numa releitura.
-  it('as faixas lançadas usam as cores que de fato aparecem', () => {
-    expect(dashboard).toContain(`'${CORES_DOS_LANCAMENTOS[0]}'`);
-    expect(dashboard).toContain(`'${CORES_DOS_LANCAMENTOS[1]}'`);
-    expect(semEspacos(css)).toContain(semEspacos(`button:nth-child(3) { background: ${CORES_DOS_LANCAMENTOS[2]}; }`));
-    expect(semEspacos(css)).toContain(semEspacos(`button:nth-child(4) { background: ${CORES_DOS_LANCAMENTOS[3]}; }`));
+  it('não duplica a lista de músicas lançadas na visão geral', () => {
+    expect(dashboard).not.toContain('Músicas lançadas');
   });
 });

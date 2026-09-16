@@ -55,9 +55,9 @@ export const LOCKED_FEATURE_CONFIG: Record<LockedFeatureKey, LockedFeatureConfig
     cta: UNLOCK_PROFILE,
   },
   tasks: {
-    title: 'Gestão de Tarefas',
+    title: 'Gestão de Ações',
     benefits: [
-      'Gerencie as tarefas do seu plano de ação',
+      'Gerencie as ações do seu plano de ação',
       'Acompanhe o progresso fase a fase',
       'Recurso do plano PRO',
     ],
@@ -79,10 +79,9 @@ export const LOCKED_FEATURE_CONFIG: Record<LockedFeatureKey, LockedFeatureConfig
     title: 'Nyta Assistente',
     benefits: [
       'Chat inteligente que executa ações no seu perfil',
-      'Crie tarefas, eventos e gerencie músicas por conversa',
+      'Crie ações, eventos e gerencie músicas por conversa',
       'Análises e recomendações personalizadas com IA',
     ],
     cta: SUBSCRIBE_PRO,
   },
 };
-

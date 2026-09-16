@@ -1,5 +1,5 @@
 import { FC, SVGProps } from 'react';
-import { FiTrendingUp } from 'react-icons/fi';
+import { FiDollarSign, FiTrendingUp } from 'react-icons/fi';
 
 // Ícones do sistema (fornecidos pelo design). As cores foram trocadas por currentColor, então cada
 // ícone herda a cor do contexto (ativo/hover). O viewBox é cropado pra o traço (centrado no box 41)
@@ -63,3 +63,4 @@ export const EditIcon = make(EditSvg, '9 7 24 24');
 export const AgendaIcon = make(AgendaSvg);
 export const FiltrosIcon = make(FiltrosSvg, '7 9 28 28');
 export const MarketingIcon: FC<IconProps> = ({ size = 22, ...rest }) => <FiTrendingUp size={size} {...rest} />;
+export const FinanceiroIcon: FC<IconProps> = ({ size = 22, ...rest }) => <FiDollarSign size={size} {...rest} />;

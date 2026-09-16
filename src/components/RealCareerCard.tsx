@@ -54,15 +54,15 @@ export const TaskProgress: FC<{ counts: TaskCounts }> = ({ counts }) => {
       </div>
       {complete ? (
         <p className="task-progress-message" style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#5ec27e', fontSize: 14, fontWeight: 700, margin: '12px 0 0' }}>
-          <FiCheckCircle size={16} /> Concluído — crie novas tarefas ou estratégias para continuar evoluindo.
+          <FiCheckCircle size={16} /> Concluído — crie novas ações ou estratégias para continuar evoluindo.
         </p>
       ) : noTasks ? (
         <p className="task-progress-message" style={{ color: '#6b7280', fontSize: 13, margin: '12px 0 0' }}>
-          Adicione tarefas às suas estratégias para acompanhar o progresso.
+          Adicione ações às suas estratégias para acompanhar o progresso.
         </p>
       ) : (
         <p className="task-progress-message" style={{ color: '#9a9aa5', fontSize: 13, margin: '12px 0 0' }}>
-          {counts.done} de {counts.total} tarefas concluídas.
+          {counts.done} de {counts.total} ações concluídas.
         </p>
       )}
     </div>

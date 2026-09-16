@@ -1,7 +1,8 @@
 import { FC, useEffect, useMemo, useState } from 'react';
 import { message } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
-import { FiCheck, FiChevronLeft, FiChevronRight, FiPlus } from 'react-icons/fi';
+import { FiCheck, FiChevronLeft, FiChevronRight, FiClock, FiUser } from 'react-icons/fi';
+import { useSearchParams } from 'react-router-dom';
 
 import { BotaoFlutuante } from '../../components/BotaoFlutuante';
 
@@ -14,10 +15,12 @@ import { Spinner } from '../../components/spinner/spinner';
 import { EventModal } from '../../components/EventModal';
 import { EVENT_TYPES } from '@maestra/core/constants/maestra';
 import * as eventsDb from '@maestra/core/services/db/events';
-import type { AgendaEvent, ArtistContent } from '@maestra/core/interfaces/maestra';
+import * as membersDb from '@maestra/core/services/db/members';
+import type { AgendaEvent, ArtistContent, ArtistMember } from '@maestra/core/interfaces/maestra';
+import { buildAssigneeOptions, eventDurationMinutes, eventMatchesAssignee, getEventStyle, getOverlapColumns, isToday, dateForPointer, type AgendaAssigneeOption, type AgendaEventWithAssignee, SLOT_HEIGHT } from './agendaUtils';
 import './agenda.scss';
 
-type CalendarView = 'day' | 'month' | 'year';
+type CalendarView = 'day' | 'week' | 'month' | 'year';
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -34,7 +37,9 @@ const Agenda: FC = () => {
   const artistId = artist?.id;
   const { canEditAgenda: canEdit, editPlanning } = useArtistCapabilities(artist);
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const [events, setEvents] = useState<AgendaEvent[]>([]);
+  const [members, setMembers] = useState<ArtistMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [calendarView, setCalendarView] = useState<CalendarView>('day');
   const [cursor, setCursor] = useState<Dayjs>(dayjs());
@@ -42,13 +47,14 @@ const Agenda: FC = () => {
   const [editing, setEditing] = useState<AgendaEvent | null>(null);
   const [defaultDate, setDefaultDate] = useState<string | undefined>();
   const [defaultTime, setDefaultTime] = useState<string | undefined>();
+  const [resizeState, setResizeState] = useState<{ event: AgendaEvent; startY: number; originalEnd: number } | null>(null);
+  const assigneeFilter = searchParams.get('member') || 'all';
 
   useEffect(() => {
     if (!artistId) return;
     setLoading(true);
-    eventsDb
-      .listEvents(artistId)
-      .then(setEvents)
+    Promise.all([eventsDb.listEvents(artistId), membersDb.listMembers(artistId)])
+      .then(([nextEvents, nextMembers]) => { setEvents(nextEvents); setMembers(nextMembers); })
       .catch(() => message.error('Erro ao carregar agenda'))
       .finally(() => setLoading(false));
   }, [artistId]);
@@ -62,15 +68,13 @@ const Agenda: FC = () => {
   const termoBusca = useGlobalSearch((st) => st.termo);
   const visibleEvents = useMemo(() => {
     const q = normalizar(termoBusca);
-    if (!q) return events;
-    return events.filter((e) =>
+    const filtered = q ? events.filter((e) =>
       normalizar(e.title || '').includes(q) ||
       normalizar(e.description || '').includes(q) ||
       normalizar(e.location || '').includes(q)
-    );
-  }, [events, termoBusca]);
-  const hasTaskEvents = useMemo(() => events.some(isTaskEvent), [events]);
-
+    ) : events;
+    return filtered.filter((event) => eventMatchesAssignee(event, assigneeFilter));
+  }, [events, termoBusca, assigneeFilter]);
   const byDate = useMemo(() => {
     const map: Record<string, AgendaEvent[]> = {};
     for (const event of visibleEvents) (map[event.date] = map[event.date] || []).push(event);
@@ -85,6 +89,11 @@ const Agenda: FC = () => {
     return days;
   }, [cursor]);
 
+  const weekDays = useMemo(() => {
+    const start = cursor.startOf('week');
+    return Array.from({ length: 7 }, (_, index) => start.add(index, 'day'));
+  }, [cursor]);
+
 
   const onSaved = (e: AgendaEvent) => {
     setEvents((prev) => {
@@ -94,6 +103,39 @@ const Agenda: FC = () => {
       next[idx] = e;
       return next;
     });
+  };
+
+  const onEventSaved = async (event: AgendaEvent) => {
+    onSaved(event);
+    if (!artist || event.source !== 'action_plan' || !event.task_id) return;
+
+    const eventWithAssignee = event as AgendaEventWithAssignee;
+    let found = false;
+    const assigneeMember = eventWithAssignee.assignee_kind === 'member' && eventWithAssignee.assignee_member_id
+      ? members.find((member) => member.id === eventWithAssignee.assignee_member_id)
+      : undefined;
+    const owner = eventWithAssignee.assignee_kind === 'owner'
+      ? 'owner'
+      : eventWithAssignee.assignee_kind === 'member'
+        ? assigneeMember?.email
+        : undefined;
+    const content: ArtistContent = {
+      ...artist.content,
+      strategies: (artist.content.strategies || []).map((strategy) => ({
+        ...strategy,
+        tasks: (strategy.tasks || []).map((task) => {
+          if (task.id !== event.task_id) return task;
+          found = true;
+          return { ...task, deadline: event.date, owner };
+        }),
+      })),
+    };
+    if (!found) return;
+    try {
+      await dispatch(artistsActions.updateArtistContent({ id: artist.id, content })).unwrap();
+    } catch (error: any) {
+      message.error(error?.message || 'O evento foi salvo, mas a tarefa não foi sincronizada.');
+    }
   };
 
   const onDeleted = (id: string) => {
@@ -146,75 +188,44 @@ const Agenda: FC = () => {
     setModalOpen(true);
   };
 
-  // Eventos vindos do Plano de Ação podem ser concluídos sem abrir o modal.
-  // A tarefa é a fonte de verdade; o evento espelha apenas seu status na Agenda.
-  const toggleTaskEvent = async (event: AgendaEvent) => {
-    if (!artist || !event.task_id) return;
-    if (!editPlanning) {
-      message.error('Você não tem permissão para editar tarefas deste artista.');
-      return;
-    }
+  const assigneeOptions = useMemo<AgendaAssigneeOption[]>(() => buildAssigneeOptions(members), [members]);
+  const setAssigneeFilter = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value === 'all') next.delete('member');
+    else next.set('member', value);
+    setSearchParams(next, { replace: true });
+  };
 
-    let found = false;
-    const nextStatus = event.status === 'completed' ? 'todo' : 'done';
-    const content: ArtistContent = {
-      ...artist.content,
-      strategies: (artist.content.strategies || []).map((strategy) => ({
-        ...strategy,
-        tasks: (strategy.tasks || []).map((task) => {
-          if (task.id !== event.task_id) return task;
-          found = true;
-          return { ...task, status: nextStatus };
-        }),
-      })),
-    };
-
-    if (!found) {
-      message.error('Não encontrei a tarefa vinculada a este evento.');
-      return;
-    }
-
-    const completed = nextStatus === 'done';
+  const moveEvent = async (event: AgendaEvent, date: string, startTime: string, endTime?: string) => {
+    if (!canEdit || event.source === 'action_plan') return;
     try {
-      await dispatch(artistsActions.updateArtistContent({ id: artist.id, content })).unwrap();
-      const savedEvent = await eventsDb.updateEvent(event.id, { status: completed ? 'completed' : 'scheduled' });
-      onSaved(savedEvent);
-      message.success(completed ? 'Tarefa concluída.' : 'Tarefa reaberta.');
-    } catch {
-      message.error('Não consegui atualizar a tarefa agora.');
+      const saved = await eventsDb.updateEvent(event.id, { date, start_time: startTime, end_time: endTime || event.end_time || null });
+      onSaved(saved);
+    } catch (error: any) {
+      message.error(error?.message || 'Não consegui mover o compromisso.');
     }
   };
 
-  const taskCheckbox = (event: AgendaEvent) => {
-    const completed = event.status === 'completed';
-    return (
-      <button
-        type="button"
-        aria-label={completed ? 'Reabrir tarefa' : 'Concluir tarefa'}
-        title={completed ? 'Reabrir tarefa' : 'Concluir tarefa'}
-        onClick={(clickEvent) => {
-          clickEvent.stopPropagation();
-          void toggleTaskEvent(event);
-        }}
-        style={{
-          width: 16,
-          height: 16,
-          minWidth: 16,
-          padding: 0,
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: 4,
-          border: `1.5px solid ${typeColor(event.type)}`,
-          background: completed ? typeColor(event.type) : 'transparent',
-          color: '#15121c',
-          cursor: 'pointer',
-        }}
-      >
-        {completed && <FiCheck size={12} strokeWidth={3} />}
-      </button>
-    );
-  };
+  useEffect(() => {
+    if (!resizeState) return undefined;
+    const onMove = (event: PointerEvent) => {
+      const delta = Math.round((event.clientY - resizeState.startY) / SLOT_HEIGHT) * 15;
+      const start = Number(resizeState.event.start_time?.slice(0, 2) || 0) * 60 + Number(resizeState.event.start_time?.slice(3, 5) || 0);
+      const end = Math.max(start + 15, Math.min(1440, resizeState.originalEnd + delta));
+      setEvents((prev) => prev.map((item) => item.id === resizeState.event.id ? { ...item, end_time: `${String(Math.floor(end / 60) % 24).padStart(2, '0')}:${String(end % 60).padStart(2, '0')}:00` } : item));
+    };
+    const onUp = async () => {
+      const current = events.find((item) => item.id === resizeState.event.id);
+      setResizeState(null);
+      if (current?.end_time) {
+        try { onSaved(await eventsDb.updateEvent(current.id, { end_time: current.end_time })); }
+        catch (error: any) { message.error(error?.message || 'Não consegui redimensionar o compromisso.'); }
+      }
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
+    return () => { window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); };
+  }, [resizeState, events]);
 
   if (!artist) return <Spinner loading>{null as any}</Spinner>;
 
@@ -223,19 +234,22 @@ const Agenda: FC = () => {
   const dayEvents = visibleEvents
     .filter((event) => event.date === selectedDate)
     .sort((a, b) => (a.start_time || '23:59').localeCompare(b.start_time || '23:59'));
-  const unscheduledTasks = visibleEvents
-    .filter((event) => isTaskEvent(event) && event.date !== selectedDate)
-    .slice(0, 6);
-  const hours = Array.from({ length: 16 }, (_, index) => `${String(index + 8).padStart(2, '0')}:00`);
-  const hourIndex = (event: AgendaEvent) => {
-    const hour = Number(event.start_time?.slice(0, 2) || 8);
-    return Math.min(Math.max(hour - 7, 1), hours.length);
-  };
-  const moveCursor = (amount: number) => setCursor(cursor.add(amount, calendarView === 'year' ? 'year' : calendarView === 'month' ? 'month' : 'day'));
+  const dayAllDayEvents = dayEvents.filter((event) => !event.start_time);
+  const hours = Array.from({ length: 24 }, (_, index) => `${String(index).padStart(2, '0')}:00`);
+  const quarterSlots = Array.from({ length: 96 }, (_, index) => {
+    const hour = Math.floor(index / 4);
+    const minute = (index % 4) * 15;
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  });
+  const overlapColumns = getOverlapColumns(dayEvents);
+  const nowPosition = isToday(cursor) ? ((dayjs().hour() * 60 + dayjs().minute()) / 15) * SLOT_HEIGHT : null;
+  const moveCursor = (amount: number) => setCursor(cursor.add(amount, calendarView === 'year' ? 'year' : calendarView === 'month' ? 'month' : calendarView === 'week' ? 'week' : 'day'));
   const calendarLabel = calendarView === 'year'
     ? cursor.format('YYYY')
     : calendarView === 'month'
       ? cursor.format('MMMM [de] YYYY')
+      : calendarView === 'week'
+        ? `${weekDays[0].format('D [de] MMM')} – ${weekDays[6].format('D [de] MMM [de] YYYY')}`
       : cursor.format('dddd, D [de] MMMM [de] YYYY');
   // No celular a coluna da data mede 165px (o "+ Compromisso" define a coluna vizinha), e o
   // rotulo inteiro nao cabe — cortaria justamente o ano, no fim da frase. A versao curta larga o
@@ -262,56 +276,120 @@ const Agenda: FC = () => {
             <span className="calendar-label-full">{calendarLabel}</span>
             <span className="calendar-label-compact">{calendarLabelCompact}</span>
           </strong>
+          <label className="calendar-assignee-filter">
+            <FiUser aria-hidden="true" />
+            <span className="sr-only">Filtrar por responsável</span>
+            <select value={assigneeFilter} onChange={(event) => setAssigneeFilter(event.target.value)} aria-label="Filtrar por responsável">
+              <option value="all">Todos os responsáveis</option>
+              {assigneeOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+            </select>
+          </label>
           <nav aria-label="Visualização da agenda">
             <button className={calendarView === 'day' ? 'calendar-active' : ''} type="button" onClick={() => setCalendarView('day')}>Dia</button>
+            <button className={calendarView === 'week' ? 'calendar-active' : ''} type="button" onClick={() => setCalendarView('week')}>Semana</button>
             <button className={calendarView === 'month' ? 'calendar-active' : ''} type="button" onClick={() => setCalendarView('month')}>Mês</button>
             <button className={calendarView === 'year' ? 'calendar-active' : ''} type="button" onClick={() => setCalendarView('year')}>Ano</button>
           </nav>
         </div>
       </header>
-      {calendarView === 'day' && <div className="calendar-all-day"><span>Dia todo</span><strong>{dayEvents.find((event) => !event.start_time)?.title || 'Planeje sua semana com clareza'}</strong></div>}
+      {calendarView === 'day' && (
+        <div className="calendar-all-day">
+          <span>Dia todo</span>
+          <div className="calendar-all-day-list">
+            {dayAllDayEvents.length > 0 ? dayAllDayEvents.map((event) => (
+              <button type="button" className="calendar-all-day-event" key={event.id} onClick={() => openEdit(event)}>
+                {isTaskEvent(event) && <i className={event.status === 'completed' ? 'is-completed' : ''} aria-hidden="true">{event.status === 'completed' ? <FiCheck size={11} /> : null}</i>}
+                <strong>{calendarTitle(event.title, 72)}</strong>
+              </button>
+            )) : <strong>Planeje sua semana</strong>}
+          </div>
+        </div>
+      )}
       <Spinner loading={loading && !events.length}>
         {calendarView === 'day' ? <div className="calendar-layout">
           <section className="calendar-timeline">
             <div className="calendar-hours">{hours.map((hour) => <span key={hour}>{hour}</span>)}</div>
-            <div className="calendar-events">
+            <div className="calendar-events" onDragOver={(event) => { if (canEdit) event.preventDefault(); }} onDrop={(event) => {
+              if (!canEdit) return;
+              event.preventDefault();
+              const moving = dayEvents.find((item) => item.id === event.dataTransfer.getData('text/event-id'));
+              if (!moving) return;
+              const target = dateForPointer(event.clientY, event.currentTarget.getBoundingClientRect(), cursor);
+              const endMinutes = Number(target.start_time.slice(0, 2)) * 60 + Number(target.start_time.slice(3, 5)) + eventDurationMinutes(moving);
+              void moveEvent(moving, target.date, target.start_time, `${String(Math.floor(endMinutes / 60) % 24).padStart(2, '0')}:${String(endMinutes % 60).padStart(2, '0')}:00`);
+            }}>
               {/* Faixas vazias clicáveis: uma por hora, atrás dos eventos (vêm antes no DOM).
                   Clicar abre o modal já com o dia em foco e a hora da faixa — sobra só o título.
                   Onde há evento, é o botão dele que recebe o clique, porque pinta por cima. */}
-              {canEdit && hours.map((hour, index) => (
+              {canEdit && quarterSlots.map((time, index) => (
                 <button
                   type="button"
-                  key={`slot-${hour}`}
+                  key={`slot-${time}`}
                   className="calendar-slot"
-                  aria-label={`Novo compromisso às ${hour}`}
-                  onClick={() => openCreate(selectedDate, `${hour}:00`)}
-                  style={{ gridRow: index + 1, gridColumn: '1 / -1' } as React.CSSProperties}
+                  aria-label={`Novo compromisso às ${time}`}
+                  onClick={() => openCreate(selectedDate, `${time}:00`)}
+                  style={{ top: index * SLOT_HEIGHT, height: SLOT_HEIGHT } as React.CSSProperties}
                 />
               ))}
-              {dayEvents.filter((event) => event.start_time).map((event, index) => (
+              {dayEvents.filter((event) => event.start_time).map((event) => {
+                const layout = overlapColumns.get(event.id) || { column: 0, columns: 1 };
+                const eventStyle = getEventStyle(event);
+                return (
                 <button
                   type="button"
                   key={event.id}
                   className="calendar-event"
+                  draggable={canEdit && event.source !== 'action_plan'}
+                  onDragStart={(dragEvent) => dragEvent.dataTransfer.setData('text/event-id', event.id)}
                   onClick={() => openEdit(event)}
-                  style={{ '--event-color': typeColor(event.type), gridRowStart: hourIndex(event), gridColumn: index % 2 === 0 ? 1 : 2 } as React.CSSProperties}
+                  style={{ '--event-color': typeColor(event.type), top: eventStyle.top, height: eventStyle.height, left: `${layout.column * (100 / layout.columns)}%`, width: `calc(${100 / layout.columns}% - 8px)` } as React.CSSProperties}
                 >
                   <strong>{calendarTitle(event.title, 44)}</strong>
+                  <small><FiClock /> {event.start_time?.slice(0, 5)}{event.end_time ? ` – ${event.end_time.slice(0, 5)}` : ''}</small>
+                  <i className="calendar-event-resize" aria-label="Redimensionar compromisso" onPointerDown={(pointerEvent) => { pointerEvent.stopPropagation(); if (canEdit && event.source !== 'action_plan') { const end = (Number(event.end_time?.slice(0, 2) || event.start_time?.slice(0, 2) || 0) * 60) + Number(event.end_time?.slice(3, 5) || event.start_time?.slice(3, 5) || 0); setResizeState({ event, startY: pointerEvent.clientY, originalEnd: end }); } }} />
                 </button>
-              ))}
+                );
+              })}
+              {nowPosition !== null && <span className="calendar-now-line" style={{ top: nowPosition }} aria-hidden="true" />}
             </div>
           </section>
-          <aside className="calendar-tasks">
-            <header><h2>Tarefas</h2>{canEdit && <button type="button" className="calendar-add-task" aria-label="Adicionar compromisso" onClick={() => openCreate()}><FiPlus /></button>}</header>
-            {/* Saíram daqui duas abas e um "Ordenar por Prioridade" que não existiam de fato:
-                "Não agendadas" era um botão sem ação (só o estilo de aba ativa), "Atrasadas"
-                escondia as tarefas do calendário inteiro — nada a ver com atraso, e ainda
-                esvaziava esta própria lista — e a ordenação era texto fixo. Voltam quando forem
-                filtros de verdade. */}
-            {hasTaskEvents && unscheduledTasks.map((event) => <button className="calendar-task" type="button" key={event.id} onClick={() => openEdit(event)}>{taskCheckbox(event)}<i style={{ background: typeColor(event.type) }} />{calendarTitle(event.title, 48)}</button>)}
-            {!unscheduledTasks.length && <p className="agenda-empty">Nenhuma tarefa pendente.</p>}
-          </aside>
-        </div> : calendarView === 'month' ? <section className="agenda-month-board" aria-label="Calendário mensal">
+        </div> : calendarView === 'week' ? <section className="agenda-week-board" aria-label="Calendário semanal">
+          <div className="agenda-week-head">
+            <span className="agenda-week-gutter" />
+            {weekDays.map((day) => <button type="button" key={day.format('YYYY-MM-DD')} className={day.isSame(dayjs(), 'day') ? 'is-today' : ''} onClick={() => { setCursor(day); setCalendarView('day'); }}>
+              <small>{WEEKDAYS[day.day()]}</small><strong>{day.format('D')}</strong>
+            </button>)}
+          </div>
+          <div className="agenda-week-all-day">
+            <span>Dia todo</span>
+            {weekDays.map((day) => {
+              const eventsForDay = (byDate[day.format('YYYY-MM-DD')] || []).filter((event) => !event.start_time);
+              return <div key={day.format('YYYY-MM-DD')}>{eventsForDay.map((event) => <button type="button" key={event.id} onClick={() => openEdit(event)} style={{ '--event-color': typeColor(event.type) } as React.CSSProperties}>{calendarTitle(event.title, 24)}</button>)}</div>;
+            })}
+          </div>
+          <div className="agenda-week-grid">
+            <div className="agenda-week-hours">{hours.map((hour) => <span key={hour}>{hour}</span>)}</div>
+            {weekDays.map((day) => {
+              const key = day.format('YYYY-MM-DD');
+              const eventsForDay = (byDate[key] || []).filter((event) => event.start_time);
+              const columns = getOverlapColumns(eventsForDay);
+              return <div className="agenda-week-column" key={key} onClick={(clickEvent) => {
+                if (!canEdit || (clickEvent.target as HTMLElement).closest('.calendar-event')) return;
+                const target = dateForPointer(clickEvent.clientY, clickEvent.currentTarget.getBoundingClientRect(), day);
+                openCreate(target.date, target.start_time);
+              }}>
+                {quarterSlots.map((time, index) => <span className="agenda-week-slot" key={time} style={{ top: index * SLOT_HEIGHT }} />)}
+                {eventsForDay.map((event) => {
+                  const layout = columns.get(event.id) || { column: 0, columns: 1 };
+                  const style = getEventStyle(event);
+                  return <button type="button" className="calendar-event agenda-week-event" key={event.id} onClick={(clickEvent) => { clickEvent.stopPropagation(); openEdit(event); }} style={{ '--event-color': typeColor(event.type), top: style.top, height: style.height, left: `${layout.column * (100 / layout.columns)}%`, width: `calc(${100 / layout.columns}% - 4px)` } as React.CSSProperties}>
+                    <strong>{calendarTitle(event.title, 24)}</strong><small>{event.start_time?.slice(0, 5)}</small>
+                  </button>;
+                })}
+              </div>;
+            })}
+          </div>
+        </section> : calendarView === 'month' ? <section className="agenda-month-board" aria-label="Calendário mensal">
           <div className="agenda-month-weekdays">{WEEKDAYS.map((weekday) => <span key={weekday}>{weekday}</span>)}</div>
           <div className="agenda-month-grid">
             {monthDays.map((day) => {
@@ -344,9 +422,10 @@ const Agenda: FC = () => {
           defaultDate={defaultDate}
           defaultTime={defaultTime}
           onClose={() => setModalOpen(false)}
-          onSaved={onSaved}
+          onSaved={onEventSaved}
           onDeleted={onDeleted}
           onDeleteEvent={deleteAgendaEvent}
+          assigneeOptions={assigneeOptions}
           deleteLabel={editing && isTaskEvent(editing) ? 'Remover prazo' : 'Excluir'}
           deleteConfirmTitle={editing && isTaskEvent(editing) ? 'Remover o prazo da tarefa e excluir o evento?' : 'Excluir evento?'}
         />

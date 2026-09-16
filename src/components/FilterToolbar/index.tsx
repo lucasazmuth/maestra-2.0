@@ -105,10 +105,12 @@ export const FilterToolbar: FC<FilterToolbarProps> = ({
         className={open || activeCount ? styles.filterButtonActive : styles.filterButton}
         aria-expanded={open}
         aria-haspopup="dialog"
+        aria-label={title}
+        title={title}
       >
         <FiSliders aria-hidden="true" />
-        <span>Filtros</span>
-        {!!activeCount && <span className={styles.filterCount}>{activeCount}</span>}
+        <span className={styles.filterButtonLabel}>Filtros</span>
+        {!!activeCount && <span className={`${styles.filterCount} catalog-filter-count`}>{activeCount}</span>}
       </button>
     </Popover>
   </div>

@@ -4,6 +4,7 @@ import { Modal } from 'antd';
 import { FiCheck } from 'react-icons/fi';
 import { UpsellContext, UPSELL_CONFIG } from './config';
 import { usePlanPrices } from '@maestra/core/hooks/usePlanPrices';
+import { Diamond } from '../PlanTag/Diamond';
 import styles from './UpsellModal.module.scss';
 
 interface UpsellModalProps {
@@ -26,7 +27,6 @@ export const UpsellModal: FC<UpsellModalProps> = ({
   const navigate = useNavigate();
   const { monthlyFmt } = usePlanPrices();
   const config = UPSELL_CONFIG[context];
-  const Icon = config.icon;
 
   // Assinante ATIVO que atingiu o teto de perfis do plano (10): é um limite fixo,
   // não há add-on para comprar — apenas informa, sem CTA de venda.
@@ -50,7 +50,7 @@ export const UpsellModal: FC<UpsellModalProps> = ({
       width={420}
     >
       <div className={styles.header}>
-        <Icon className={styles.icon} />
+        <Diamond tone='pro' size={64} className={styles.diamond} />
         <h2 className={styles.title}>
           {proAtLimit ? 'Limite de perfis atingido' : config.title}
         </h2>

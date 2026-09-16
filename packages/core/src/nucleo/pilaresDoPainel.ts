@@ -126,7 +126,7 @@ const pilarDaExecucao = (artista: Artist | null | undefined, jornada: JourneySta
   if (!jornada.hasPlan) {
     return {
       ...base, estado: 'travado',
-      linha: 'Suas tarefas nascem do planejamento.',
+      linha: 'Suas ações nascem do planejamento.',
       detalhe: jornada.resumingPlan ? 'Você parou no meio do caminho.' : undefined,
       progresso: null,
       cta: jornada.resumingPlan ? 'Continuar planejamento' : 'Criar planejamento',
@@ -137,8 +137,8 @@ const pilarDaExecucao = (artista: Artist | null | undefined, jornada: JourneySta
   if (jornada.tasksTotal === 0) {
     return {
       ...base, estado: 'vazio',
-      linha: 'Seu plano está pronto e ainda sem tarefas.',
-      progresso: null, cta: 'Montar tarefas', destino: 'plano',
+      linha: 'Seu plano está pronto e ainda sem ações.',
+      progresso: null, cta: 'Montar ações', destino: 'plano',
     };
   }
 
@@ -148,10 +148,10 @@ const pilarDaExecucao = (artista: Artist | null | undefined, jornada: JourneySta
   if (jornada.tasksPending === 0) {
     return {
       ...base, estado: 'concluido',
-      linha: `Tudo em dia, com ${jornada.tasksDone} tarefas concluídas.`,
+      linha: `Tudo em dia, com ${jornada.tasksDone} ações concluídas.`,
       detalhe: 'Hora de medir sua evolução.',
       progresso,
-      cta: capacidades.manageTasks ? 'Refazer diagnóstico' : 'Ver minhas tarefas',
+      cta: capacidades.manageTasks ? 'Refazer diagnóstico' : 'Ver minhas ações',
       destino: capacidades.manageTasks ? 'refazerDiagnostico' : 'plano',
     };
   }
@@ -159,9 +159,9 @@ const pilarDaExecucao = (artista: Artist | null | undefined, jornada: JourneySta
   const proxima = proximaTarefa(artista);
   return {
     ...base, estado: 'andamento',
-    linha: `${jornada.tasksDone} de ${jornada.tasksTotal} tarefas concluídas.`,
+    linha: `${jornada.tasksDone} de ${jornada.tasksTotal} ações concluídas.`,
     detalhe: proxima ? `Próxima: ${proxima.description}` : undefined,
-    progresso, cta: 'Ver minhas tarefas', destino: 'plano',
+    progresso, cta: 'Ver minhas ações', destino: 'plano',
   };
 };
 

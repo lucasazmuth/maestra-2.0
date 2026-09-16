@@ -81,7 +81,7 @@ const CommentList: FC<{
       <div className={styles.emptyComments}>
         <FiMessageSquare size={24} />
         <strong>Nenhum comentário ainda</strong>
-        <span>Use este espaço para registrar contexto, decisões e atualizações da tarefa.</span>
+        <span>Use este espaço para registrar contexto, decisões e atualizações da ação.</span>
       </div>
     );
   }
@@ -277,7 +277,7 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
     <div className={modalStyles.footer}>
       {canDelete && (
         <Popconfirm
-          title="Excluir esta tarefa?"
+          title="Excluir esta ação?"
           description="Esta ação não pode ser desfeita."
           okText="Excluir"
           cancelText="Cancelar"
@@ -285,7 +285,7 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
           onConfirm={onDelete}
         >
           <Button className={modalStyles.dangerButton} danger type="text" icon={<FiTrash2 />}>
-            Excluir tarefa
+            Excluir ação
           </Button>
         </Popconfirm>
       )}
@@ -304,10 +304,10 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
       onCancel={onClose}
       title={
         <div className={modalStyles.heading}>
-          <span className={modalStyles.kicker}>Tarefa</span>
+          <span className={modalStyles.kicker}>Ação</span>
           <span className={modalStyles.title}>
             <i className={modalStyles.titleDot} aria-hidden />
-            {task?.description || 'Detalhes da tarefa'}
+            {task?.description || 'Detalhes da ação'}
           </span>
           {strategyTitle && <span className={modalStyles.subtitle}>{strategyTitle}</span>}
         </div>
@@ -336,7 +336,7 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
                     autoSize={{ minRows: 3, maxRows: 7 }}
                     maxLength={500}
                     disabled={!canEdit}
-                    placeholder="Descreva a tarefa"
+                    placeholder="Descreva a ação"
                   />
                 </label>
 

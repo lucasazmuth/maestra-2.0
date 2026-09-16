@@ -11,7 +11,7 @@ export type SecaoDoPainel = 'visao-geral' | ChaveDoPilar;
 const ROTULOS: Record<ChaveDoPilar, string> = {
   diagnostico: 'Diagnóstico REAL',
   execucao: 'Plano de Ação',
-  planejamento: 'Planejamento',
+  planejamento: 'Planejamento estratégico',
 };
 
 interface PillarCardsProps {

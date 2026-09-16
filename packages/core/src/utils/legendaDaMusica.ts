@@ -61,17 +61,16 @@ export interface DadosDaLegenda {
  * A ordem é a da utilidade: primeiro a última mexida (é o que responde "onde é que eu ia?"),
  * depois o que a música é (gênero) e quando sai.
  *
- * O nome só aparece com o tempo ao lado: "Editado por Ana" sozinho não diz se foi hoje ou no
- * ano passado, e é o "quando" que faz a lista servir para retomar trabalho. Sem nome nenhum, o
- * tempo entra sozinho.
+ * O nome aparece com o tempo ao lado: "Ana · há 2 h". O rótulo "Editado por" era redundante na
+ * lista, porque a própria linha já é o metadado de atualização. Sem nome, o tempo entra sozinho.
  */
 export const legendaDaMusica = (dados: DadosDaLegenda, agora: number = Date.now()): string => {
   const tempo = haQuantoTempo(dados.updated_at, agora);
   const quem = dados.last_edited_by?.trim();
 
-  const edicao = quem && tempo ? `Editado por ${quem} · ${tempo}`
-    : quem ? `Editado por ${quem}`
-      : tempo ? `Editado ${tempo}`
+  const edicao = quem && tempo ? `${quem} · ${tempo}`
+    : quem ? quem
+      : tempo ? tempo
         : null;
 
   const lancamento = dados.release_date

@@ -1,7 +1,7 @@
 import { FC, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { DatePicker, Dropdown, Popconfirm } from 'antd';
 import dayjs from 'dayjs';
-import { FiTrash2, FiPlus } from 'react-icons/fi';
+import { FiTrash2, FiUser } from 'react-icons/fi';
 
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 
@@ -126,13 +126,11 @@ export const TaskOwner: FC<{
     aria-disabled={disabled}
     onClick={disabled ? onBlocked : undefined}
   >
-    {current
-      ? (
-        // Foto quando existe; senao o mesmo avatar padrao do header e da Equipe, no lugar da
-        // inicial. O nome continua no `title` do botao, que e onde ele ja era lido.
-        <img className="ap-owner-foto" src={current.avatar || ARTISTS_DEFAULT_IMAGE} alt="" />
-      )
-      : <FiPlus size={13} />}
+    {current ? (
+      <img className="ap-owner-foto" src={current.avatar || ARTISTS_DEFAULT_IMAGE} alt="" />
+    ) : (
+      <FiUser className="ap-owner-empty-icon" aria-hidden />
+    )}
   </button>;
   if (disabled) return button;
   return (

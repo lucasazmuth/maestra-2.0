@@ -43,6 +43,8 @@ export interface InputBarProps {
   disabled: boolean;
   rateLimitInfo: RateLimitInfo | null;
   pendingToolCalls: PendingToolCall[];
+  placeholder?: string;
+  animatedPlaceholder?: boolean;
   // Leva o artista pra tela de planos (CTA "Mais limite" quando atinge o limite diário).
   onUpgrade?: () => void;
 }
@@ -55,6 +57,8 @@ export const InputBar: FC<InputBarProps> = ({
   disabled,
   rateLimitInfo,
   pendingToolCalls,
+  placeholder = CONVITE_DO_CAMPO,
+  animatedPlaceholder = false,
   onUpgrade,
 }) => {
   const [value, setValue] = useState('');
@@ -182,8 +186,8 @@ export const InputBar: FC<InputBarProps> = ({
       <div className="nyta-input-bar__row">
         <textarea
           ref={textareaRef}
-          className="nyta-input-bar__textarea"
-          placeholder={CONVITE_DO_CAMPO}
+          className={`nyta-input-bar__textarea${animatedPlaceholder ? ' nyta-input-bar__textarea--animated' : ''}`}
+          placeholder={placeholder}
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}

@@ -26,7 +26,7 @@ export const BENEFICIOS_DO_PRO: readonly GrupoDeBeneficios[] = [
   {
     chave: 'executar',
     titulo: 'Execute o seu plano',
-    itens: ['Gestão de tarefas do plano de ação', 'Edição em todos os perfis que você acessa'],
+    itens: ['Crie e gerencie ações e estratégias do plano', 'Edição em todos os perfis que você acessa'],
   },
   {
     chave: 'nyta',
@@ -53,7 +53,7 @@ export const BENEFICIOS_DO_GRATIS: readonly GrupoDeBeneficios[] = [
     itens: [
       'Veja o diagnóstico e o plano de ação',
       'Visualize músicas, agenda e equipe',
-      'Apenas leitura, sem edição',
+      'Edite prazos, categorias e responsáveis',
     ],
   },
 ] as const;

@@ -14,6 +14,7 @@ import { ACCESS_LEVEL_HINTS, MVP_ACCESS_LEVEL_OPTIONS } from '@maestra/core/cons
 import * as membersDb from '@maestra/core/services/db/members';
 import { useGlobalSearch, normalizar } from '@maestra/core/stores/globalSearchStore';
 import type { ArtistMember, AccessLevel } from '@maestra/core/interfaces/maestra';
+import { EquipeIcon } from '../../components/Icons/system';
 import styles from './Team.module.scss';
 
 const statusLabel: Record<string, string> = {
@@ -227,7 +228,7 @@ const Team: FC = () => {
       <Spinner loading={loading && !members.length}>
         {!members.length ? (
           <div className={styles.empty}>
-            <FiUser aria-hidden="true" />
+            <EquipeIcon size={28} aria-hidden="true" />
             <strong>Sua equipe começa aqui</strong>
             <span>Convide colaboradores por e-mail e defina os acessos de cada pessoa.</span>
           </div>

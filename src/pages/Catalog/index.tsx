@@ -35,7 +35,8 @@ import * as genresDb from '@maestra/core/services/db/genres';
 import * as membersDb from '@maestra/core/services/db/members';
 import type { CatalogItem, CatalogProject, CatalogVersion, MusicGenre, ArtistMember } from '@maestra/core/interfaces/maestra';
 import { useGlobalSearch, normalizar } from '@maestra/core/stores/globalSearchStore';
-import { legendaDaMusica } from '@maestra/core/utils/legendaDaMusica';
+import { haQuantoTempo, legendaDaMusica } from '@maestra/core/utils/legendaDaMusica';
+import { CatalogoIcon } from '../../components/Icons/system';
 
 // Forma da linha das DUAS listas da tela — Músicas e Lançamentos. Antes Músicas era uma tabela
 // em grade, com cabeçalho e colunas fixas, e Lançamentos uma lista solta: duas caras para a
@@ -308,10 +309,8 @@ const Catalog: FC = () => {
   const localTracks: LocalTrack[] = items.map((i) => ({
     id: i.id,
     title: i.title,
-    // A lista toca a versão PRINCIPAL de cada música — dizer qual é evita a dúvida de estar
-    // ouvindo uma gravação antiga. O gênero, que ficava aqui, não identificava nada.
     subtitle: i.audio_file
-      ? `V${i.version_number || 1} · versão principal`
+      ? `Editado ${haQuantoTempo(i.updated_at) || 'sem data'}`
       : 'Áudio pendente',
     cover: i.cover_image,
     url: i.audio_file || '',
@@ -1047,8 +1046,10 @@ const Catalog: FC = () => {
           )}
           <div className='catalog-reference-list'>
           {!items.length ? (
-            <div style={{ color: '#7c8da8', padding: 32, textAlign: 'center' }}>
-              {canEditCatalog ? 'Nenhuma música cadastrada ainda. Cadastre a primeira.' : 'Nenhuma música cadastrada ainda.'}
+            <div className='catalog-empty-state'>
+              <CatalogoIcon size={28} aria-hidden="true" />
+              <strong>Nenhuma música cadastrada ainda</strong>
+              <span>{canEditCatalog ? 'Comece adicionando a primeira música deste perfil.' : 'Este perfil ainda não possui músicas cadastradas.'}</span>
             </div>
           ) : !filteredItems.length ? (
             // Uma linha, igual ao vazio da aba Lançamentos. Antes era uma caixa tracejada com
@@ -1130,19 +1131,18 @@ const Catalog: FC = () => {
                       )}
                     </button>
                     {/* Nem toda faixa tem capa (a dos Lançamentos sempre tem, vem do Spotify).
-                        Sem imagem entra um bloco neutro, para a linha não desalinhar.
+                        Sem imagem usamos o mesmo empty state do player, para a linha não
+                        desalinhar e o estado visual ficar consistente entre os dois lugares.
                         No celular a capa sai: as peças fixas somavam 351px numa linha de 319, e o
                         título e a legenda ficavam com ZERO — não truncados, sumidos. A capa é
-                        decorativa aqui (na maioria das faixas em preparação nem existe, é só o
-                        bloco neutro), então é a primeira a ceder espaço para o nome da música. */}
-                    {!isMobile && (it.cover_image ? (
-                      <img src={it.cover_image} alt='' style={linhaCapa} />
-                    ) : (
-                      <span
-                        aria-hidden
-                        style={{ ...linhaCapa, background: '#eef3fb', display: 'block', flexShrink: 0 }}
+                        decorativa aqui, então é a primeira a ceder espaço para o nome da música. */}
+                    {!isMobile && (
+                      <img
+                        src={it.cover_image || `${process.env.PUBLIC_URL}/images/playlist.png`}
+                        alt=''
+                        style={linhaCapa}
                       />
-                    ))}
+                    )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={linhaTitulo}>{it.title}</div>
                       <div style={linhaSub}>{legenda}</div>
@@ -1246,8 +1246,8 @@ const Catalog: FC = () => {
         }}
       >
         <p style={{ margin: 0 }}>
-          <strong>{paraExcluir?.title}</strong> e tudo o que está montada nela — pistas, clipes e
-          a faixa guia — saem do catálogo. Não dá para voltar atrás.
+          <strong>{paraExcluir?.title}</strong> e tudo o que está montado nela. Pistas, clipes e
+          a faixa guia saem do catálogo. Não dá para voltar atrás.
         </p>
       </Modal>
 

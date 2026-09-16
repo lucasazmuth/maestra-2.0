@@ -39,4 +39,4 @@ export const CONVITE_DO_CAMPO = 'Pergunte algo à Nyta';
  * Fica, e fica miúda: é obrigação de quem entrega texto de modelo, e não um rótulo do campo.
  * Ela dividia a linha com um contador "0/1000" que agora só aparece perto do limite.
  */
-export const RESSALVA_DA_NYTA = 'A Nyta pode cometer erros. Confira informações importantes.';
+export const RESSALVA_DA_NYTA = 'A IA pode conter erros. Confira informações importantes.';

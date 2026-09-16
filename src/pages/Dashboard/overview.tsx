@@ -19,6 +19,7 @@ import type { LocalTrack } from '@maestra/core/stores/localPlayerStore';
 import { useLocalPlayerStore } from '@maestra/core/stores/localPlayerStore';
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import { UpsellModal } from '../../components/UpsellModal';
+import { haQuantoTempo } from '@maestra/core/utils/legendaDaMusica';
 
 // Respeita o "reduzir movimento" do sistema (a timeline anima só quando permitido).
 const REDUCE_MOTION =
@@ -134,7 +135,7 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
     .map((i) => ({
       id: i.id,
       title: i.title,
-      subtitle: i.genre || undefined,
+      subtitle: `Editado ${haQuantoTempo(i.updated_at) || 'sem data'}`,
       cover: i.cover_image,
       url: i.audio_file as string,
     }));
@@ -153,10 +154,10 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
     <>
       <h2 style={sectionTitle}>Visão geral</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16 }}>
-        {/* Próximas tarefas — timeline */}
-        <Panel icon={<PlanoAcaoIcon size={18} />} title="Próximas tarefas" action={{ label: 'Plano de ação', onClick: () => go('action-plan') }}>
+        {/* Próximas ações — timeline */}
+        <Panel icon={<PlanoAcaoIcon size={18} />} title="Próximas ações" action={{ label: 'Plano de ação', onClick: () => go('action-plan') }}>
           {upcomingTasks.length === 0 ? (
-            <Empty text="Nenhuma tarefa pendente." />
+            <Empty text="Nenhuma ação pendente." />
           ) : (
             <div style={{ position: 'relative' }}>
               <div style={{ position: 'absolute', left: 9, top: 18, bottom: 22, width: 2, background: 'linear-gradient(180deg, #9A4FD1, rgba(154, 79, 209,0.12))', transformOrigin: 'top', ...(REDUCE_MOTION ? {} : { transform: 'scaleY(0)', animation: 'apTlLine .9s cubic-bezier(0.4,0,0.2,1) .1s forwards' }) }} />

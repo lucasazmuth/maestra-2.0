@@ -115,7 +115,7 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
   const groups: { label: string | null; items: { icon: React.ReactNode; label: string; navTo: string; active: boolean; locked: boolean; lockedHint?: string }[] }[] = [
     {
       label: null,
-      items: [{ icon: <DashboardIcon />, label: t('Dashboard', { defaultValue: 'Dashboard' }), navTo: '', active: isActive(''), locked: false }],
+      items: [{ icon: <DashboardIcon />, label: t('Home', { defaultValue: 'Início' }), navTo: '', active: isActive(''), locked: false }],
     },
     {
       label: t('Growth', { defaultValue: 'Crescimento' }),

@@ -1,4 +1,4 @@
-import { lazy, memo, Suspense, useEffect, useRef, useState, type FC, type ReactNode, type RefObject, type CSSProperties } from 'react';
+import { memo, useEffect, useRef, useState, type FC, type ReactNode, type RefObject, type CSSProperties } from 'react';
 
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
@@ -22,6 +22,7 @@ import { useGlobalSearch } from '@maestra/core/stores/globalSearchStore';
 import { useNytaModal } from '@maestra/core/hooks/useNytaModal';
 import { enableWebPush, hasWebPushSubscription, isWebPushSupported, syncWebPushSubscription } from '../../services/pushNotifications';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
+import { altasForPattern } from '@maestra/core/constants/realBadge';
 import { countUnread } from '@maestra/core/services/db/notifications';
 import { supabase } from '@maestra/core/lib/supabase';
 import { SearchIcon } from '../Icons';
@@ -31,9 +32,9 @@ import {
   CatalogoIcon,
   DashboardIcon,
   EquipeIcon,
+  FinanceiroIcon,
   MarketingIcon,
   NotificationIcon,
-  PlanoAcaoIcon,
   SystemHomeIcon,
 } from '../Icons/system';
 import { NytaAvatar } from '../../pages/Wizard/chat/nytaPersona';
@@ -42,25 +43,6 @@ import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities
 export interface LayoutContext {
   container: RefObject<HTMLDivElement | null>;
 }
-
-const REAL_CAREER_STAGES = [
-  'Beginner',
-  'Cult',
-  'Paradox',
-  'Moneymaker',
-  'Influencer',
-  'Bet',
-  'Outlier',
-  'Rising',
-  'Hype',
-  'Potential',
-  'Digital',
-  'Analog',
-  'Underpaid',
-  'Spotlight',
-  'Hit',
-  'Icon',
-] as const;
 
 const pathArtistId = (pathname: string): string | undefined =>
   /^\/artists\/([^/]+)/.exec(pathname)?.[1];
@@ -78,16 +60,10 @@ const ProfileMenuButton: FC<{
   </button>
 );
 
-// Avaliação da plataforma: carregada sob demanda — o modal só existe quando alguém clica.
-const PlatformReviewModal = lazy(() =>
-  import('../PlatformReviewModal').then((m) => ({ default: m.PlatformReviewModal }))
-);
-
 export const AppLayout: FC = memo(() => {
   const dispatch = useAppDispatch();
   const container = useRef<HTMLDivElement>(null);
   const listaDePerfis = useRef<HTMLDivElement>(null);
-  const [reviewOpen, setReviewOpen] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
@@ -172,10 +148,9 @@ export const AppLayout: FC = memo(() => {
   const { viewPlanning } = useArtistCapabilities(currentArtist);
   const currentArtistImage = currentArtist?.content?.spotifyProfile?.image || ARTISTS_DEFAULT_IMAGE;
   const realStage = currentArtist?.content?.realIndex?.profile?.name;
-  // O REAL usa índice zero-based: Beginner = 0 e Icon = 15, como na referência visual.
-  // O arco percorre o intervalo completo entre a primeira e a última das 16 fases.
-  const realStageIndex = realStage ? Math.max(0, REAL_CAREER_STAGES.indexOf(realStage as typeof REAL_CAREER_STAGES[number])) : 0;
-  const realStageProgress = realStage ? `${(realStageIndex / (REAL_CAREER_STAGES.length - 1)) * 100}%` : '0%';
+  // O indicador do retrato mostra o nível REAL: quantas dimensões estão altas, de 0 a 4.
+  const realAltas = altasForPattern(currentArtist?.content?.realIndex?.pattern);
+  const realStageProgress = `${(realAltas / 4) * 100}%`;
 
   // Solicita push automaticamente na primeira entrada autenticada. O navegador
   // pode bloquear pedidos sem gesto do usuário; nesse caso, Configurações é o
@@ -263,6 +238,11 @@ export const AppLayout: FC = memo(() => {
   const goArtist = (suffix: string) => {
     if (!routeArtistId) return;
     navigate(`/artists/${routeArtistId}${suffix ? `/${suffix}` : ''}`);
+  };
+
+  const goArtistDiagnostic = () => {
+    if (!routeArtistId) return;
+    navigate(`/artists/${routeArtistId}?aba=diagnostico`);
   };
 
   const userMetadata = (user?.user_metadata || {}) as Record<string, any>;
@@ -510,38 +490,32 @@ export const AppLayout: FC = memo(() => {
                 tabIndex={0}
                 aria-label={`Início de ${currentArtist.name}`}
                 aria-current={isActive('') ? 'page' : undefined}
-                onClick={() => goArtist('')}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goArtist(''); } }}
+                onClick={goArtistDiagnostic}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goArtistDiagnostic(); } }}
                 style={{ '--stage-progress': realStageProgress } as CSSProperties}
               >
                 <div
                   className='portrait-stage-ring'
-                  aria-label={`Fase ${realStageIndex} de ${REAL_CAREER_STAGES.length}: ${realStage || 'Não definida'}`}
+                  aria-label={`${realAltas} de 4 dimensões REAL em alta: ${realStage || 'Não definida'}`}
                 >
                   <div className='portrait'>
                     <img src={currentArtistImage} alt={currentArtist.name} />
                   </div>
                 </div>
-                <i>{realStageIndex}</i>
+                <i>{realAltas}</i>
               </div>
               <h1>{currentArtist.name}</h1>
               <p className='profile-stage-label'>Fase atual: <b>{currentArtist.content?.realIndex?.profile?.name || currentArtist.content?.phaseLabel || 'Em construção'}</b></p>
 
               <div className='profile-menu'>
-                <ProfileMenuButton active={isActive('')} icon={<DashboardIcon size={22} />} label='Dashboard' onClick={() => goArtist('')} />
-                <ProfileMenuButton active={isActive('action-plan')} icon={<PlanoAcaoIcon size={22} />} label='Plano de Ação' locked={!viewPlanning} onClick={() => goArtist('action-plan')} />
+                <ProfileMenuButton active={isActive('')} icon={<DashboardIcon size={22} />} label='Início' onClick={() => goArtist('')} />
                 <ProfileMenuButton active={isActive('catalog')} icon={<CatalogoIcon size={22} />} label='Músicas' onClick={() => goArtist('catalog')} />
                 <ProfileMenuButton active={isActive('agenda')} icon={<AgendaIcon size={22} />} label='Agenda' onClick={() => goArtist('agenda')} />
                 <ProfileMenuButton active={isActive('team')} icon={<EquipeIcon size={22} />} label='Equipe' locked={!viewPlanning} onClick={() => goArtist('team')} />
                 <ProfileMenuButton active={isActive('marketing')} icon={<MarketingIcon size={22} />} label={<span>Marketing<small style={{ display: 'block', fontSize: 8 }}>(Em breve)</small></span>} onClick={() => goArtist('marketing')} />
+                <ProfileMenuButton active={isActive('financeiro')} icon={<FinanceiroIcon size={22} />} label={<span>Financeiro<small style={{ display: 'block', fontSize: 8 }}>(Em breve)</small></span>} onClick={() => goArtist('financeiro')} />
               </div>
 
-              <button type='button' className='social-links' onClick={() => setReviewOpen(true)}>
-                Avaliar
-              </button>
-              <button type='button' className='social-links' onClick={() => navigate('/suporte')}>
-                Suporte
-              </button>
             </aside>
           )}
 
@@ -559,10 +533,6 @@ export const AppLayout: FC = memo(() => {
       </main>
 
       <NytaFloatingModal />
-
-      <Suspense fallback={null}>
-        {reviewOpen && <PlatformReviewModal open onClose={() => setReviewOpen(false)} />}
-      </Suspense>
 
       {playerVisible && playerCurrentId && playerTracks.length > 0 && (
         <LocalPlayerBar
