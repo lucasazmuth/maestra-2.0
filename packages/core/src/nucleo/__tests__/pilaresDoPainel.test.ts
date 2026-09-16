@@ -82,7 +82,7 @@ describe('pilares do painel', () => {
         } as Partial<Artist['content']>),
         jornada(), TUDO,
       );
-      expect(pilar.linha).toBe('3 de 10 tarefas concluídas.');
+      expect(pilar.linha).toBe('3 de 10 ações concluídas.');
       expect(pilar.detalhe).toBe('Próxima: Definir o conceito do media kit');
       expect(pilar.progresso).toEqual({ feito: 3, total: 10, pct: 30 });
       expect(pilar.destino).toBe('plano');

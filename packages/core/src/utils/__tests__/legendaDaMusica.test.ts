@@ -42,13 +42,13 @@ describe('haQuantoTempo', () => {
 describe('legendaDaMusica', () => {
   it('quem mexeu por último vem primeiro, com o tempo ao lado', () => {
     expect(legendaDaMusica({ last_edited_by: 'Ana', updated_at: atras(2 * DIA) }, AGORA))
-      .toBe('Editado por Ana · há 2 dias');
+      .toBe('Ana · há 2 dias');
   });
 
   // O nome sozinho não diz se foi hoje ou no ano passado — e é o "quando" que faz a lista
   // servir para retomar trabalho.
   it('sem nome, o tempo entra sozinho', () => {
-    expect(legendaDaMusica({ updated_at: atras(3 * HORA) }, AGORA)).toBe('Editado há 3 h');
+    expect(legendaDaMusica({ updated_at: atras(3 * HORA) }, AGORA)).toBe('há 3 h');
   });
 
   it('junta gênero e lançamento depois da edição', () => {
@@ -56,7 +56,7 @@ describe('legendaDaMusica', () => {
       { last_edited_by: 'Ana', updated_at: atras(DIA), genre: 'Axé', release_date: '2026-12-25' },
       AGORA,
     );
-    expect(legenda).toBe('Editado por Ana · ontem · Axé · 25 de dez.');
+    expect(legenda).toBe('Ana · ontem · Axé · 25 de dez.');
   });
 
   // Sem isto a linha sai com separadores a apontar para o nada: "· Axé ·".
@@ -64,7 +64,7 @@ describe('legendaDaMusica', () => {
     expect(legendaDaMusica({ genre: 'Rock' }, AGORA)).toBe('Rock');
     expect(legendaDaMusica({}, AGORA)).toBe('');
     expect(legendaDaMusica({ last_edited_by: '   ', updated_at: atras(DIA) }, AGORA))
-      .toBe('Editado ontem');
+      .toBe('ontem');
   });
 
   // A frase antiga era igual em todas as linhas: dizia o modelo, não a música.
