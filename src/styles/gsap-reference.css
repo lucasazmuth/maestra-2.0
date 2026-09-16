@@ -7485,17 +7485,23 @@
 .method-view-header p { margin: 0; color: rgba(255,255,255,.72); font-size: 14px; line-height: 1.5; }
 .method-view-header button { display: inline-flex; min-height: 40px; flex: 0 0 auto; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,.32); border-radius: 5px; padding: 0 15px; background: rgba(0,0,0,.16); color: #fff; cursor: pointer; font-size: 11px; font-weight: 800; }
 .method-view-header button:hover { background: rgba(255,255,255,.12); }
-.method-diagnostic-header { display: block; min-height: 276px; padding: 28px 32px 24px; }
+.method-diagnostic-header { display: block; min-height: 278px; padding: 30px 32px 24px; }
 .method-diagnostic-header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 28px; }
-.method-diagnostic-header-top > div { max-width: 680px; }
-.method-diagnostic-summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.2); }
-.method-diagnostic-summary > div:nth-child(2) { min-width: 0; }
-.method-diagnostic-summary span { display: block; color: rgba(255,255,255,.66); font-size: 10px; font-weight: 800; text-transform: uppercase; }
-.method-diagnostic-summary strong { display: block; margin-top: 4px; color: #fff; font-size: 26px; line-height: 1.1; }
-.method-diagnostic-summary p { max-width: 620px; margin: 6px 0 0; color: rgba(255,255,255,.78); font-size: 12px; line-height: 1.45; }
-.method-diagnostic-pattern { display: flex; gap: 7px; }
-.method-diagnostic-pattern i { display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid rgba(255,255,255,.25); border-radius: 50%; color: rgba(255,255,255,.45); font-family: Georgia, serif; font-size: 13px; font-style: italic; font-weight: 700; }
-.method-diagnostic-pattern i.acesa { border-color: rgba(255,255,255,.8); background: rgba(255,255,255,.16); color: #fff; }
+.method-diagnostic-result { max-width: 760px; }
+.method-diagnostic-result > span { color: rgba(255,255,255,.66); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.method-diagnostic-result-main { display: flex; align-items: center; gap: 16px; margin-top: 14px; }
+.method-diagnostic-result-main > div { min-width: 0; }
+.method-diagnostic-result-main small { display: block; color: rgba(255,255,255,.6); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.method-diagnostic-header .method-diagnostic-result-main h1 { margin: 3px 0 4px; font-size: 31px; line-height: 1.05; }
+.method-diagnostic-result-main p { max-width: 660px; margin: 0; color: rgba(255,255,255,.78); font-size: 13px; line-height: 1.4; }
+.method-diagnostic-summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 24px; padding-top: 17px; border-top: 1px solid rgba(255,255,255,.2); }
+.method-diagnostic-status { color: rgba(255,255,255,.76); font-size: 13px; line-height: 1.4; }
+.method-diagnostic-pattern { display: grid; justify-items: end; gap: 8px; min-width: 164px; }
+.method-diagnostic-pattern span { display: block; color: rgba(255,255,255,.62); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.method-diagnostic-pattern > span { letter-spacing: .04em; }
+.method-diagnostic-pattern > div { display: flex; gap: 6px; }
+.method-diagnostic-pattern i { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid rgba(255,255,255,.22); border-radius: 50%; color: rgba(255,255,255,.38); font-family: Georgia, serif; font-size: 14px; font-style: italic; font-weight: 700; }
+.method-diagnostic-pattern i.acesa { border-color: rgba(255,255,255,.66); background: rgba(255,255,255,.14); color: #fff; }
 .method-diagnostic-grid, .method-execution-grid, .method-planning-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; border: 1px solid #e2e8f1; border-top: 0; background: #e2e8f1; }
 .method-planning-grid { grid-template-columns: 1.15fr .85fr; }
 .method-planning-grid .method-primary-card { grid-row: span 2; }
@@ -7587,8 +7593,9 @@
   .method-view-header button { width: 100%; justify-content: center; }
   .method-diagnostic-header { min-height: 0; padding: 26px 22px; }
   .method-diagnostic-header-top { flex-direction: column; }
-  .method-diagnostic-summary { grid-template-columns: auto minmax(0, 1fr); }
-  .method-diagnostic-pattern { grid-column: 1 / -1; }
+  .method-diagnostic-result-main { align-items: flex-start; }
+  .method-diagnostic-summary { align-items: flex-start; flex-direction: column; gap: 14px; }
+  .method-diagnostic-pattern { justify-items: start; min-width: 0; }
   .method-diagnostic-grid, .method-execution-grid, .method-planning-grid { grid-template-columns: 1fr; }
   .method-planning-grid .method-primary-card { grid-row: auto; }
   .method-primary-card, .method-real-card, .method-progress-card, .method-list-card { min-height: 0; }

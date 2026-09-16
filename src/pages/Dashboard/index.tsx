@@ -69,22 +69,26 @@ const CabecalhoDoMetodo: FC<{
   <header className={`method-view-header ${perfilReal ? 'method-diagnostic-header' : ''}`}>
     {perfilReal ? <>
       <div className='method-diagnostic-header-top'>
-        <div>
-          <span>{pilar.rotulo}</span>
-          <h1 id={`method-${pilar.chave}`}>{pilar.titulo}</h1>
-          <p>{pilar.linha}</p>
+        <div className='method-diagnostic-result'>
+          <span>{pilar.titulo}</span>
+          <div className='method-diagnostic-result-main'>
+            <RealBadge tier={tierForAltas(altasForPattern(perfilReal.pattern))} label={String(altasForPattern(perfilReal.pattern))} size={62} />
+            <div>
+              <small>Seu perfil de carreira</small>
+              <h1 id={`method-${pilar.chave}`}>{perfilReal.name}</h1>
+              <p>{perfilReal.description}</p>
+            </div>
+          </div>
         </div>
         <button type='button' onClick={aoAbrir}>{pilar.cta}<FiArrowRight aria-hidden /></button>
       </div>
       <div className='method-diagnostic-summary'>
-        <RealBadge tier={tierForAltas(altasForPattern(perfilReal.pattern))} label={String(altasForPattern(perfilReal.pattern))} size={54} />
-        <div>
-          <span>Seu perfil de carreira</span>
-          <strong>{perfilReal.name}</strong>
-          <p>{perfilReal.description}</p>
-        </div>
+        <div className='method-diagnostic-status'>{pilar.linha}</div>
         <div className='method-diagnostic-pattern' aria-label='Dimensões REAL'>
-          {(['r', 'e', 'a', 'l'] as const).map((key) => <i key={key} className={perfilReal.pattern[key] ? 'acesa' : ''}>{key.toUpperCase()}</i>)}
+          <span>Dimensões acesas</span>
+          <div>
+            {(['r', 'e', 'a', 'l'] as const).map((key) => <i key={key} className={perfilReal.pattern[key] ? 'acesa' : ''}>{key.toUpperCase()}</i>)}
+          </div>
         </div>
       </div>
     </> : <>
