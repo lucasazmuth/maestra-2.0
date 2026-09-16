@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { App, DatePicker, message } from 'antd';
 import { createPortal } from 'react-dom';
 import dayjs from 'dayjs';
-import { FiArchive, FiArrowRight, FiCheck, FiCheckCircle, FiChevronDown, FiCircle, FiLock, FiMoreVertical, FiPlus, FiX } from 'react-icons/fi';
+import { FiArchive, FiCheck, FiCheckCircle, FiChevronDown, FiCircle, FiLock, FiMoreVertical, FiPlus, FiX } from 'react-icons/fi';
 
 import { useNytaModal } from '@maestra/core/hooks/useNytaModal';
 import { buildActionPlan } from '@maestra/core/wizard/motores';
@@ -553,27 +553,6 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
             </div>
           </div>
           <div className="action-plan-header-summary">
-            <div className="action-plan-header-status action-plan-header-actions">
-              <button
-                type="button"
-                className="action-plan-new-strategy"
-                onClick={() => manageTasks ? openWithPrompt('Quero criar uma nova estratégia para o meu plano de ação.') : showProRequired()}
-              >
-                Nova estratégia
-                <FiArrowRight aria-hidden />
-              </button>
-              {activeView === 'strategies' && (
-                <button
-                  type="button"
-                  className="ap-btn ap-btn--accent action-plan-schedule-shortcut"
-                  onClick={() => setActiveView('schedule')}
-                  aria-label="Abrir cronograma"
-                >
-                  Cronograma
-                  <FiArrowRight aria-hidden />
-                </button>
-              )}
-            </div>
             <div className="action-plan-header-side">
               <span>AÇÕES DO CICLO</span>
               <strong>{completedActions}/{totalActions}</strong>
@@ -599,12 +578,24 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
             Cronograma
           </button>
         </nav>
-        {hasArchive && (
-          <button className="action-plan-archived-button" type="button" onClick={() => manageTasks ? setArchiveOpen(true) : showProRequired()}>
-            <FiArchive size={13} />
-            Arquivadas ({archived.length})
-          </button>
-        )}
+        <div className="action-plan-tabs-actions">
+          {activeView === 'strategies' && (
+            <button
+              type="button"
+              className="action-plan-new-strategy"
+              onClick={() => manageTasks ? openWithPrompt('Quero criar uma nova estratégia para o meu plano de ação.') : showProRequired()}
+            >
+              <FiPlus aria-hidden />
+              Nova estratégia
+            </button>
+          )}
+          {hasArchive && (
+            <button className="action-plan-archived-button" type="button" onClick={() => manageTasks ? setArchiveOpen(true) : showProRequired()}>
+              <FiArchive size={13} />
+              Arquivadas ({archived.length})
+            </button>
+          )}
+        </div>
       </div>
 
       {activeView === 'strategies' ? <section className="action-strategy-overview" aria-label="Estratégias do plano">
