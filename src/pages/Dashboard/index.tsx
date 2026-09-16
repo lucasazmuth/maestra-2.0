@@ -368,10 +368,7 @@ const Dashboard: FC = () => {
       {/* A Nyta orienta a próxima ação antes de apresentar o painel de comando. */}
       <NytaDashboardHero artistName={artist.name} />
 
-      {/* O painel de comando vem depois da conversa, como uma segunda camada de decisão. */}
-      <VisaoGeralDoArtista artist={artist} onSelect={setSecao} />
-
-      {/* O rodapé encerra a página com atalhos de apoio e colaboração do artista. */}
+      {/* Os atalhos de suporte e colaboração vêm logo depois da conversa. */}
       <section className='music-footer'>
         <Atalho
           icone={<FiLifeBuoy />}
@@ -392,6 +389,9 @@ const Dashboard: FC = () => {
           aoAbrir={() => navigate(`/artists/${artist.id}/team`)}
         />
       </section>
+
+      {/* O painel de comando fecha o fluxo principal, abaixo dos cards de suporte. */}
+      <VisaoGeralDoArtista artist={artist} onSelect={setSecao} />
       </>}
 
       <PlatformReviewModal open={avaliando} onClose={() => setAvaliando(false)} />
