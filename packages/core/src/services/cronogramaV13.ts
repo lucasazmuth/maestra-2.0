@@ -154,8 +154,14 @@ export const buildV13Actions = (
   const state = schedule.strategies[strategy.id] || {};
   const definitions = actionDefinitionsForPath(definition, state.selectedPath);
   let previousDate: string | undefined;
-  return definitions.map((action) => {
-    const date = state.manualDates?.[action.n] || state.informedDates?.[action.n] || calculatedDate(definition, action, schedule, state, previousDate);
+  const actions = definitions.map((action) => {
+    const routineStart = action.tipo === 'rotina'
+      ? dateBase(definition, action, schedule, state, previousDate)
+      : undefined;
+    const date = state.manualDates?.[action.n]
+      || state.informedDates?.[action.n]
+      || (routineStart && nextBrazilBusinessDay(routineStart))
+      || calculatedDate(definition, action, schedule, state, previousDate);
     const tight = !!date && date < options.today;
     const effectiveDate = date ? maxDate(date, options.today) : undefined;
     if (effectiveDate && action.tipo !== 'rotina' && action.tipo !== 'informada') previousDate = effectiveDate;
@@ -187,6 +193,94 @@ export const buildV13Actions = (
       tasks,
     };
   });
+  return applyCompressionFloors(actions);
+};
+
+const addCalendarMonths = (value: string, months: number): string => {
+  const date = parseDate(value);
+  const day = date.getUTCDate();
+  date.setUTCDate(1);
+  date.setUTCMonth(date.getUTCMonth() + months);
+  const lastDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 12)).getUTCDate();
+  date.setUTCDate(Math.min(day, lastDay));
+  return formatDate(date);
+};
+
+export const applyCompressionFloors = (actions: ActionPlanAction[]): ActionPlanAction[] => {
+  let previous: string | undefined;
+  return actions.map((action) => {
+    if (!action.date || action.dateType === 'rotina' || action.dateType === 'informada') return action;
+    const definition = CRONOGRAMA_V13_STRATEGIES
+      .flatMap((strategy) => strategy.acoes)
+      .find((candidate) => candidate.n === action.number && candidate.nome === action.title);
+    const floor = definition?.piso_dias || 0;
+    const minimum = previous ? addDays(previous, floor) : action.date;
+    const date = action.date < minimum ? minimum : action.date;
+    previous = date;
+    return { ...action, date, tight: action.tight || date !== action.date };
+  });
+};
+
+export const distributeV13Actions = (
+  actions: ActionPlanAction[],
+  today: string
+): ActionPlanAction[] => {
+  const occupied = new Set<string>();
+  return actions.map((action) => {
+    if (!action.date || action.dateType !== 'automatica') return action;
+    let candidate = nextBrazilBusinessDay(maxDate(action.date, today));
+    for (let offset = 0; offset < 4 && occupied.has(candidate); offset += 1) {
+      candidate = nextBrazilBusinessDay(addDays(candidate, 1));
+    }
+    occupied.add(candidate);
+    return candidate === action.date ? action : { ...action, date: candidate, tight: action.tight || candidate !== action.date };
+  });
+};
+
+export const routineOccurrences = (
+  action: ActionPlanAction,
+  from: string,
+  to: string
+): string[] => {
+  if (action.dateType !== 'rotina' || !action.date || !action.cadence) return [];
+  const end = action.recurrenceEnd && action.recurrenceEnd < to ? action.recurrenceEnd : to;
+  const step = ({ semanal: 7, quinzenal: 14, mensal: 0, trimestral: 0, semestral: 0, anual: 0 } as Record<ActionPlanCadence, number>)[action.cadence];
+  const output: string[] = [];
+  let current = action.date;
+  while (current <= end) {
+    if (current >= from) output.push(current);
+    current = step ? addDays(current, step) : addCalendarMonths(current, ({ mensal: 1, trimestral: 3, semestral: 6, anual: 12 } as Record<string, number>)[action.cadence] || 1);
+  }
+  return output;
+};
+
+export interface V13DependencyWarning {
+  kind: 'acceptance' | 'drag' | 'execution';
+  message: string;
+  strategyId: string;
+  actionNumber: number;
+}
+
+export const dependencyWarnings = (
+  strategies: Array<{ id: string; bankId?: string; actions?: ActionPlanAction[] }>,
+  mode: V13DependencyWarning['kind']
+): V13DependencyWarning[] => {
+  const warnings: V13DependencyWarning[] = [];
+  for (const dependency of CRONOGRAMA_V13_DEPENDENCIES) {
+    const source = strategies.find((strategy) => String(strategy.bankId || strategy.id).replace(/^#/, '') === String(dependency.x.estrategia).replace(/^#/, ''));
+    const target = strategies.find((strategy) => String(strategy.bankId || strategy.id).replace(/^#/, '') === String(dependency.y.estrategia).replace(/^#/, ''));
+    if (!target?.actions?.length) continue;
+    const sourceDone = source?.actions?.some((action) => dependency.x.acoes.includes(action.number) && action.status === 'done');
+    const targetAction = target.actions.find((action) => action.number === dependency.y.acao);
+    if (!targetAction || sourceDone) continue;
+    warnings.push({
+      kind: mode,
+      message: `${dependency.y.nome} depende de ${dependency.x.nomes.join(' ou ')}.`,
+      strategyId: target.id,
+      actionNumber: targetAction.number,
+    });
+  }
+  return warnings;
 };
 
 export const validateV13Sources = (): string[] => {
