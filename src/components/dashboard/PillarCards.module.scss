@@ -1,11 +1,18 @@
 .menu {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   align-items: stretch;
   gap: 30px;
   min-height: 58px;
   margin-bottom: 24px;
+  padding-top: 10px;
   overflow-x: auto;
   border-bottom: 1px solid #dfe5ef;
+  background: rgba(248, 250, 253, .96);
+  box-shadow: 0 8px 18px rgba(89, 110, 148, .06);
+  backdrop-filter: blur(8px);
   scrollbar-width: none;
 }
 
@@ -47,7 +54,7 @@
 .menu button.ativo::after { opacity: 1; transform: scaleX(1); }
 
 @media (max-width: 700px) {
-  .menu { gap: 22px; min-height: 52px; margin: -2px -14px 20px; padding: 0 14px; }
+  .menu { gap: 22px; min-height: 52px; margin: -2px -14px 20px; padding: 10px 14px 0; }
   .menu button { padding-bottom: 13px; font-size: 12px; }
 }
 
