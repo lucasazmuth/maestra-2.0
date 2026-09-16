@@ -357,17 +357,6 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
     if (strategy && task) syncTaskEvent(strategy, task, patch);
   };
 
-  const toggleAction = (sid: string, action: ActionPlanAction) => {
-    const nextStatus = action.status === 'done' ? 'todo' : 'done';
-    void commit((ss) => ss.map((s) => s.id !== sid ? s : {
-      ...s,
-      actions: (s.actions || []).map((item) => item.id === action.id ? { ...item, status: nextStatus } : item),
-    }), editPlanning);
-    const strategy = artist?.content?.strategies?.find((s) => s.id === sid);
-    if (strategy) syncActionEvent(strategy, action, { status: nextStatus });
-    toast.success(nextStatus === 'done' ? 'Ação concluída.' : 'Ação reaberta.');
-  };
-
   const patchAction = (sid: string, action: ActionPlanAction, date?: string) => {
     void commit((ss) => ss.map((s) => s.id !== sid ? s : {
       ...s,
@@ -654,11 +643,8 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
                             return (
                               <li key={action.id} className={`ap-v13-action${done ? ' is-done' : ''}`}>
                                 <div className="ap-v13-action-head">
-                                  <button type="button" className={`action-task-check${done ? ' is-done' : ''}`} title={done ? 'Reabrir ação' : 'Concluir ação'} onClick={() => editPlanning ? toggleAction(p.s.id, action) : showProRequired()}>
-                                    {done ? <FiCheckCircle size={25} /> : <FiCircle size={25} />}
-                                  </button>
                                   <strong>{action.title}</strong>
-                                  <span className="ap-plan-task-meta">
+                                  <span className="ap-v13-action-meta ap-plan-task-meta">
                                     <TaskOwner className="ap-owner" value={action.owner} assignees={assignees} disabled={!editPlanning} onBlocked={showProRequired} onChange={(owner) => {
                                       void commit((ss) => ss.map((s) => s.id !== p.s.id ? s : { ...s, actions: (s.actions || []).map((item) => item.id === action.id ? { ...item, owner } : item) }), editPlanning);
                                     }} />
