@@ -2804,4 +2804,65 @@ $docLow: #8b9ab4;
   }
   .healthLabel, .pieLegendLabel { color: #61749a !important; }
   .healthVal, .pieLegendVal { color: #52668d !important; }
+
+  // Grade editorial: cada dimensão é uma faixa do diagnóstico. Em telas grandes, as quatro
+  // frentes se leem em paralelo; em telas estreitas elas voltam para uma coluna sem cortar dados.
+  .dimGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .dimCard {
+    min-height: 100%;
+    padding: 24px 22px 26px;
+  }
+  .dimMono {
+    color: var(--dim-color) !important;
+    background: color-mix(in srgb, var(--dim-color) 9%, white) !important;
+    border-color: color-mix(in srgb, var(--dim-color) 60%, white) !important;
+  }
+
+  .reportEyebrow {
+    margin-bottom: 7px;
+    color: #7184a5;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  .reportSectionTitle {
+    margin: 0 0 20px;
+    color: #273f6b;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+  .audienceGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 28px;
+  }
+  .audienceGrid > * { min-width: 0; margin: 0 !important; }
+  .audienceGrid > :only-child { grid-column: 1 / -1; }
+  .cityChart,
+  .platformPresence {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+  .cityRow { padding: 9px 0; }
+  .platformSectionTitle { color: #36517f !important; }
+  .profileMapTitle { display: none; }
+  .profileMap { padding: 26px !important; }
+  .mapRow { padding: 11px 0; }
+  .mapChip { background: #f8faff !important; }
+  .mapChipOn { border-color: #d08a18 !important; background: #fff8e7 !important; }
+
+  @media (max-width: 760px) {
+    .dimGrid,
+    .audienceGrid { grid-template-columns: 1fr; }
+    .audienceGrid > :only-child { grid-column: auto; }
+    .reportSectionTitle { font-size: 18px; }
+  }
 }

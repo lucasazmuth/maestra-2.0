@@ -76,7 +76,7 @@ const CabecalhoDoMetodo: FC<{
             <div>
               <small>Seu perfil de carreira</small>
               <h1 id={`method-${pilar.chave}`}>{perfilReal.name}</h1>
-              <p>{perfilReal.description.replace(/\s[—–]\s/g, '. ')}</p>
+              <p>{perfilReal.description.replace(/\s[—–]\s+(.)/g, (_, first: string) => `. ${first.toUpperCase()}`)}</p>
             </div>
           </div>
         </div>

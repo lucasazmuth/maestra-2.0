@@ -821,10 +821,13 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
             })}
       </div>
 
-      {/* SEÇÃO EXTRA — Onde seus ouvintes estão (dado real do Chartmetric) */}
-      {!!cities?.length && (
-        <div className={`${styles.cityChart} ${styles.reveal}`} style={{ animationDelay: '0.24s', marginBottom: 28 }}>
-          <div className={styles.cityChartLabel}>Onde seus ouvintes estão</div>
+      {/* Distribuição da audiência e presença editorial: dois lados da mesma leitura musical. */}
+      {(!!cities?.length || !!chartmetric?.playlists?.top?.length || !!chartmetric?.audience?.top_countries?.length) && (
+        <div className={`${styles.audienceGrid} ${styles.reveal}`} style={{ animationDelay: '0.24s' }}>
+          {!!cities?.length && (
+            <section className={styles.cityChart}>
+              <div className={styles.reportEyebrow}>Território</div>
+              <h2 className={styles.reportSectionTitle}>Onde sua música encontra gente</h2>
           {cities.slice(0, 5).map((c) => {
             const max = cities[0].listeners || 1;
             const pct = Math.max(6, Math.round((c.listeners / max) * 100));
@@ -836,13 +839,13 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
               </div>
             );
           })}
-        </div>
-      )}
+            </section>
+          )}
 
-      {/* SEÇÃO EXTRA — Presença nas plataformas (enriquecimento Chartmetric, só pós-pago) */}
-      {(!!chartmetric?.playlists?.top?.length || !!chartmetric?.audience?.top_countries?.length) && (
-        <div className={`${styles.platformPresence} ${styles.reveal}`} style={{ animationDelay: '0.27s', marginBottom: 28 }}>
-          <div className={styles.cityChartLabel}>Sua presença nas plataformas</div>
+          {(!!chartmetric?.playlists?.top?.length || !!chartmetric?.audience?.top_countries?.length) && (
+            <section className={styles.platformPresence}>
+              <div className={styles.reportEyebrow}>Distribuição</div>
+              <h2 className={styles.reportSectionTitle}>Sua presença nas plataformas</h2>
 
           {!!chartmetric?.playlists?.top?.length && (
             <div className={styles.platformSection}>
@@ -878,12 +881,15 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
               })}
             </div>
           )}
+            </section>
+          )}
         </div>
       )}
 
       {/* SEÇÃO EXTRA — Mapa dos 16 perfis (onde você está) */}
       <div className={`${styles.profileMap} ${styles.reveal}`} style={{ animationDelay: '0.3s' }}>
-        <div className={styles.profileMapTitle}>Sua posição entre os 16 perfis</div>
+        <div className={styles.reportEyebrow}>Trajetória</div>
+        <h2 className={styles.reportSectionTitle}>Sua posição entre os 16 perfis</h2>
         {PROFILE_MAP.map((row) => (
           <div key={row.tier} className={styles.mapRow}>
             <RealBadge tier={tierForAltas(row.altas)} label={String(row.altas)} size={38} />
