@@ -1099,6 +1099,11 @@
    aparece e os três blocos ficam na mesma superfície. */
 .task-app .board-shell > .Main-section { background: transparent; }
 
+/* The dashboard canvas must be the content of the scrolling Main-section. Keeping overflow on
+   the canvas itself prevents a sticky method menu from being clipped by its own page wrapper. */
+.task-app:not(.public-app) .Main-section:has(.music-dashboard) { overflow-y: auto !important; }
+.task-app:not(.public-app) .music-dashboard { overflow: visible; }
+
 /* Preserve the menu-card outlines while preventing horizontal scrolling. */
 @media (min-width: 1301px) { .profile-panel { width: 368px; padding-right: 60px; padding-left: 58px; }.board-shell { margin-left: 469px; } }
 @media (min-width: 1301px) { .module-layout .board-shell { margin-left: 130px; } }

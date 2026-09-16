@@ -52,8 +52,8 @@
 .menu button:hover { color: #53688f; }
 .menu button:focus-visible { outline: 2px solid #7fb0ff; outline-offset: -2px; }
 .menu button.ativo { color: #8796b1; }
-.menu button::after,
-.menu button.ativo::after { display: none; }
+.menu button.ativo { color: #263b63; }
+.menu button.ativo::after { display: block; opacity: 1; transform: scaleX(1); }
 
 @media (max-width: 700px) {
   .menu { gap: 22px; min-height: 52px; margin: -2px -14px 20px; padding: 10px 14px 0; }
