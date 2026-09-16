@@ -7487,6 +7487,8 @@
 .method-view-header button:hover { background: rgba(255,255,255,.12); }
 .method-diagnostic-header { display: block; min-height: 278px; padding: 30px 32px 24px; }
 .method-diagnostic-header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 28px; }
+.method-diagnostic-header > .method-diagnostic-header-top,
+.method-diagnostic-header > .method-diagnostic-summary { max-width: none; }
 .method-diagnostic-result { max-width: 760px; }
 .method-diagnostic-result > span { color: rgba(255,255,255,.66); font-size: 10px; font-weight: 800; text-transform: uppercase; }
 .method-diagnostic-result-main { display: flex; align-items: center; gap: 16px; margin-top: 14px; }
