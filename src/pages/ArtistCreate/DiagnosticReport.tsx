@@ -672,7 +672,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
     row.num != null ? <CountUp value={row.num} /> : (row.value ?? '–');
 
   return (
-    <div className={styles.realWrap} style={{ ['--real-accent' as string]: realAccent } as React.CSSProperties}>
+    <div className={`${styles.realWrap} ${hideProfile ? styles.dashboardReport : ''}`} style={{ ['--real-accent' as string]: realAccent } as React.CSSProperties}>
       {/* SEÇÃO 1 — Hero (oculto na /diagnostico, que usa o PageHeader padrão) */}
       {!hideHero && (
         <div className={`${styles.realHero} ${styles.reveal}`} style={{ animationDelay: '0s' }}>
