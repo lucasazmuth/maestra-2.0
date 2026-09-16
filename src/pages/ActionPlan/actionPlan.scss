@@ -1117,6 +1117,7 @@
 .action-plan-page--embedded .action-plan-header-result span { display: block; max-width: 660px; margin: 0; color: #6f82a4 !important; font-size: 13px; line-height: 1.4; }
 .action-plan-page--embedded .action-plan-header-summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: auto; padding-top: 17px; border-top: 1px solid rgba(82, 104, 143, .18); }
 .action-plan-page--embedded .action-plan-header-status { color: #6f82a4; font-size: 13px; line-height: 1.4; }
+.action-plan-page--embedded .action-plan-header-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
 .action-plan-page--embedded .action-plan-new-strategy {
   display: inline-flex;
   align-items: center;
@@ -1140,6 +1141,12 @@
 .action-plan-page--embedded .action-plan-new-strategy:focus-visible {
   background: #fff;
   outline: 0;
+}
+.action-plan-page--embedded .action-plan-schedule-shortcut {
+  min-height: 38px;
+  padding-inline: 15px;
+  font-size: 11px;
+  box-shadow: none;
 }
 .action-plan-page--embedded .action-plan-header-side { display: grid; justify-items: end; gap: 8px; min-width: 164px; text-align: right; }
 .action-plan-page--embedded .action-plan-header-side span { color: #7286aa !important; font-size: 10px; font-weight: 800; text-transform: uppercase; }

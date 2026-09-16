@@ -553,7 +553,7 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
             </div>
           </div>
           <div className="action-plan-header-summary">
-            <div className="action-plan-header-status">
+            <div className="action-plan-header-status action-plan-header-actions">
               <button
                 type="button"
                 className="action-plan-new-strategy"
@@ -562,6 +562,17 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
                 Nova estratégia
                 <FiArrowRight aria-hidden />
               </button>
+              {activeView === 'strategies' && (
+                <button
+                  type="button"
+                  className="ap-btn ap-btn--accent action-plan-schedule-shortcut"
+                  onClick={() => setActiveView('schedule')}
+                  aria-label="Abrir cronograma"
+                >
+                  Cronograma
+                  <FiArrowRight aria-hidden />
+                </button>
+              )}
             </div>
             <div className="action-plan-header-side">
               <span>AÇÕES DO CICLO</span>
