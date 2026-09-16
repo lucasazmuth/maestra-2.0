@@ -301,7 +301,7 @@ const Agenda: FC = () => {
                 {isTaskEvent(event) && <i className={event.status === 'completed' ? 'is-completed' : ''} aria-hidden="true">{event.status === 'completed' ? <FiCheck size={11} /> : null}</i>}
                 <strong>{calendarTitle(event.title, 72)}</strong>
               </button>
-            )) : <strong>Planeje sua semana</strong>}
+            )) : <strong className="calendar-all-day-empty">Planeje sua semana</strong>}
           </div>
         </div>
       )}
