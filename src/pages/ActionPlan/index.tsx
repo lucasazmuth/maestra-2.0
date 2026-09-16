@@ -23,6 +23,7 @@ import { listMembers } from '@maestra/core/services/db/members';
 import * as eventsDb from '@maestra/core/services/db/events';
 import type { ActionPlanAction, ActionTask, ArtistContent, ArtistMember, Strategy } from '@maestra/core/interfaces/maestra';
 import { migrateContentToV13 } from '@maestra/core/services/migracaoV13';
+import { buildV13Actions, defaultV13Schedule } from '@maestra/core/services/cronogramaV13';
 import './actionPlan.scss';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -328,6 +329,9 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const syncActionEvent = (strategy: Strategy, action: ActionPlanAction, patch: Partial<ActionPlanAction>) => {
     if (!artist) return;
     const nextAction = { ...action, ...patch };
+    const assignedMember = nextAction.owner && nextAction.owner !== TASK_OWNER_SELF
+      ? members.find((member) => member.status === 'active' && member.email.toLowerCase() === nextAction.owner?.toLowerCase())
+      : undefined;
     void eventsDb.syncActionPlanTaskEvent({
       artistId: artist.id,
       taskId: action.id,
@@ -336,8 +340,10 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
       deadline: nextAction.date,
       completed: nextAction.status === 'done',
       recurrence: nextAction.cadence === 'semanal' ? 'weekly' : undefined,
-      assigneeKind: nextAction.owner ? (nextAction.owner === TASK_OWNER_SELF ? 'owner' : 'unassigned') : 'unassigned',
-      assigneeMemberId: null,
+      assigneeKind: nextAction.owner
+        ? (nextAction.owner === TASK_OWNER_SELF ? 'owner' : assignedMember ? 'member' : 'unassigned')
+        : 'unassigned',
+      assigneeMemberId: assignedMember?.id || null,
     }).catch((error: unknown) => {
       console.error('[ActionPlan] Não foi possível sincronizar a ação v1.3 na Agenda:', error);
       toast.error('A ação foi salva, mas a Agenda não foi sincronizada.');
@@ -452,7 +458,17 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const activateArchived = (ids: string[]) => {
     if (!manageTasks) { showProRequired(); return; }
     if (!ids.length) return;
-    commit((ss) => ss.map((s) => (ids.includes(s.id) ? { ...s, tasks: buildActionPlan(s) } : s)));
+    if (!content) return;
+    const schedule = content.actionPlanScheduleV13 || defaultV13Schedule(todayStr());
+    commit((ss) => ss.map((s) => {
+      if (!ids.includes(s.id)) return s;
+      const activated = { ...s, tasks: buildActionPlan(s) };
+      return {
+        ...activated,
+        actions: buildV13Actions(activated, schedule, { today: todayStr(), existing: s.actions }),
+        actionPlanVersion: 'v3' as const,
+      };
+    }));
     setArchiveOpen(false);
     message.success(ids.length === 1 ? 'Estratégia trazida pro plano de ação.' : `${ids.length} estratégias trazidas pro plano de ação.`);
   };
