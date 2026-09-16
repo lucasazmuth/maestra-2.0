@@ -1,0 +1,4894 @@
+{
+ "versao": "v1.3",
+ "data": "2026-09-16",
+ "substitui": "cronograma_v1_2.json",
+ "base": "insumo_cronograma_v1_3.json (revisão da Anita 15-16/09) + decisões do chat do cronograma em 16/09",
+ "convencoes": {
+  "acao": "nível datado, nome fase + objeto; é o que entra na agenda",
+  "tarefa": "checklist dentro da ação; sem data; checklist completo conclui a ação; conclusão manual deixa as tarefas abertas",
+  "tipos_de_data": {
+   "automatica": "dia calculado a partir de conta_de",
+   "marco": "dia 0 da âncora; Dia D (lançamento) ou data própria; cor por marco_tipo",
+   "rotina": "sem dia; começa após a ação anterior; recorrência por cadencia; sem fim salvo campo fim; artista pode encerrar",
+   "informada": "sem dia; a Nyta pergunta a data; sem data = bandeja Esperando data; com data = as seguintes contam dela"
+  },
+  "conta_de": {
+   "lancamento": "dias ANTES do lançamento (negativo = depois)",
+   "propria": "dias ANTES da data própria (negativo = depois)",
+   "inicio": "dias DEPOIS do dia do aceite da estratégia (primeiro aceite: data de início do plano)",
+   "informada_anterior": "dias DEPOIS da data informada na ação informada anterior da cadeia"
+  },
+  "classe": "piso de compressão: depois que a ação começa, a seguinte só começa após piso_dias (rapida 0, media 3, longa 7)",
+  "fim_de_semana": "true só em marco e informada; automática que cai em sábado, domingo ou feriado nacional vai para o próximo dia útil"
+ },
+ "gatilhos": {
+  "semana_pesada_acoes": 6,
+  "frente_parada_dias": 30,
+  "sobreposicao": "mesma semana; combinado com semana_pesada no mesmo aviso quando os dois ocorrem",
+  "distribuicao": {
+   "janela_dias_uteis": 3,
+   "alvo_acoes_por_dia_util": 1,
+   "direcao": "só para frente",
+   "quem_desliza": "a ação da estratégia de menor prioridade",
+   "excluidos": [
+    "marco",
+    "informada",
+    "rotina"
+   ]
+  },
+  "resumo": {
+   "segunda": "semanal: começa, vence, rotinas da semana, esperando data",
+   "demais_dias": "diário: as ações do dia"
+  }
+ },
+ "marcos": {
+  "tipos": [
+   "lancamento",
+   "show",
+   "turne",
+   "campanha",
+   "evento"
+  ],
+  "regra": "cor por tipo; ações automáticas neutras; sem cor por estratégia; estratégias numeradas 1..N pela priorização"
+ },
+ "perguntas_gerais": [
+  {
+   "id": "lancamento",
+   "nome": "Lançamento (Dia D)",
+   "pergunta": "Qual a data do seu próximo lançamento? Se ainda não tem data fechada, me diz o mês que eu marco o dia 15 e a gente ajusta depois.",
+   "apoio": "O ideal é trabalhar com 180 dias de antecedência. É o tempo de cuidar da produção, do material e da divulgação sem correria. Se o seu lançamento está mais perto que isso, tudo bem, eu encaixo o que cabe e te mostro o que fica apertado. Se você ainda não tem lançamento previsto, eu sugiro uma data daqui a 180 dias e você muda quando quiser.",
+   "fallback": "hoje + 180 dias"
+  },
+  {
+   "id": "inicio",
+   "nome": "Início do plano",
+   "pergunta": "Quando você quer começar a executar o plano?",
+   "apoio": "Não precisa ser amanhã. Mas quanto antes você começa, mais cedo as coisas passam a andar. Se preferir, eu marco a partir de hoje.",
+   "fallback": "hoje",
+   "observacao": "feita só no primeiro aceite do plano; estratégias de âncora início aceitas depois contam do dia do próprio aceite"
+  }
+ ],
+ "perguntas_de_caminho": [
+  {
+   "estrategia": "#3",
+   "pergunta": "Você vai constituir a sua própria editora ou contratar uma editora com administração?",
+   "opcoes": [
+    {
+     "rotulo": "Editora própria",
+     "acoes_exclusivas": [
+      2,
+      3
+     ]
+    },
+    {
+     "rotulo": "Contratar editora",
+     "acoes_exclusivas": [
+      4
+     ]
+    }
+   ]
+  },
+  {
+   "estrategia": "#6",
+   "pergunta": "Você vai montar a documentação de branding por conta própria ou com ajuda profissional?",
+   "opcoes": [
+    {
+     "rotulo": "Por conta própria",
+     "acoes_exclusivas": [
+      2,
+      3
+     ]
+    },
+    {
+     "rotulo": "Com profissional",
+     "acoes_exclusivas": [
+      4,
+      5
+     ]
+    }
+   ]
+  },
+  {
+   "estrategia": "#10",
+   "pergunta": "Você vai cuidar das redes por conta própria ou com o suporte profissional?",
+   "opcoes": [
+    {
+     "rotulo": "Com suporte",
+     "acoes_exclusivas": [
+      2
+     ]
+    },
+    {
+     "rotulo": "Por conta própria",
+     "acoes_exclusivas": [
+      3
+     ]
+    }
+   ]
+  },
+  {
+   "estrategia": "#15",
+   "pergunta": "Você vai contratar uma assessoria de imprensa ou fazer por conta própria?",
+   "opcoes": [
+    {
+     "rotulo": "Contratar assessoria",
+     "acoes_exclusivas": [
+      1
+     ]
+    },
+    {
+     "rotulo": "Por conta própria",
+     "acoes_exclusivas": [
+      2,
+      4
+     ]
+    }
+   ]
+  },
+  {
+   "estrategia": "#18",
+   "pergunta": "Você vai contratar um divulgador de rádio ou fazer por conta própria?",
+   "opcoes": [
+    {
+     "rotulo": "Contratar divulgador",
+     "acoes_exclusivas": [
+      2
+     ]
+    },
+    {
+     "rotulo": "Por conta própria",
+     "acoes_exclusivas": [
+      3,
+      4
+     ]
+    }
+   ]
+  },
+  {
+   "estrategia": "#24",
+   "pergunta": "Você vai trabalhar a presença de palco com um profissional ou por conta própria?",
+   "opcoes": [
+    {
+     "rotulo": "Com profissional",
+     "acoes_exclusivas": [
+      2,
+      3
+     ]
+    },
+    {
+     "rotulo": "Por conta própria",
+     "acoes_exclusivas": [
+      4
+     ]
+    }
+   ]
+  },
+  {
+   "estrategia": "#41b",
+   "pergunta": "Você vai se apresentar às marcas por conta própria ou por meio de uma agência?",
+   "opcoes": [
+    {
+     "rotulo": "Via agência",
+     "acoes_exclusivas": [
+      2
+     ]
+    },
+    {
+     "rotulo": "Por conta própria",
+     "acoes_exclusivas": [
+      3
+     ]
+    }
+   ]
+  }
+ ],
+ "dependencias": [
+  {
+   "x": {
+    "estrategia": "#6",
+    "acoes": [
+     3,
+     5
+    ],
+    "regra": "qualquer uma concluída",
+    "nomes": [
+     "Consolidação do documento de branding",
+     "Imersão e aprovação do branding"
+    ]
+   },
+   "y": {
+    "estrategia": "#8",
+    "acao": 2,
+    "nome": "Ensaio de fotos do material promocional"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#6",
+    "acoes": [
+     3,
+     5
+    ],
+    "regra": "qualquer uma concluída",
+    "nomes": [
+     "Consolidação do documento de branding",
+     "Imersão e aprovação do branding"
+    ]
+   },
+   "y": {
+    "estrategia": "#N6",
+    "acao": 1,
+    "nome": "Planejamento das peças audiovisuais"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#6",
+    "acoes": [
+     3,
+     5
+    ],
+    "regra": "qualquer uma concluída",
+    "nomes": [
+     "Consolidação do documento de branding",
+     "Imersão e aprovação do branding"
+    ]
+   },
+   "y": {
+    "estrategia": "#9",
+    "acao": 2,
+    "nome": "Produção do media kit"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#6",
+    "acoes": [
+     3,
+     5
+    ],
+    "regra": "qualquer uma concluída",
+    "nomes": [
+     "Consolidação do documento de branding",
+     "Imersão e aprovação do branding"
+    ]
+   },
+   "y": {
+    "estrategia": "#43",
+    "acao": 3,
+    "nome": "Montagem da lojinha"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#8",
+    "acoes": [
+     4
+    ],
+    "regra": "concluída",
+    "nomes": [
+     "Montagem do kit de venda"
+    ]
+   },
+   "y": {
+    "estrategia": "#29",
+    "acao": 3,
+    "nome": "Prospecção de shows públicos"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#8",
+    "acoes": [
+     4
+    ],
+    "regra": "concluída",
+    "nomes": [
+     "Montagem do kit de venda"
+    ]
+   },
+   "y": {
+    "estrategia": "#30",
+    "acao": 4,
+    "nome": "Prospecção de shows corporativos"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#8",
+    "acoes": [
+     4
+    ],
+    "regra": "concluída",
+    "nomes": [
+     "Montagem do kit de venda"
+    ]
+   },
+   "y": {
+    "estrategia": "#31",
+    "acao": 4,
+    "nome": "Prospecção de shows particulares"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#8",
+    "acoes": [
+     4
+    ],
+    "regra": "concluída",
+    "nomes": [
+     "Montagem do kit de venda"
+    ]
+   },
+   "y": {
+    "estrategia": "#32",
+    "acao": 3,
+    "nome": "Prospecção de casas de show e teatros"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#8",
+    "acoes": [
+     4
+    ],
+    "regra": "concluída",
+    "nomes": [
+     "Montagem do kit de venda"
+    ]
+   },
+   "y": {
+    "estrategia": "#33",
+    "acao": 3,
+    "nome": "Inscrição e prospecção em festivais"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#8",
+    "acoes": [
+     4
+    ],
+    "regra": "concluída",
+    "nomes": [
+     "Montagem do kit de venda"
+    ]
+   },
+   "y": {
+    "estrategia": "#N5",
+    "acao": 3,
+    "nome": "Prospecção das datas da turnê"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#8",
+    "acoes": [
+     4
+    ],
+    "regra": "concluída",
+    "nomes": [
+     "Montagem do kit de venda"
+    ]
+   },
+   "y": {
+    "estrategia": "#50",
+    "acao": 3,
+    "nome": "Prospecção de bookers internacionais"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#8",
+    "acoes": [
+     4
+    ],
+    "regra": "concluída",
+    "nomes": [
+     "Montagem do kit de venda"
+    ]
+   },
+   "y": {
+    "estrategia": "#34",
+    "acao": 2,
+    "nome": "Preparação da apresentação para empresários"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#14",
+    "acoes": [
+     1
+    ],
+    "regra": "concluída",
+    "nomes": [
+     "Organização da base de contatos"
+    ]
+   },
+   "y": {
+    "estrategia": "#9",
+    "acao": 3,
+    "nome": "Envio do media kit no lançamento"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#14",
+    "acoes": [
+     1
+    ],
+    "regra": "concluída",
+    "nomes": [
+     "Organização da base de contatos"
+    ]
+   },
+   "y": {
+    "estrategia": "#23",
+    "acao": 4,
+    "nome": "Divulgação do show de lançamento"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#14",
+    "acoes": [
+     1
+    ],
+    "regra": "concluída",
+    "nomes": [
+     "Organização da base de contatos"
+    ]
+   },
+   "y": {
+    "estrategia": "#39",
+    "acao": 3,
+    "nome": "Aquecimento da base para a campanha"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#36",
+    "acoes": [
+     1
+    ],
+    "regra": "concluída",
+    "nomes": [
+     "Constituição ou regularização da empresa"
+    ]
+   },
+   "y": {
+    "estrategia": "#29",
+    "acao": 2,
+    "nome": "Documentação para o setor público"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#36",
+    "acoes": [
+     1
+    ],
+    "regra": "concluída",
+    "nomes": [
+     "Constituição ou regularização da empresa"
+    ]
+   },
+   "y": {
+    "estrategia": "#37",
+    "acao": 2,
+    "nome": "Preparação do projeto-base para editais"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#36",
+    "acoes": [
+     1
+    ],
+    "regra": "concluída",
+    "nomes": [
+     "Constituição ou regularização da empresa"
+    ]
+   },
+   "y": {
+    "estrategia": "#38",
+    "acao": 2,
+    "nome": "Inscrição na lei de incentivo"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#N3",
+    "acoes": [
+     5
+    ],
+    "regra": "concluída",
+    "nomes": [
+     "Finalização dos fonogramas"
+    ]
+   },
+   "y": {
+    "estrategia": "#1",
+    "acao": 4,
+    "nome": "Preparação do lançamento fonográfico"
+   }
+  },
+  {
+   "x": {
+    "estrategia": "#N3",
+    "acoes": [
+     5
+    ],
+    "regra": "concluída",
+    "nomes": [
+     "Finalização dos fonogramas"
+    ]
+   },
+   "y": {
+    "estrategia": "#N6",
+    "acao": 4,
+    "nome": "Gravação e finalização do audiovisual"
+   }
+  }
+ ],
+ "textos_nyta": {
+  "caminho_apoio": "As duas opções funcionam, mas a assessoria profissional traz mais chance de resultado. Contratar custa dinheiro e poupa tempo. Fazer por conta própria custa tempo e necessita dedicação no aprendizado. Analise se você tem as forças necessárias para tocar por conta própria e se esse investimento cabe no seu orçamento. Lembre-se de considerar o impacto dessa estratégia nos seus objetivos.",
+  "aceite": "Aqui está o cronograma dessa estratégia. Se fizer sentido, é só aceitar. Se alguma data não cabe, arrasta que eu reorganizo as seguintes.",
+  "apertadas": "Ficaram {n} ações apertadas, porque o lançamento está mais perto do que o preparo pede. Nada foi cortado. Mantenha o acompanhamento da sua agenda para não deixar nada passar.",
+  "continua": "Essa ação é contínua. Ela vai aparecer toda semana no seu calendário a partir de {data}.",
+  "ancora_mudou": "Você mudou a data do lançamento. Reorganizei tudo que dependia dela. Dá uma olhada no que ficou apertado.",
+  "informada_pergunta": "Já tem data? Me conta que eu marco no calendário. Se ainda não tem, deixo sem data e você me avisa quando fechar.",
+  "informada_moveu": "Marquei {acao} em {data} e organizei as {n} ações seguintes a partir dela.",
+  "bandeja": "Você tem {n} ações esperando data. Quando fechar alguma, me avisa que eu encaixo no calendário.",
+  "proxima": "Próxima: {acao}, em {data}.",
+  "dependencia_aceite": "{Y} depende de {X}, que está na estratégia {estrategia}, e ela ficou fora do seu plano. Você já tem isso resolvido, ou quer incluir a estratégia?",
+  "dependencia_execucao": "{Y} é esta semana e {X} ainda está aberta. Quer seguir mesmo assim ou empurrar {Y} uma semana?",
+  "dependencia_arrasto": "Pode deixar aí, só que {Y} vai começar antes de {X} estar pronta. Se pra você faz sentido, tudo bem.",
+  "desfazer": "Concluída com {n} tarefas abertas. Desfazer",
+  "semana_pesada": "Essa semana ficou cheia: {n} ações começando. Se quiser, me diz qual ação pode esperar um pouco que eu reorganizo.",
+  "frente_parada": "A estratégia {estrategia} está há um mês sem nenhuma ação. Não é problema, só quero que você saiba. Quer saber sua próxima ação pendente?",
+  "sobreposicao": "Essa estratégia nova cai na mesma semana de ações que você já tem marcadas[, e a semana passa de seis ações]. Mostro aqui onde sobrepõe. Você prefere seguir assim ou empurrar alguma?"
+ },
+ "estrategias": [
+  {
+   "id": "#1",
+   "titulo": "Criar uma programação estruturada de lançamentos fonográficos",
+   "ancora": "lancamento",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Catálogo e conceito do produto fonográfico",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Organizar o banco de músicas, identificando as prontas e em produção (dica: use a Maestra)",
+      "Definir o conceito artístico do projeto a partir da sua visão, missão e valores",
+      "Avaliar incluir feats e, se fizer sentido, escolher os artistas a convidar"
+     ],
+     "dia": 180,
+     "conta_de": "lancamento",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Planejamento dos lançamentos do ano",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o que vai ser lançado (singles, EP ou álbum)",
+      "Montar o cronograma com a data prevista de cada lançamento"
+     ],
+     "dia": 150,
+     "conta_de": "lancamento",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Contratação da distribuidora",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Listar distribuidoras com atendimento adequadas ao seu nicho",
+      "Apresentar o projeto às de interesse",
+      "Comparar as propostas (atendimento, pitching, adiantamento) e fechar"
+     ],
+     "dia": 120,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Preparação do lançamento fonográfico",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Preparar o plano de marketing do lançamento",
+      "Produzir o conteúdo promocional planejado",
+      "Conferir cadastros e metadados (perfis de artista, ISRC/ISWC, filiação como intérprete e músico)",
+      "Enviar o pitching com quatro semanas de antecedência, com master, ISRC, capa, fotos, release e plano de marketing"
+     ],
+     "dia": 70,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Dia D: lançamento fonográfico",
+     "tipo": "marco",
+     "caminho": null,
+     "tarefas": [
+      "Reenvelopar todas as redes",
+      "Ativar comunidades de fãs",
+      "Ativar rede de network"
+     ],
+     "dia": 0,
+     "conta_de": "lancamento",
+     "marco_tipo": "lancamento",
+     "fim_de_semana": true
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Rotina pós-lançamento fonográfico",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Executar o planejado no cronograma de redes sociais",
+      "Publicar feedbacks e repercutir repostagens",
+      "Analisar os relatórios de desempenho"
+     ],
+     "dia": null,
+     "cadencia": "semanal",
+     "fim": {
+      "tipo": "dias_apos_inicio",
+      "dias": 60
+     },
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#3",
+   "titulo": "Trabalhar a edição das obras: contratar editora ou constituir editora própria com administração",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Organização das obras para edição",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Entender como funciona uma editora musical e o que ela arrecada",
+      "Listar todas as suas obras (dica: use o catálogo da Maestra)"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Constituição da editora própria",
+     "tipo": "automatica",
+     "caminho": "Editora própria",
+     "tarefas": [
+      "Consultar um contador sobre a constituição da sua editora, ou a inclusão do CNAE correspondente caso já exista uma empresa",
+      "Constituir formalmente a sua editora",
+      "Filiar a editora a uma associação de arrecadação"
+     ],
+     "dia": 10,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Administração da editora própria",
+     "tipo": "automatica",
+     "caminho": "Editora própria",
+     "tarefas": [
+      "Pesquisar editoras que fazem contrato de administração",
+      "Apresentar o catálogo às editoras de interesse",
+      "Avaliar os termos propostos com apoio jurídico",
+      "Assinar o contrato"
+     ],
+     "dia": 20,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Contratação de editora como autor",
+     "tipo": "automatica",
+     "caminho": "Contratar editora",
+     "tarefas": [
+      "Pesquisar editoras estruturadas que atendem autores do seu perfil",
+      "Apresentar o catálogo às editoras de interesse",
+      "Avaliar os termos propostos com apoio jurídico",
+      "Assinar o contrato"
+     ],
+     "dia": 20,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Rotina de arrecadação da editora",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Analisar os relatórios de repasse",
+      "Manter contato com a editora pra prospectar sincronização e gravação por outros artistas"
+     ],
+     "dia": null,
+     "cadencia": "mensal",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#4",
+   "titulo": "Prospectar oportunidades de sincronização",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Preparação do catálogo para sync",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Entender o que é sincronização e que tipo de música tem demanda",
+      "Organizar o catálogo com as músicas disponíveis para sync (dica: use a Maestra)",
+      "Checar se os direitos das obras estão registrados",
+      "Preparar uma pasta com as músicas, versões instrumentais e informações"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Cadastro nos canais de sincronização",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Mapear produtoras, agências de publicidade e supervisores musicais do seu nicho",
+      "Cadastrar as músicas em plataformas e bibliotecas de sincronização"
+     ],
+     "dia": 20,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Promoção do catálogo para sync",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Apresentar o catálogo aos contatos mapeados",
+      "Avisar a editora e a distribuidora sobre os próximos lançamentos, pra possíveis conexões",
+      "Fazer follow-up"
+     ],
+     "dia": 40,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Negociação dos licenciamentos de sync",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Negociar cada licenciamento com atenção aos direitos envolvidos",
+      "Registrar cada licenciamento fechado"
+     ],
+     "dia": 50,
+     "conta_de": "inicio",
+     "classe": "rapida",
+     "piso_dias": 0,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Rotina de sincronização",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Manter o catálogo atualizado nas plataformas a cada lançamento",
+      "Repercutir cada sincronização nas redes e no material de venda",
+      "Manter contato com os supervisores musicais"
+     ],
+     "dia": null,
+     "cadencia": "mensal",
+     "fim": null,
+     "fim_de_semana": false
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Divulgação das músicas sincronizadas",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Criar um cronograma de conteúdos para promover a música sincada",
+      "Ativar collabs com os perfis envolvidos para ampliação de audiência"
+     ],
+     "dia": 60,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#6",
+   "titulo": "Definir a documentação de referências de branding do projeto (coordenação entre conceito e desdobramentos visuais)",
+   "ancora": "lancamento",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Definição do conceito de branding",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Fazer o brainstorm de conceito",
+      "Afunilar as possibilidades até fechar o conceito, lembrando do posicionamento almejado",
+      "Definir o tom de voz do projeto"
+     ],
+     "dia": 173,
+     "conta_de": "lancamento",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Moodboard e referências de branding",
+     "tipo": "automatica",
+     "caminho": "Por conta própria",
+     "tarefas": [
+      "Criar o moodboard (recortes de imagens) que represente o conceito",
+      "Pesquisar referências para a capa",
+      "Pesquisar tipologias para a logo",
+      "Pesquisar referências de direção de arte para as fotos de divulgação",
+      "Pesquisar referências de figurino e visagismo",
+      "Pesquisar referências de cenografia"
+     ],
+     "dia": 173,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Consolidação do documento de branding",
+     "tipo": "automatica",
+     "caminho": "Por conta própria",
+     "tarefas": [
+      "Reunir conceito, tom de voz e referências num documento único",
+      "Escrever o briefing para os demais profissionais (fotógrafo, designer, videomaker)",
+      "Compartilhar o documento com a equipe e os parceiros"
+     ],
+     "dia": 150,
+     "conta_de": "lancamento",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Contratação do profissional de branding",
+     "tipo": "automatica",
+     "caminho": "Com profissional",
+     "tarefas": [
+      "Pesquisar profissionais e consultorias de branding com experiência em música",
+      "Ver portfólios e pedir orçamento e prazo aos mais alinhados",
+      "Escolher e fechar o contrato"
+     ],
+     "dia": 173,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Imersão e aprovação do branding",
+     "tipo": "automatica",
+     "caminho": "Com profissional",
+     "tarefas": [
+      "Entregar ao profissional o conceito, o tom de voz e o seu planejamento (visão, missão, posicionamento)",
+      "Participar da imersão / briefing",
+      "Dar retorno sobre as propostas apresentadas",
+      "Aprovar o documento final e compartilhar com a equipe e os parceiros"
+     ],
+     "dia": 165,
+     "conta_de": "lancamento",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Rotina de conferência da identidade",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Conferir cada peça nova (capa, foto, vídeo, post) contra o documento",
+      "Revisar o documento a cada novo ciclo de lançamento"
+     ],
+     "dia": null,
+     "cadencia": "mensal",
+     "fim": {
+      "tipo": "dias_apos_inicio",
+      "dias": 90
+     },
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#8",
+   "titulo": "Produzir novo material promocional baseado em uma coordenação estruturada de branding",
+   "ancora": "lancamento",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Levantamento do material promocional",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Listar o que vai ser produzido (fotos, release, bio, PDF, vídeo)",
+      "Definir o que será feito por conta própria e o que será contratado",
+      "Consultar o documento de branding pra alinhar tudo"
+     ],
+     "dia": 90,
+     "conta_de": "lancamento",
+     "classe": "rapida",
+     "piso_dias": 0,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Ensaio de fotos do material promocional",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Pesquisar fotógrafos alinhados à nova identidade",
+      "Fechar o fotógrafo e marcar o ensaio",
+      "Realizar o ensaio",
+      "Selecionar e tratar as melhores imagens"
+     ],
+     "dia": 50,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Redação dos textos promocionais",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Escrever a bio curta e a bio longa a partir do posicionamento",
+      "Escrever o release (avaliar aspas de jornalista ou personalidade) para imprensa",
+      "Escrever o release do pitching para as plataformas"
+     ],
+     "dia": 40,
+     "conta_de": "lancamento",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Montagem do kit de venda",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Montar o PDF de apresentação com fotos, bio e informações do show",
+      "Editar o vídeo de venda do show",
+      "Organizar tudo numa pasta pronta pra envio"
+     ],
+     "dia": 30,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Circulação do material promocional",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Atualizar site, redes e perfis de artista com o material novo",
+      "Enviar o kit aos contatos de venda e de imprensa da sua base",
+      "Revisar o kit a cada lançamento ou mudança no show"
+     ],
+     "dia": 10,
+     "conta_de": "lancamento",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#9",
+   "titulo": "Criar media kit criativo para lançamentos estratégicos",
+   "ancora": "lancamento",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Conceito e formato do media kit",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o que você quer provocar em quem recebe",
+      "Fazer brainstorm para definir o que vai ser o media kit"
+     ],
+     "dia": 60,
+     "conta_de": "lancamento",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Produção do media kit",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Produzir o material",
+      "Revisar e aprovar a versão final"
+     ],
+     "dia": 30,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Envio do media kit no lançamento",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Mapear os influenciadores e veículos que vão receber",
+      "Personalizar o envio para cada destinatário",
+      "Enviar os media kits"
+     ],
+     "dia": 20,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Repercussão do media kit",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Registrar quem recebeu, respondeu e publicou",
+      "Repostar e agradecer publicamente quem repercutiu"
+     ],
+     "dia": -14,
+     "conta_de": "lancamento",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#10",
+   "titulo": "Estruturar a gestão das redes sociais",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Estratégia de conteúdo das redes",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir quais redes são prioritárias para o seu público",
+      "Definir as editorias de conteúdo a partir do posicionamento"
+     ],
+     "dia": 3,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Contratação do suporte de redes",
+     "tipo": "automatica",
+     "caminho": "Com suporte",
+     "tarefas": [
+      "Pesquisar profissionais de social media / marketing digital e ver trabalhos anteriores",
+      "Pedir propostas e comparar",
+      "Fechar e alinhar editorias, verba e metas com o profissional"
+     ],
+     "dia": 10,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Organização da rotina de redes",
+     "tipo": "automatica",
+     "caminho": "Por conta própria",
+     "tarefas": [
+      "Reservar horários fixos na semana pra produzir e publicar",
+      "Escolher uma ferramenta de agendamento de posts",
+      "Separar um banco de conteúdos (fotos, vídeos, bastidores) pra não começar do zero toda semana"
+     ],
+     "dia": 10,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Planejamento mensal das redes",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Montar o cronograma de postagens",
+      "Definir a verba mensal de tráfego pago e os conteúdos a impulsionar",
+      "Planejar a produção do conteúdo"
+     ],
+     "dia": 15,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Produção do conteúdo das redes",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Contratar os profissionais de produção necessários, se for o caso",
+      "Produzir as peças do mês"
+     ],
+     "dia": 23,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Publicação e acompanhamento das redes",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Executar as postagens acompanhando o cronograma",
+      "Responder comentários e mensagens",
+      "Analisar o desempenho dos posts"
+     ],
+     "dia": 30,
+     "conta_de": "inicio",
+     "classe": "rapida",
+     "piso_dias": 0,
+     "fim_de_semana": false
+    },
+    {
+     "n": 7,
+     "n_insumo": 7,
+     "nome": "Rotina das redes sociais",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Ajustar editorias e verba conforme as análises",
+      "Repetir o planejamento a cada mês",
+      "Alinhar os picos de conteúdo com os lançamentos e shows do plano"
+     ],
+     "dia": null,
+     "cadencia": "semanal",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#12",
+   "titulo": "Criar site com área de captação de contatos e trabalhar gestão de comunidade, avaliando modelos de remuneração recorrente",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Criação do site com cadastro",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Criar o site, mesmo que simples, com área de cadastro",
+      "Ligar o cadastro a uma ferramenta de e-mail",
+      "Fazer uma campanha de inscrições (avaliar oferta de recompensa)"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Desenho da comunidade de fãs",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Escolher onde criar a comunidade (WhatsApp, Telegram, plataforma de assinatura)",
+      "Definir o que a comunidade vai receber de especial, alinhado ao posicionamento",
+      "Definir se vai ter mensalidade e qual valor"
+     ],
+     "dia": 51,
+     "conta_de": "inicio",
+     "classe": "rapida",
+     "piso_dias": 0,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Lançamento da comunidade de fãs",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Configurar a plataforma escolhida",
+      "Criar as regras e a mensagem de boas-vindas",
+      "Convidar primeiro os fãs mais engajados",
+      "Divulgar a comunidade nas redes e nos shows"
+     ],
+     "dia": 62,
+     "conta_de": "inicio",
+     "classe": "rapida",
+     "piso_dias": 0,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Alimentação da comunidade de fãs",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Criar um cronograma de conteúdo e encontros exclusivos",
+      "Manter a frequência de interação",
+      "Usar a comunidade nos lançamentos e shows (pré-venda, bastidores)"
+     ],
+     "dia": 86,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Rotina da comunidade de fãs",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Acompanhar crescimento, retenção e receita recorrente",
+      "Enviar comunicação regular à base de e-mails",
+      "Ajustar o que a comunidade recebe conforme o retorno"
+     ],
+     "dia": null,
+     "cadencia": "semanal",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#14",
+   "titulo": "Mapear, organizar e ativar a base de contatos atual e de interesse de network",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Organização da base de contatos",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Mapear todos os contatos que você já tem (celular, e-mail, redes)",
+      "Criar uma planilha única de contatos",
+      "Classificar cada contato por tipo (jornalista, contratante, músico, fã)"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Mapeamento dos contatos que faltam",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Identificar os contatos mais estratégicos para o momento do projeto",
+      "Listar os contatos de interesse que você ainda não tem",
+      "Mapear como chegar em cada um",
+      "Fazer contato de apresentação"
+     ],
+     "dia": 17,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Fluxo de comunicação da base de contatos",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir um fluxo para cada tipo de contato (o quê e com que frequência)",
+      "Criar listas de transmissão ou grupos segmentados",
+      "Preparar o material de cada tipo (release pra jornalista, kit pra contratante)"
+     ],
+     "dia": 32,
+     "conta_de": "inicio",
+     "classe": "rapida",
+     "piso_dias": 0,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Ativação da base de contatos",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Enviar a primeira comunicação de cada grupo",
+      "Responder e interagir com os fãs"
+     ],
+     "dia": 40,
+     "conta_de": "inicio",
+     "classe": "rapida",
+     "piso_dias": 0,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Rotina de relacionamento com a base",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Manter o contato regular conforme o fluxo definido",
+      "Atualizar a planilha a cada evento, show ou lançamento",
+      "Acionar a base nos lançamentos e shows do plano"
+     ],
+     "dia": null,
+     "cadencia": "mensal",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#15",
+   "titulo": "Trabalhar imprensa e mídia nos lançamentos",
+   "ancora": "lancamento",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 2,
+     "nome": "Contratação da assessoria de imprensa",
+     "tipo": "automatica",
+     "caminho": "Contratar assessoria",
+     "tarefas": [
+      "Pesquisar assessorias com atuação no seu nicho e pedir cases",
+      "Comparar propostas para o período do lançamento",
+      "Fechar e entregar o kit e o calendário à assessoria"
+     ],
+     "dia": 60,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 3,
+     "nome": "Mapeamento de veículos e jornalistas",
+     "tipo": "automatica",
+     "caminho": "Por conta própria",
+     "tarefas": [
+      "Listar veículos e jornalistas que cobrem o seu nicho",
+      "Levantar o contato de cada um",
+      "Montar a lista de envio"
+     ],
+     "dia": 60,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 1,
+     "nome": "Preparação da pauta de imprensa",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o gancho: o que há de novo e por que importa",
+      "Reunir o kit de imprensa (release, fotos, bio, links)",
+      "Alinhar com o plano de marketing e o cronograma do lançamento"
+     ],
+     "dia": 40,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Envio e follow-up com a imprensa",
+     "tipo": "automatica",
+     "caminho": "Por conta própria",
+     "tarefas": [
+      "Enviar o release com antecedência",
+      "Fazer follow-up",
+      "Atender pedidos de entrevista e de material"
+     ],
+     "dia": 21,
+     "conta_de": "lancamento",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Acompanhamento da cobertura de imprensa",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Registrar cada matéria num documento de clipping",
+      "Repercutir as matérias nas redes e agradecer os veículos",
+      "Incluir o clipping no material de venda"
+     ],
+     "dia": -15,
+     "conta_de": "lancamento",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Rotina de relacionamento com a imprensa",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Manter contato com os jornalistas entre os lançamentos",
+      "Avisar de novidades fora do ciclo (show, prêmio, parceria)"
+     ],
+     "dia": null,
+     "cadencia": "mensal",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#17",
+   "titulo": "Prospectar participações em podcasts e canais do YouTube",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Mapeamento de podcasts e canais",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Listar podcasts e canais que falam com o seu público",
+      "Observar quais já receberam artistas do seu perfil",
+      "Levantar o contato de cada um"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Proposta de participação em podcasts",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Preparar um pitch curto de apresentação",
+      "Escolher o gancho (lançamento, história, pauta)",
+      "Preparar o material de apoio (bio, links, fotos)"
+     ],
+     "dia": 8,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Prospecção de podcasts",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Propor a participação aos contatos mapeados",
+      "Fazer follow-up",
+      "Agendar as participações confirmadas"
+     ],
+     "dia": 10,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Participação e repercussão nos podcasts",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Preparar os pontos que você quer contar na conversa",
+      "Participar do podcast",
+      "Divulgar a participação nas redes e agradecer o canal"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Rotina de podcasts",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Registrar os contatos e os resultados",
+      "Manter relacionamento informando novidades do trabalho",
+      "Buscar novas participações a cada lançamento"
+     ],
+     "dia": null,
+     "cadencia": "semestral",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#18",
+   "titulo": "Trabalhar rádio no seu nicho",
+   "ancora": "lancamento",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Preparação da música para rádio",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir a música de trabalho",
+      "Preparar o arquivo no padrão de rádio e a ficha da música",
+      "Preparar release curto e fotos"
+     ],
+     "dia": 21,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Contratação do divulgador de rádio",
+     "tipo": "automatica",
+     "caminho": "Contratar divulgador",
+     "tarefas": [
+      "Pesquisar divulgadores do nicho e pedir resultados anteriores",
+      "Comparar propostas",
+      "Fechar e alinhar as metas"
+     ],
+     "dia": 40,
+     "conta_de": "lancamento",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Mapeamento das rádios estratégicas",
+     "tipo": "automatica",
+     "caminho": "Por conta própria",
+     "tarefas": [
+      "Listar as rádios do segmento e da sua região",
+      "Levantar o contato dos programadores",
+      "Entender como cada rádio recebe música"
+     ],
+     "dia": 40,
+     "conta_de": "lancamento",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Envio e follow-up com as rádios",
+     "tipo": "automatica",
+     "caminho": "Por conta própria",
+     "tarefas": [
+      "Enviar a música propondo execução ou parceria (entrevista, sessão ao vivo)",
+      "Fazer follow-up",
+      "Agendar as participações que surgirem"
+     ],
+     "dia": 14,
+     "conta_de": "lancamento",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Acompanhamento da execução nas rádios",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Acompanhar em quais rádios a música entrou",
+      "Repercutir nas redes",
+      "Registrar os resultados"
+     ],
+     "dia": -21,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Rotina de relacionamento com as rádios",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Manter comunicação informando as novidades",
+      "Enviar as próximas músicas de trabalho"
+     ],
+     "dia": null,
+     "cadencia": "trimestral",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#19",
+   "titulo": "Criar programação estruturada de conteúdo para o YouTube",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Criação do canal do YouTube",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o objetivo do canal a partir do posicionamento",
+      "Definir os tipos de conteúdo (clipes, bastidores, ao vivo)",
+      "Levantar o que o seu acervo já permite publicar"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 3,
+     "nome": "Programação do canal do YouTube",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Montar um cronograma de publicação realista",
+      "Alinhar a programação com os lançamentos e shows do plano"
+     ],
+     "dia": 10,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 2,
+     "nome": "Organização do canal do YouTube",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Padronizar capas e títulos com a identidade do projeto",
+      "Organizar as playlists",
+      "Atualizar descrição, links e trailer do canal"
+     ],
+     "dia": 20,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Produção e publicação no YouTube",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Produzir os conteúdos do mês",
+      "Otimizar título, descrição e tags de cada vídeo",
+      "Publicar conforme o cronograma",
+      "Divulgar os vídeos nas outras redes"
+     ],
+     "dia": 30,
+     "conta_de": "inicio",
+     "classe": "rapida",
+     "piso_dias": 0,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Rotina do canal do YouTube",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Analisar as métricas",
+      "Ajustar a programação",
+      "Responder aos comentários"
+     ],
+     "dia": null,
+     "cadencia": "semanal",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#20",
+   "titulo": "Lançar podcast (ou videocast) próprio",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Desenho do podcast próprio",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o tema e o formato, alinhados ao posicionamento",
+      "Definir uma frequência que caiba na sua rotina",
+      "Listar os primeiros convidados ou pautas"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Preparação da produção do podcast",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o equipamento e o local de gravação",
+      "Criar a identidade do podcast (nome, capa), coerente com o branding",
+      "Escolher onde hospedar (Spotify, YouTube)"
+     ],
+     "dia": 8,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Lançamento do piloto do podcast",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Gravar o episódio piloto",
+      "Editar",
+      "Publicar o primeiro episódio",
+      "Divulgar e aproveitar os cortes nas redes"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Frequência do podcast próprio",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Gravar e publicar conforme a frequência definida",
+      "Convidar pessoas da cena",
+      "Usar os cortes pra alimentar as redes"
+     ],
+     "dia": null,
+     "cadencia": "semanal",
+     "fim": null,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Rotina de avaliação do podcast",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Avaliar os resultados a cada mês",
+      "Ajustar formato e pautas",
+      "Registrar os convidados como contatos da sua base"
+     ],
+     "dia": null,
+     "cadencia": "mensal",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#22",
+   "titulo": "Participar de eventos, congressos e showcases do mercado",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Mapeamento dos eventos do mercado",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Listar os eventos, congressos e showcases do mercado",
+      "Marcar as datas e os prazos de credenciamento no calendário",
+      "Escolher os mais estratégicos para o momento do projeto"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Preparação para o evento do mercado",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Garantir inscrição ou credenciamento",
+      "Preparar o elevator pitch de 60 segundos",
+      "Mapear na programação os conteúdos e as pessoas de interesse",
+      "Preparar o material de apresentação (link ou cartão, kit)"
+     ],
+     "dia": 15,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Participação no evento do mercado",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Procurar os palestrantes após os painéis",
+      "Acessar rodadas de negócio e meet-ups",
+      "Trocar contatos e anotar o contexto de cada um"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Follow-up do evento do mercado",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Contatar quem você conheceu na semana seguinte",
+      "Registrar os contatos na sua base",
+      "Propor próximos passos onde couber"
+     ],
+     "dia": 7,
+     "conta_de": "informada_anterior",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Rotina de presença na cena",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Interagir digitalmente com a cena entre os eventos",
+      "Repetir o mapeamento a cada ano"
+     ],
+     "dia": null,
+     "cadencia": "mensal",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#48",
+   "titulo": "Fazer pesquisa para compreender o seu público",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Definição da pesquisa de público",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o que você quer descobrir sobre o seu público (perfil, hábitos, motivações)",
+      "Definir como realizar a pesquisa (questionário, entrevistas, grupo focal)",
+      "Levantar os dados que já existem (Spotify for Artists, YouTube Studio, redes)"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Aplicação da pesquisa de público",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Enviar questionário ou realizar entrevistas / grupo focal"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Análise da pesquisa de público",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Comparar os achados com o que você queria descobrir",
+      "Consolidar as análises num relatório"
+     ],
+     "dia": 14,
+     "conta_de": "informada_anterior",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Aplicação dos resultados da pesquisa",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Usar as informações para construir a persona",
+      "Direcionar toda a comunicação para a persona constituída",
+      "Analisar resultados"
+     ],
+     "dia": 21,
+     "conta_de": "informada_anterior",
+     "classe": "rapida",
+     "piso_dias": 0,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#49",
+   "titulo": "Inscrever o projeto em premiações, pitchings e showcases",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Mapeamento de premiações e showcases",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Listar os do seu nicho",
+      "Levantar regras, prazos e formatos de inscrição",
+      "Marcar tudo no calendário"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Preparação das inscrições em premiações",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Escolher os mais estratégicos para o momento do projeto",
+      "Preparar o material de inscrição (vídeo, bio, release, números)"
+     ],
+     "dia": 10,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Inscrição em premiações e showcases",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Inscrever o projeto dentro dos prazos",
+      "Acompanhar os resultados"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Participação em premiações e showcases",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Se selecionado, preparar a apresentação ou o show",
+      "Participar e fazer contatos no evento"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Repercussão das premiações",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Comunicar a participação ou o prêmio nas redes e na imprensa",
+      "Incluir no material de venda",
+      "Registrar os contatos para as próximas edições"
+     ],
+     "dia": 7,
+     "conta_de": "informada_anterior",
+     "classe": "rapida",
+     "piso_dias": 0,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#23",
+   "titulo": "Montar o show e realizar o show de lançamento com registro audiovisual",
+   "ancora": "propria",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Definição do show de lançamento",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Fechar o repertório, alinhado ao conceito do projeto",
+      "Definir o roteiro e a ordem das músicas",
+      "Definir a formação e a ficha técnica"
+     ],
+     "dia": 90,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 3,
+     "nome": "Produção do show de lançamento",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Escolher a data e o espaço",
+      "Contratar a equipe técnica (som, luz)",
+      "Contratar o registro em áudio, vídeo e foto",
+      "Organizar a produção do dia (rider, cronograma, equipe)"
+     ],
+     "dia": 85,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 2,
+     "nome": "Ensaios do show de lançamento",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Realizar os ensaios com a banda ou equipe",
+      "Gravar um ensaio pra avaliar"
+     ],
+     "dia": 70,
+     "conta_de": "propria",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Divulgação do show de lançamento",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Preparar e executar a divulgação (redes, base de contatos, imprensa)",
+      "Ativar a comunidade de fãs e o network"
+     ],
+     "dia": 30,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Dia do show: show de lançamento",
+     "tipo": "marco",
+     "caminho": null,
+     "tarefas": [
+      "Fazer a passagem de som",
+      "Realizar o show com o registro completo",
+      "Recolher contatos e feedbacks no dia"
+     ],
+     "dia": 0,
+     "conta_de": "propria",
+     "marco_tipo": "show",
+     "fim_de_semana": true
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Repercussão do show de lançamento",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Editar o vídeo de venda e os conteúdos pras redes",
+      "Atualizar o kit de venda",
+      "Repercutir o show nas redes e na imprensa"
+     ],
+     "dia": -10,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    }
+   ],
+   "pergunta_propria": "Qual a data do show de lançamento? Se ainda não tem, me diz o mês que eu marco e a gente ajusta.",
+   "apoio_propria": "O show costuma funcionar melhor de 7 a 15 dias depois do lançamento, quando a música já circulou um pouco e o assunto ainda está quente para a imprensa. Se preferir lançar e fazer o show no mesmo dia, também funciona, só o preparo fica mais concentrado."
+  },
+  {
+   "id": "#24",
+   "titulo": "Trabalhar a presença de palco com marcações de roteiro",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Diagnóstico da presença de palco",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Gravar um show ou ensaio e assistir",
+      "Identificar o que você quer melhorar"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Contratação do profissional de palco",
+     "tipo": "automatica",
+     "caminho": "Com profissional",
+     "tarefas": [
+      "Pesquisar preparadores, diretores de show ou coreógrafos",
+      "Ver trabalhos anteriores e pedir orçamento",
+      "Fechar e marcar as sessões"
+     ],
+     "dia": 10,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Preparação de palco com profissional",
+     "tipo": "automatica",
+     "caminho": "Com profissional",
+     "tarefas": [
+      "Participar das sessões",
+      "Definir com o profissional as marcações de roteiro",
+      "Ensaiar com as marcações"
+     ],
+     "dia": 25,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Preparação de palco por conta própria",
+     "tipo": "automatica",
+     "caminho": "Por conta própria",
+     "tarefas": [
+      "Estudar referências de artistas que você admira no palco",
+      "Definir as marcações de roteiro (entradas, falas, movimentação)",
+      "Ensaiar com as marcações"
+     ],
+     "dia": 25,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Aplicação e avaliação no palco",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Aplicar no próximo show",
+      "Gravar e comparar com o diagnóstico",
+      "Ajustar os pontos fracos"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Rotina de preparação de palco",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Manter a rotina de gravar e avaliar",
+      "Revisar as marcações a cada mudança de repertório"
+     ],
+     "dia": null,
+     "cadencia": "quinzenal",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#29",
+   "titulo": "Prospectar shows em órgãos públicos, como prefeituras, fundações e SESCs",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Mapeamento dos contratantes públicos",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Listar prefeituras, SESC, SESI e órgãos da região de interesse",
+      "Entender como cada um contrata (edital, chamamento, convite)",
+      "Levantar os contatos das secretarias de cultura"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Documentação para o setor público",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Providenciar os cadastros e a documentação exigidos",
+      "Preparar material de venda adequado ao setor público"
+     ],
+     "dia": 10,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Prospecção de shows públicos",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Enviar material aos contatos",
+      "Mapear editais e chamamentos abertos",
+      "Inscrever o projeto nos correspondentes",
+      "Fazer follow-up"
+     ],
+     "dia": 30,
+     "conta_de": "inicio",
+     "classe": "rapida",
+     "piso_dias": 0,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Fechamento dos shows públicos",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Negociar as condições e formalizar",
+      "Cumprir as exigências de prestação de contas"
+     ],
+     "dia": 60,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Realização do show público",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Realizar o show"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Rotina de presença nos órgãos públicos",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Registrar contatos e resultados",
+      "Repercutir os shows públicos nas redes",
+      "Manter presença constante nos editais e chamamentos"
+     ],
+     "dia": null,
+     "cadencia": "mensal",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#30",
+   "titulo": "Prospectar shows corporativos (shows fechados para convidados, contratados por empresas)",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Definição da oferta de show corporativo",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Listar os tipos de empresas e eventos corporativos do seu perfil",
+      "Definir o formato do show voltado ao entretenimento",
+      "Definir a faixa de cachê para esse mercado"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 3,
+     "nome": "Mapeamento de agências corporativas",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Mapear agências de eventos corporativos",
+      "Levantar contatos de RH, marketing e agências",
+      "Registrar na sua base de contatos"
+     ],
+     "dia": 5,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 2,
+     "nome": "Preparação do material corporativo",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Preparar material específico (PDF, vídeo) com linguagem corporativa",
+      "Incluir clipping e depoimentos"
+     ],
+     "dia": 10,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Prospecção de shows corporativos",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Apresentar e enviar o material de venda",
+      "Ativar um fluxo de e-mails para os contatos mapeados",
+      "Avaliar investimento em tráfego pago",
+      "Fazer follow-up"
+     ],
+     "dia": 25,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Fechamento dos shows corporativos",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Negociar e formalizar o contrato",
+      "Alinhar a produção com a empresa"
+     ],
+     "dia": 50,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Realização do show corporativo",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Realizar o show"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 7,
+     "n_insumo": 7,
+     "nome": "Rotina de relacionamento corporativo",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Fazer pesquisa de satisfação pós-venda",
+      "Pedir indicações após cada evento",
+      "Manter contato com as agências"
+     ],
+     "dia": null,
+     "cadencia": "mensal",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#31",
+   "titulo": "Prospectar shows particulares (casamentos, aniversários etc.)",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Definição da oferta para particulares",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o show voltado ao entretenimento",
+      "Definir o diferencial personalizado, como o momento especial dos noivos",
+      "Definir a faixa de cachê por tipo de evento"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Preparação do material para particulares",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Preparar material voltado a esse público",
+      "Criar uma página no site com vídeos e depoimentos"
+     ],
+     "dia": 10,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Mapeamento de cerimonialistas",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Mapear cerimonialistas e produtores de eventos particulares",
+      "Levantar os contatos",
+      "Registrar na sua base de contatos"
+     ],
+     "dia": 35,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Prospecção de shows particulares",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Apresentar o serviço aos contatos mapeados",
+      "Avaliar investimento em tráfego pago",
+      "Fazer follow-up"
+     ],
+     "dia": 40,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Fechamento dos shows particulares",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Alinhar os detalhes com o cliente (repertório, momento especial, logística)",
+      "Formalizar"
+     ],
+     "dia": 70,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Realização do show particular",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Realizar o evento"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 7,
+     "n_insumo": 7,
+     "nome": "Rotina de eventos particulares",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Pedir indicação e depoimento aos clientes satisfeitos",
+      "Atualizar a página de depoimentos",
+      "Manter contato com os cerimonialistas"
+     ],
+     "dia": null,
+     "cadencia": "mensal",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#32",
+   "titulo": "Prospectar shows em casas de show e teatros",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Mapeamento de casas de show e teatros",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Listar casas e teatros do seu perfil e região",
+      "Entender o modelo de cada um (cachê, bilheteria, parceria)",
+      "Levantar os contatos dos programadores"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Preparação da proposta para as casas",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Preparar o material de venda com o vídeo do show",
+      "Definir a proposta para cada modelo (cachê, bilheteria, parceria)"
+     ],
+     "dia": 10,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Prospecção de casas de show e teatros",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Apresentar o show aos programadores",
+      "Fazer follow-up",
+      "Negociar as condições e fechar a data"
+     ],
+     "dia": 20,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Divulgação do show na casa de shows / teatro",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Divulgar nas redes, na base de contatos e na imprensa",
+      "Ativar a comunidade de fãs e o network",
+      "Alinhar a divulgação com a casa"
+     ],
+     "dia": 60,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Realização do show na casa de shows / teatro",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Fazer a passagem de som",
+      "Realizar o show",
+      "Recolher contatos e feedbacks"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Rotina de relacionamento com as casas",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Repercutir nas redes e agradecer a casa",
+      "Manter relacionamento para novas datas",
+      "Registrar os resultados (público, bilheteria)"
+     ],
+     "dia": null,
+     "cadencia": "mensal",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#33",
+   "titulo": "Prospectar shows em festivais e junto a produtores de eventos",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Mapeamento de festivais e produtores",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Listar os festivais e produtores do seu nicho",
+      "Marcar os prazos de inscrição e curadoria no calendário",
+      "Levantar os contatos de produtores e curadores"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Preparação do material para festivais",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Preparar material de venda voltado a festivais (vídeo ao vivo, ficha técnica, clipping)",
+      "Adequar o material ao formato de cada inscrição"
+     ],
+     "dia": 10,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Inscrição e prospecção em festivais",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Inscrever o projeto nos festivais com chamada aberta",
+      "Apresentar o projeto aos produtores",
+      "Fazer follow-up"
+     ],
+     "dia": 20,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Confirmação das participações em festivais",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Acompanhar os resultados das curadorias",
+      "Negociar e confirmar as participações",
+      "Organizar a logística"
+     ],
+     "dia": 45,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Participação e repercussão nos festivais",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Realizar o show",
+      "Fazer contatos com produtores e artistas no evento",
+      "Repercutir nas redes"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Rotina de presença nos festivais",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Registrar contatos e resultados",
+      "Manter relacionamento para as próximas edições"
+     ],
+     "dia": null,
+     "cadencia": "trimestral",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#N5",
+   "titulo": "Planejar turnê de circulação",
+   "ancora": "propria",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Desenho da rota da turnê",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Identificar as praças onde o seu público já existe ou pode existir (dados de streaming e redes)",
+      "Definir a rota e o período (praças próximas agrupadas)",
+      "Definir o formato do show pra estrada (equipe e ficha técnica viáveis)"
+     ],
+     "dia": 180,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Viabilização da turnê de circulação",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Montar o orçamento (deslocamento, hospedagem, equipe, cachês)",
+      "Mapear editais e programas de circulação",
+      "Inscrever o projeto nos editais"
+     ],
+     "dia": 160,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Prospecção das datas da turnê",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Levantar casas, festivais e produtores locais em cada praça",
+      "Propor as datas",
+      "Fechar as datas e a logística"
+     ],
+     "dia": 150,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Divulgação praça a praça da turnê",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Planejar a divulgação local (rádio, imprensa, parceiros)",
+      "Ativar a base e a comunidade em cada cidade"
+     ],
+     "dia": 30,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Realização da turnê de circulação",
+     "tipo": "marco",
+     "caminho": null,
+     "tarefas": [
+      "Realizar os shows",
+      "Registrar e repercutir durante a turnê"
+     ],
+     "dia": 0,
+     "conta_de": "propria",
+     "marco_tipo": "turne",
+     "fim_de_semana": true
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Avaliação e repercussão da turnê",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Avaliar praça por praça",
+      "Repercutir a turnê nas redes e na imprensa",
+      "Registrar os contatos locais na sua base"
+     ],
+     "dia": 0,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    }
+   ],
+   "pergunta_propria": "Em que período você quer fazer a turnê? Me diz o mês em que ela começa que eu monto o preparo de trás para frente.",
+   "apoio_propria": "Uma turnê pede cerca de seis meses de preparo, entre editais de circulação, datas e logística. Se o seu prazo é menor, eu encaixo o que cabe e te mostro o que fica apertado."
+  },
+  {
+   "id": "#34",
+   "titulo": "Procurar empresário/a",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Definição do que você espera do empresário",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir papéis e limites",
+      "Definir o que você oferece: projeto, números e momento"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Preparação da apresentação para empresários",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Organizar a apresentação e os números (dica: use a Maestra)",
+      "Reunir o material (kit, clipping, plano)"
+     ],
+     "dia": 5,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Mapeamento de empresários e escritórios",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Listar os que cuidam de artistas do seu porte",
+      "Pesquisar a reputação e o elenco de cada um",
+      "Levantar os contatos"
+     ],
+     "dia": 10,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Prospecção de empresários",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Apresentar o projeto aos mais alinhados",
+      "Conversar pra avaliar sintonia e visão de carreira",
+      "Fazer follow-up"
+     ],
+     "dia": 25,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Fechamento da parceria com o empresário",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Avaliar as propostas (percentual, escopo, prazo)",
+      "Alinhar expectativas e responsabilidades",
+      "Formalizar em contrato, com apoio jurídico"
+     ],
+     "dia": 45,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#35",
+   "titulo": "Contratar assistente de produção / produtor executivo",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Definição da vaga de assistente",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Listar as atividades e tarefas que você precisa delegar",
+      "Definir o perfil (assistente de produção ou produtor executivo)",
+      "Definir carga horária e forma de pagamento"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Recrutamento do assistente de produção",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Divulgar a vaga ou pedir indicações na cena",
+      "Selecionar e entrevistar os candidatos",
+      "Escolher e formalizar a contratação"
+     ],
+     "dia": 7,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Integração do assistente de produção",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Apresentar o plano estratégico e os processos do projeto (dica: use a Maestra)",
+      "Treinar nas ferramentas e rotinas",
+      "Definir os pontos de acompanhamento semanais"
+     ],
+     "dia": 30,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Delegação das tarefas ao assistente",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Delegar oficialmente as tarefas do plano com prazos",
+      "Acompanhar as entregas"
+     ],
+     "dia": 45,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#36",
+   "titulo": "Organizar a parte burocrática e operacional",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Constituição ou regularização da empresa",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Consultar um contador para constituir a empresa",
+      "Constituir formalmente a empresa (ou regularizar a existente)",
+      "Efetuar o registro da marca, se necessário, com suporte profissional"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Definição dos processos financeiros",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir os processos de contas a pagar e a receber",
+      "Definir os processos de contratações de receitas e despesas",
+      "Avaliar a contratação de BPO (suporte terceirizado de operação financeira)"
+     ],
+     "dia": 15,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Estruturação dos contratos-padrão",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Mapear os contratos recorrentes necessários (show, agenciamento, distribuição, edição)",
+      "Escolher assessoria jurídica especializada para confecção dos contratos-padrão",
+      "Aprovar os modelos"
+     ],
+     "dia": 25,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Organização da produção dos shows",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Criar o checklist de produção dos shows e ações contratados",
+      "Preparar o cronograma"
+     ],
+     "dia": 60,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Rotina da operação da empresa",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Gerar relatórios de acompanhamento",
+      "Mapear e resolver os gargalos",
+      "Revisar os processos a cada semestre"
+     ],
+     "dia": null,
+     "cadencia": "mensal",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#37",
+   "titulo": "Inscrever o projeto em editais alinhados com o posicionamento",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Mapeamento dos editais",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Listar os editais abertos compatíveis com o projeto",
+      "Criar um calendário fixo de editais recorrentes",
+      "Ler as regras e marcar os prazos"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Preparação do projeto-base para editais",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Avaliar se vai inscrever por conta própria ou com profissional de captação",
+      "Reunir a documentação base",
+      "Escrever os textos-base do projeto (apresentação, objetivos, orçamento, contrapartidas)"
+     ],
+     "dia": 10,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Inscrição nos editais",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Adaptar o projeto ao formato de cada edital escolhido",
+      "Preparar os textos conforme o edital",
+      "Inscrever dentro do prazo"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Acompanhamento dos editais",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Acompanhar os resultados",
+      "Responder a diligências",
+      "Se aprovado, organizar a execução e a prestação de contas"
+     ],
+     "dia": 30,
+     "conta_de": "informada_anterior",
+     "classe": "rapida",
+     "piso_dias": 0,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#38",
+   "titulo": "Criar projeto incentivado para captação de patrocínio",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Desenho do projeto incentivado",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o conceito e o escopo",
+      "Montar o orçamento",
+      "Definir as contrapartidas (acessibilidade, social, cultural)"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Inscrição na lei de incentivo",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Preparar os textos e planilhas orçamentárias",
+      "Inscrever o projeto na lei correspondente",
+      "Acompanhar a aprovação",
+      "Responder a diligências"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Preparação da captação do incentivado",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Montar o material de venda do projeto para patrocinadores",
+      "Mapear marcas com perfil alinhado e levantar os contatos"
+     ],
+     "dia": 90,
+     "conta_de": "informada_anterior",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Ativação da prospecção do projeto incentivado",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Apresentar o projeto às marcas",
+      "Fazer follow-up",
+      "Negociar e formalizar"
+     ],
+     "dia": 120,
+     "conta_de": "informada_anterior",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Execução e prestação de contas do projeto",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Executar o projeto conforme aprovado",
+      "Cumprir as contrapartidas",
+      "Prestar contas"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Rotina com os patrocinadores",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Repercutir o projeto e o patrocinador nas redes",
+      "Manter relacionamento com as marcas",
+      "Registrar aprendizados pro próximo projeto"
+     ],
+     "dia": null,
+     "cadencia": "mensal",
+     "fim": {
+      "tipo": "dias_apos_acao",
+      "acao": 5,
+      "dias": 30
+     },
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#39",
+   "titulo": "Criar campanha de financiamento coletivo",
+   "ancora": "propria",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Desenho da campanha de financiamento",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o objetivo e calcular a meta de arrecadação",
+      "Escolher a plataforma de crowdfunding",
+      "Definir as recompensas por faixa de valor"
+     ],
+     "dia": 60,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Produção da campanha de financiamento",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Produzir o vídeo e o texto da campanha",
+      "Montar a página",
+      "Preparar o plano de divulgação (antes, durante e reta final)"
+     ],
+     "dia": 40,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Aquecimento da base para a campanha",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Avisar a comunidade e a base de contatos",
+      "Publicar teasers nas redes",
+      "Convidar apoiadores"
+     ],
+     "dia": 14,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Dia do lançamento: campanha de financiamento",
+     "tipo": "marco",
+     "caminho": null,
+     "tarefas": [
+      "Publicar a campanha",
+      "Disparar a comunicação pra base e pras redes",
+      "Ativar o network e os parceiros"
+     ],
+     "dia": 0,
+     "conta_de": "propria",
+     "marco_tipo": "campanha",
+     "fim_de_semana": true
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Divulgação durante a campanha",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Publicar atualizações e novas recompensas",
+      "Responder aos apoiadores",
+      "Reforçar a divulgação na reta final"
+     ],
+     "dia": -1,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Entrega das recompensas da campanha",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Entregar as recompensas",
+      "Prestar contas aos apoiadores",
+      "Agradecer publicamente"
+     ],
+     "dia": -45,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    }
+   ],
+   "pergunta_propria": "Quando você quer lançar a campanha? Me diz a data que eu monto o preparo de trás para frente. Se a campanha é para bancar um lançamento, ela precisa terminar antes de a produção começar.",
+   "apoio_propria": "O preparo da ação leva cerca de dois meses antes de a campanha ir ao ar, e ela costuma ficar aberta de 30 a 45 dias. Conta esse tempo todo antes de definir a data da entrega."
+  },
+  {
+   "id": "#40",
+   "titulo": "Mapear marcas alinhadas e prospectar ativações publicitárias",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Definição da oferta para marcas",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o que você oferece a uma marca (contrapartidas e ativações)",
+      "Listar marcas alinhadas aos seus valores e ao seu público"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Preparação do material para marcas",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Preparar material específico mostrando audiência, imagem e ativações",
+      "Levantar os contatos de marketing de cada marca"
+     ],
+     "dia": 10,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Prospecção de marcas",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Desenhar uma proposta de parceria para cada marca",
+      "Apresentar a proposta aos contatos",
+      "Fazer follow-up"
+     ],
+     "dia": 20,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Fechamento da parceria com a marca",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Negociar os termos",
+      "Formalizar em contrato"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Entrega e reporte para a marca",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Executar as contrapartidas",
+      "Reportar os resultados à marca",
+      "Repercutir a parceria nas redes"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    }
+   ]
+  },
+  {
+   "id": "#41a",
+   "titulo": "Ativar influenciadores para divulgar o trabalho",
+   "ancora": "lancamento",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Definição da ativação com influenciadores",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o público que você quer atingir",
+      "Listar influenciadores que falam com esse público",
+      "Analisar o engajamento real de cada um",
+      "Definir o formato da parceria (permuta, pago, orgânico)"
+     ],
+     "dia": 60,
+     "conta_de": "lancamento",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Preparação do material para influenciadores",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Preparar o media kit para envio",
+      "Personalizar a proposta para cada influenciador"
+     ],
+     "dia": 40,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Fechamento com os influenciadores",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Apresentar a proposta aos influenciadores",
+      "Combinar conteúdo e data com quem topar",
+      "Enviar o material"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Acompanhamento dos influenciadores",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Acompanhar as publicações",
+      "Repostar e agradecer",
+      "Medir o resultado de cada ativação"
+     ],
+     "dia": null,
+     "cadencia": "semanal",
+     "fim": {
+      "tipo": "dias_apos_inicio",
+      "dias": 30
+     },
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#41b",
+   "titulo": "Atuar como influenciador junto a marcas",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Posicionamento como creator",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o seu nicho de conteúdo",
+      "Organizar as redes para esse posicionamento",
+      "Montar um media kit com números e perfil do público",
+      "Definir a tabela de valores por entregável"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Contratação da agência de creators",
+     "tipo": "automatica",
+     "caminho": "Via agência",
+     "tarefas": [
+      "Pesquisar agências especializadas em creators",
+      "Comparar as propostas",
+      "Fechar"
+     ],
+     "dia": 35,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Prospecção de marcas como creator",
+     "tipo": "automatica",
+     "caminho": "Por conta própria",
+     "tarefas": [
+      "Listar marcas que combinam com o seu conteúdo",
+      "Apresentar-se às marcas",
+      "Fazer follow-up"
+     ],
+     "dia": 45,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Fechamento das publis",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Negociar e fechar as primeiras publis"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Entrega das publis",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Produzir e entregar o conteúdo",
+      "Reportar os resultados"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Rotina de creator",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Manter o media kit e a tabela atualizados",
+      "Repercutir as publis alinhadas ao posicionamento",
+      "Avaliar cada parceria pelo alinhamento com a sua missão"
+     ],
+     "dia": null,
+     "cadencia": "mensal",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#42",
+   "titulo": "Fazer parcerias com outros artistas da cena",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Mapeamento de artistas parceiros",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Listar artistas que combinam com o seu trabalho",
+      "Priorizar por afinidade e troca de público",
+      "Mapear como chegar em cada um"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Preparação do convite de parceria",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o tipo de parceria (feat, abertura, show conjunto, turnê)",
+      "Preparar a proposta ou o convite"
+     ],
+     "dia": 12,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Prospecção de parcerias artísticas",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Apresentar a ideia aos artistas",
+      "Combinar os detalhes com quem topar",
+      "Formalizar o combinado (divisão de direitos, custos e divulgação)"
+     ],
+     "dia": 20,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Realização da parceria artística",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Realizar (gravação, show)",
+      "Divulgar em conjunto"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Rotina de parcerias artísticas",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Manter a relação pra novas trocas",
+      "Registrar os parceiros na sua base de contatos"
+     ],
+     "dia": null,
+     "cadencia": "trimestral",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#N2",
+   "titulo": "Ativar parcerias de composição",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Definição das parcerias de composição",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o que você busca na parceria (letra, melodia, produção, gênero)",
+      "Listar compositores e artistas com afinidade",
+      "Ouvir o trabalho de cada um e selecionar os de interesse"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Convite aos parceiros de composição",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Fazer o convite propondo uma sessão de composição",
+      "Combinar data e formato"
+     ],
+     "dia": 15,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Sessões de composição",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Realizar as sessões",
+      "Combinar a divisão de direitos autorais antes de finalizar"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Registro das obras em parceria",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Registrar as obras com a divisão correta",
+      "Selecionar o que entra no repertório e nos lançamentos"
+     ],
+     "dia": 14,
+     "conta_de": "informada_anterior",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Rotina de parcerias de composição",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Manter as parcerias que funcionaram",
+      "Ampliar a rede de coautores ao longo do tempo"
+     ],
+     "dia": null,
+     "cadencia": "trimestral",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#43",
+   "titulo": "Criar a Lojinha do/da [nome do artista]",
+   "ancora": "lancamento",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Definição dos produtos da lojinha",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir os produtos (camiseta, vinil, acessórios), alinhados ao conceito do projeto",
+      "Pesquisar fornecedores ou parceiros de licenciamento",
+      "Pedir orçamentos e amostras"
+     ],
+     "dia": 120,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Definição de preços e canais da lojinha",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir os preços de cada produto",
+      "Escolher onde vender (loja online, nos shows)"
+     ],
+     "dia": 90,
+     "conta_de": "lancamento",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Montagem da lojinha",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Montar a loja online ou o ponto de venda",
+      "Produzir um estoque inicial enxuto (ou sob demanda)",
+      "Fotografar os produtos com a identidade do projeto"
+     ],
+     "dia": 60,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Preparação do lançamento da lojinha",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Montar o cronograma da campanha",
+      "Produzir os materiais"
+     ],
+     "dia": 45,
+     "conta_de": "lancamento",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Lançamento da lojinha",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Divulgar nas redes, na comunidade e nos shows",
+      "Alinhar o lançamento da loja com um lançamento musical ou show"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Rotina da lojinha",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Controlar estoque, vendas e reposição",
+      "Testar novos produtos conforme o retorno"
+     ],
+     "dia": null,
+     "cadencia": "semanal",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#54",
+   "titulo": "Lançar cursos, aulas ou mentorias",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Desenho da oferta de cursos",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Listar o que você sabe ensinar e o que já te perguntam",
+      "Escolher o formato (aula individual, curso online, mentoria, workshop)",
+      "Definir o público-alvo"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Montagem do conteúdo do curso",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Montar o conteúdo e o programa",
+      "Definir preço e forma de pagamento",
+      "Escolher a plataforma ou o espaço"
+     ],
+     "dia": 10,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Produção do material do curso",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Produzir vídeos, apostilas e exercícios",
+      "Montar a página de inscrição"
+     ],
+     "dia": 25,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Divulgação e inscrições do curso",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Divulgar nas redes, na comunidade e no site",
+      "Abrir as inscrições"
+     ],
+     "dia": 45,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Entrega do curso ou mentoria",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Realizar as aulas ou sessões",
+      "Coletar feedback"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Rotina de cursos e mentorias",
+     "tipo": "rotina",
+     "caminho": null,
+     "tarefas": [
+      "Mapear melhorias",
+      "Manter a divulgação"
+     ],
+     "dia": null,
+     "cadencia": "mensal",
+     "fim": null,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#55",
+   "titulo": "Atuar como palestrante",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Definição da palestra-base",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir os temas que você domina e que interessam a um público",
+      "Estruturar a palestra-base (roteiro, duração, mensagem central)"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Preparação do material de palestrante",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Preparar bio, temas e vídeo de apresentação",
+      "Definir o cachê por tipo de evento"
+     ],
+     "dia": 15,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Prospecção de palestras",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Mapear eventos, escolas, empresas e festivais que contratam palestrantes",
+      "Levantar os contatos",
+      "Apresentar-se e enviar o material",
+      "Fazer follow-up"
+     ],
+     "dia": 25,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Realização das palestras",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Realizar as entregas",
+      "Registrar em vídeo"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Repercussão das palestras",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Usar o registro para atualizar o material de venda",
+      "Divulgar nas redes"
+     ],
+     "dia": 7,
+     "conta_de": "informada_anterior",
+     "classe": "rapida",
+     "piso_dias": 0,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#50",
+   "titulo": "Prospectar bookers e agentes internacionais para turnê no exterior",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Definição dos mercados internacionais",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir os mercados internacionais onde o seu som conversa",
+      "Pesquisar bookers e agentes que trabalham esses mercados"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Preparação do material internacional",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Preparar o material de venda em inglês (e no idioma local, se necessário)",
+      "Ter o vídeo de show pronto e legendado"
+     ],
+     "dia": 20,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Prospecção de bookers internacionais",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Apresentar o projeto aos bookers e agentes",
+      "Fazer follow-up"
+     ],
+     "dia": 40,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Fechamento da turnê internacional",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Negociar as condições (cachês, logística, vistos)",
+      "Fechar as datas e organizar a viagem"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Realização da turnê internacional",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Realizar os shows",
+      "Divulgar nas redes durante a turnê"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Repercussão da turnê no Brasil",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Repercutir a turnê na imprensa e nas redes",
+      "Atualizar o kit de venda com a experiência internacional"
+     ],
+     "dia": 7,
+     "conta_de": "informada_anterior",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#51",
+   "titulo": "Inscrever o projeto em festivais internacionais e editais de mobilidade",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Mapeamento de festivais internacionais",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Listar festivais internacionais alinhados ao seu perfil",
+      "Mapear editais de mobilidade (fundações, embaixadas, órgãos públicos e privados)",
+      "Marcar os prazos de inscrição no calendário"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Preparação do material em inglês",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Preparar bio, release, vídeo e ficha técnica em inglês",
+      "Adequar o material ao formato de cada inscrição"
+     ],
+     "dia": 15,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Inscrição em festivais internacionais",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Inscrever o projeto nos festivais com chamada aberta",
+      "Inscrever o projeto nos editais de mobilidade",
+      "Fazer follow-up"
+     ],
+     "dia": 30,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Organização da viagem ao festival",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Se selecionado, organizar logística, vistos e passagens",
+      "Alinhar a ficha técnica com o festival"
+     ],
+     "dia": 90,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Participação no festival internacional",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Realizar o show",
+      "Fazer contatos com os programadores presentes",
+      "Repercutir nas redes"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Repercussão do festival internacional",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Repercutir na imprensa e nas redes no Brasil",
+      "Registrar contatos e resultados para as próximas edições"
+     ],
+     "dia": 7,
+     "conta_de": "informada_anterior",
+     "classe": "rapida",
+     "piso_dias": 0,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#53",
+   "titulo": "Criar evento, festival ou label próprios",
+   "ancora": "propria",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Desenho do evento próprio",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o conceito, alinhado ao posicionamento",
+      "Definir formato, porte e periodicidade",
+      "Definir o modelo de receita (bilheteria, patrocínio, edital, bar)"
+     ],
+     "dia": 180,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Planejamento da produção do evento",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Montar o orçamento (produção, cachês, estrutura, divulgação)",
+      "Escolher local e data",
+      "Convidar artistas parceiros"
+     ],
+     "dia": 160,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Viabilização do evento próprio",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Buscar patrocínio ou edital",
+      "Contratar produção e estrutura técnica",
+      "Formalizar os contratos com artistas e fornecedores"
+     ],
+     "dia": 110,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Divulgação do evento próprio",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Preparar o plano de divulgação",
+      "Ativar comunidade, base de contatos e imprensa"
+     ],
+     "dia": 45,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Dia do evento: evento próprio",
+     "tipo": "marco",
+     "caminho": null,
+     "tarefas": [
+      "Coordenar a produção do dia",
+      "Realizar o evento",
+      "Registrar em foto e vídeo"
+     ],
+     "dia": 0,
+     "conta_de": "propria",
+     "marco_tipo": "evento",
+     "fim_de_semana": true
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Fechamento e repercussão do evento",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Prestar contas a patrocinadores e parceiros",
+      "Repercutir nas redes e na imprensa",
+      "Avaliar pra próxima edição"
+     ],
+     "dia": 0,
+     "conta_de": "propria",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    }
+   ],
+   "pergunta_propria": "Quando você quer fazer a primeira edição do seu evento? Me diz o mês que eu marco uma data e a gente ajusta. Um evento leva uns seis meses de preparo.",
+   "apoio_propria": "Seis meses é o preparo de uma primeira edição pequena. Se a ideia é maior, ou depende de patrocínio, leva mais tempo."
+  },
+  {
+   "id": "#N1",
+   "titulo": "Buscar formação artística complementar",
+   "ancora": "inicio",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Definição da formação artística",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Identificar o que você quer desenvolver (voz, instrumento, teoria, expressão corporal)",
+      "Pesquisar professores, escolas ou cursos nessa área"
+     ],
+     "dia": 0,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Escolha da formação artística",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Avaliar as opções levantadas em relação ao custo",
+      "Escolher e fechar"
+     ],
+     "dia": 14,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Prática da formação artística",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Montar uma rotina de estudo e prática",
+      "Pedir feedback ao professor"
+     ],
+     "dia": 25,
+     "conta_de": "inicio",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 5,
+     "nome": "Aplicação da formação artística",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Aplicar o aprendizado nos ensaios e no repertório",
+      "Gravar e comparar a sua evolução"
+     ],
+     "dia": 30,
+     "conta_de": "inicio",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 5,
+     "n_insumo": 4,
+     "nome": "Avaliação do ciclo de formação",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Manter a constância por pelo menos um ciclo (6 meses)",
+      "Avaliar os resultados e definir o próximo passo"
+     ],
+     "dia": 180,
+     "conta_de": "inicio",
+     "classe": "rapida",
+     "piso_dias": 0,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#N3",
+   "titulo": "Trabalhar com produtor musical com boa capacidade técnica e alinhado ao seu estilo musical",
+   "ancora": "lancamento",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Definição da produção musical",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o que você espera da produção (referências sonoras do seu gênero)",
+      "Listar produtores com experiência no seu estilo"
+     ],
+     "dia": 180,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Escolha do produtor e do estúdio",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Ouvir trabalhos anteriores e conversar com os mais alinhados",
+      "Pedir orçamentos e prazos",
+      "Escolher e formalizar (contrato, prazos, direitos)"
+     ],
+     "dia": 160,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Pré-produção musical",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Preparar as músicas e as referências",
+      "Realizar a pré-produção e os ensaios"
+     ],
+     "dia": 130,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Gravação, mixagem e masterização",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Gravar",
+      "Acompanhar mixagem e masterização"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Finalização dos fonogramas",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Receber os arquivos finais (master, ISRC)",
+      "Organizar no catálogo (dica: use a Maestra)",
+      "Entregar à distribuidora conforme o cronograma de lançamentos"
+     ],
+     "dia": 30,
+     "conta_de": "informada_anterior",
+     "classe": "rapida",
+     "piso_dias": 0,
+     "fim_de_semana": false
+    }
+   ]
+  },
+  {
+   "id": "#N6",
+   "titulo": "Produzir o conteúdo audiovisual para os lançamentos",
+   "ancora": "lancamento",
+   "acoes": [
+    {
+     "n": 1,
+     "n_insumo": 1,
+     "nome": "Planejamento das peças audiovisuais",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir, para cada lançamento do cronograma, quais peças vão existir (clipe, visualizer, lyric video, session, bastidores)",
+      "Definir o conceito visual a partir do documento de branding"
+     ],
+     "dia": 120,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 2,
+     "n_insumo": 2,
+     "nome": "Viabilização da produção audiovisual",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Montar o orçamento",
+      "Decidir o que será feito por conta própria e o que será contratado",
+      "Pesquisar e fechar diretor, videomaker ou produtora alinhados ao conceito"
+     ],
+     "dia": 100,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 3,
+     "n_insumo": 3,
+     "nome": "Pré-produção do conteúdo audiovisual",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Definir o roteiro",
+      "Definir a locação",
+      "Definir figurino e beleza",
+      "Definir a equipe",
+      "Criar o cronograma"
+     ],
+     "dia": 80,
+     "conta_de": "lancamento",
+     "classe": "longa",
+     "piso_dias": 7,
+     "fim_de_semana": false
+    },
+    {
+     "n": 4,
+     "n_insumo": 4,
+     "nome": "Gravação e finalização do audiovisual",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Realizar a gravação",
+      "Acompanhar edição, cor e finalização",
+      "Receber os arquivos finalizados"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 5,
+     "n_insumo": 5,
+     "nome": "Publicação do conteúdo audiovisual",
+     "tipo": "informada",
+     "caminho": null,
+     "tarefas": [
+      "Produzir os cortes e versões para cada rede (vertical, teaser, trecho)",
+      "Publicar conforme o plano de marketing do lançamento"
+     ],
+     "dia": null,
+     "fim_de_semana": true
+    },
+    {
+     "n": 6,
+     "n_insumo": 6,
+     "nome": "Análise do conteúdo audiovisual",
+     "tipo": "automatica",
+     "caminho": null,
+     "tarefas": [
+      "Analisar o desempenho",
+      "Alimentar o planejamento do próximo lançamento"
+     ],
+     "dia": 14,
+     "conta_de": "informada_anterior",
+     "classe": "media",
+     "piso_dias": 3,
+     "fim_de_semana": false
+    }
+   ]
+  }
+ ]
+}
