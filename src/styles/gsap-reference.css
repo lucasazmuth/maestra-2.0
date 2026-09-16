@@ -10387,6 +10387,8 @@ body:has(.track-detail-backdrop) .local-player-bar {
   gap: 18px;
   margin-bottom: 18px;
 }
+/* Quando o painel vem depois dos atalhos, preserve uma separação clara entre os blocos. */
+.music-footer + .overview-home { margin-top: 28px; }
 .overview-hero {
   position: relative;
   display: flex;
