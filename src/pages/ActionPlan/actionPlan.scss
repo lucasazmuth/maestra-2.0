@@ -1758,26 +1758,41 @@
   line-height: 1.4;
 }
 
-.ap-v13-checklist li button {
-  display: grid;
+.action-strategy-overview .ap-v13-checklist li > .ap-v13-task-check {
+  display: inline-flex;
   flex: 0 0 auto;
-  place-items: center;
-  width: 22px;
-  height: 22px;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  grid-template-columns: none;
+  gap: 0;
   margin: 0;
-  border: 1px solid #c6d3e8;
-  border-radius: 50%;
+  border: 1.5px solid #aebfdb;
+  border-radius: 5px;
   padding: 0;
   background: #fff;
   color: #3361ff;
   cursor: pointer;
+  text-align: center;
 }
 
-.ap-v13-checklist li button:hover,
-.ap-v13-checklist li button:focus-visible {
+.action-strategy-overview .ap-v13-checklist li > .ap-v13-task-check:hover {
   border-color: #8da9f5;
   background: #f3f6ff;
-  outline: 0;
+}
+
+.action-strategy-overview .ap-v13-checklist li > .ap-v13-task-check:focus-visible {
+  outline: 2px solid #3361ff;
+  outline-offset: 2px;
+}
+
+.action-strategy-overview .ap-v13-checklist li.is-done > .ap-v13-task-check {
+  border-color: #3361ff;
+  background: #3361ff;
+  color: #fff;
 }
 
 .ap-v13-checklist li.is-done span {

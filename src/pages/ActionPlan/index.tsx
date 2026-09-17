@@ -684,8 +684,8 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
                                 <ul className="ap-v13-checklist" aria-label={`Checklist de ${action.title}`}>
                                   {action.tasks.map((task) => (
                                     <li key={task.id} className={task.status === 'done' ? 'is-done' : ''}>
-                                      <button type="button" aria-label={task.status === 'done' ? `Reabrir ${task.description}` : `Concluir ${task.description}`} onClick={() => editPlanning ? toggleActionChecklist(p.s.id, action.id, task.id) : showProRequired()}>
-                                        {task.status === 'done' ? <FiCheck size={13} /> : <FiCircle size={13} />}
+                                      <button type="button" className="ap-v13-task-check" role="checkbox" aria-checked={task.status === 'done'} aria-label={task.description} onClick={() => editPlanning ? toggleActionChecklist(p.s.id, action.id, task.id) : showProRequired()}>
+                                        {task.status === 'done' && <FiCheck size={14} aria-hidden="true" />}
                                       </button>
                                       <span>{task.description}</span>
                                     </li>
