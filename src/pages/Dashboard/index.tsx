@@ -332,6 +332,7 @@ const Dashboard: FC = () => {
 
   return (
     <div className='board-content page-view music-dashboard'>
+      {secao === 'visao-geral' && <VisaoGeralDoArtista artist={artist} onSelect={setSecao} />}
       <PillarCards artist={artist} ativa={secao} onSelect={setSecao} />
 
       {pilarAtivo ? (
@@ -378,8 +379,6 @@ const Dashboard: FC = () => {
         />
       </section>
 
-      {/* O painel de comando fecha o fluxo principal, abaixo dos cards de suporte. */}
-      <VisaoGeralDoArtista artist={artist} onSelect={setSecao} />
       </>}
 
       <PlatformReviewModal open={avaliando} onClose={() => setAvaliando(false)} />
