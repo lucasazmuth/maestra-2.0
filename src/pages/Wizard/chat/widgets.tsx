@@ -114,6 +114,7 @@ export const ScheduleApprovalCard: FC<{
           const state = schedule.strategies[strategy.id] || {};
           const actions = strategy.actions || [];
           const tight = actions.filter((action) => action.tight).length;
+          const showActions = !pathQuestion || !!state.selectedPath;
           const ready = !datesOutOfOrder && !!definition && !!(definition.ancora === 'propria' ? state.ownDate : definition.ancora === 'inicio' ? schedule.startDate : schedule.releaseDate) && (!pathQuestion || !!state.selectedPath);
           return <section key={strategy.id} className='schedule-studio__strategy'>
             <div className='schedule-studio__strategy-head'>
@@ -128,11 +129,11 @@ export const ScheduleApprovalCard: FC<{
                 <Select value={state.selectedPath} placeholder='Escolha uma opção' options={pathQuestion.opcoes.map((option) => ({ value: option.rotulo, label: option.rotulo }))} onChange={(selectedPath) => updateState(strategy.id, { selectedPath, acceptedAt: undefined, manualDates: {}, informedDates: {} })} />
               </label>}
             </div>}
-            <div className='schedule-studio__task-heading'>
+            {showActions && <div className='schedule-studio__task-heading'>
               <div><h3>Ações desta estratégia</h3><p>Confira a data de cada ação. As tarefas ficam no checklist de cada uma.</p></div>
               {ready && <span>{actions.length} ações</span>}
-            </div>
-            {ready ? <ol className='schedule-studio__task-list'>
+            </div>}
+            {showActions && (ready ? <ol className='schedule-studio__task-list'>
               {actions.map((action, index) => <li key={action.id}>
                 <span className='schedule-studio__task-number'>{String(index + 1).padStart(2, '0')}</span>
                 <div className='schedule-studio__task-copy'>
@@ -146,7 +147,7 @@ export const ScheduleApprovalCard: FC<{
                   <DatePicker allowClear={action.dateType === 'informada'} aria-label={`Data da ação: ${action.title}`} value={action.date ? dayjs(action.date) : null} onChange={(value) => moveAction(strategy.id, action, value?.format('YYYY-MM-DD'))} format='DD/MM/YYYY' placeholder='Escolha a data' />
                 </label>
               </li>)}
-            </ol> : <p className='schedule-studio__missing-dates'>{pathQuestion && !state.selectedPath ? 'Escolha uma opção acima para ver as ações deste caminho.' : 'Preencha as datas acima para ver as ações.'}</p>}
+            </ol> : <p className='schedule-studio__missing-dates'>Preencha as datas acima para ver as ações.</p>)}
             {ready && tight > 0 && <p className='schedule-studio__warning'>{tight} {tight === 1 ? 'ação ficou com a data apertada' : 'ações ficaram com datas apertadas'}. Confira antes de aprovar.</p>}
             {ready && <p className='schedule-studio__note'>Se alguma data não funcionar, escolha outra no campo da ação antes de aprovar.</p>}
             <footer className='schedule-studio__footer'><button type='button' disabled={activeIndex === 0} onClick={() => setActiveIndex(value => value - 1)}>Estratégia anterior</button><button type='button' className='schedule-studio__approve' disabled={!ready} onClick={() => { updateState(strategy.id, { acceptedAt: new Date().toISOString() }); if (activeIndex + 1 < calculated.length) setActiveIndex(value => value + 1); }}>{activeIndex + 1 < calculated.length ? (state.acceptedAt ? 'Próxima estratégia' : 'Aprovar e continuar') : (state.acceptedAt ? 'Concluir' : 'Aprovar esta estratégia')}</button></footer>
