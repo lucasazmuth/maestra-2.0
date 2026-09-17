@@ -1096,7 +1096,7 @@
 .action-plan-page--embedded > .module-page-heading {
   display: flex;
   flex-direction: column;
-  min-height: 278px;
+  min-height: 0;
   margin: 0 0 18px;
   padding: 30px 32px 24px;
   border: 1px solid #dfe8f5;
@@ -1115,36 +1115,6 @@
 .action-plan-page--embedded .action-plan-header-result small { display: block; color: rgba(255,255,255,.6); font-size: 10px; font-weight: 800; text-transform: uppercase; }
 .action-plan-page--embedded .action-plan-header-result h1 { margin: 3px 0 4px; color: #344b73 !important; font-size: 31px; line-height: 1.05; }
 .action-plan-page--embedded .action-plan-header-result span { display: block; max-width: 660px; margin: 0; color: #6f82a4 !important; font-size: 13px; line-height: 1.4; }
-.action-plan-page--embedded .action-plan-header-summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: auto; padding-top: 17px; border-top: 1px solid rgba(82, 104, 143, .18); }
-.action-plan-page--embedded .action-plan-header-status { color: #6f82a4; font-size: 13px; line-height: 1.4; }
-.action-plan-page--embedded .action-plan-new-strategy {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 38px;
-  margin: 0;
-  padding: 0 15px;
-  border: 1px solid rgba(51, 97, 255, .22);
-  border-radius: 999px;
-  background: rgba(255,255,255,.76);
-  box-shadow: 0 7px 16px rgba(51,97,255,.1);
-  color: #3361ff;
-  cursor: pointer;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 900;
-  white-space: nowrap;
-  transition: background-color .15s ease;
-}
-.action-plan-page--embedded .action-plan-new-strategy:hover,
-.action-plan-page--embedded .action-plan-new-strategy:focus-visible {
-  background: #fff;
-  outline: 0;
-}
-.action-plan-page--embedded .action-plan-header-side { display: grid; justify-items: end; gap: 8px; min-width: 164px; text-align: right; }
-.action-plan-page--embedded .action-plan-header-side span { color: #7286aa !important; font-size: 10px; font-weight: 800; text-transform: uppercase; }
-.action-plan-page--embedded .action-plan-header-side strong { display: inline-grid; min-width: 64px; min-height: 34px; place-items: center; border: 1px solid #bdcbe1; border-radius: 999px; background: rgba(255,255,255,.48); color: #40577f; font-size: 16px; line-height: 1; }
-
 .action-plan-page--embedded .ap-plan-row:nth-child(2) { animation-delay: .08s; }
 .action-plan-page--embedded .ap-plan-row:nth-child(3) { animation-delay: .16s; }
 .action-plan-page--embedded .ap-plan-row:nth-child(4) { animation-delay: .24s; }
@@ -1161,6 +1131,14 @@
   justify-content: space-between;
   gap: 14px;
   margin: 0 0 22px;
+}
+
+.action-plan-tabs-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 9px;
 }
 
 .action-plan-view-tabs {
@@ -1248,6 +1226,11 @@
 
   .action-plan-archived-button {
     margin-left: auto;
+  }
+
+  .action-plan-tabs-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 
@@ -1667,59 +1650,205 @@
 }
 
 .ap-v13-action {
-  padding: 14px 16px;
-  border: 1px solid rgba(130, 150, 190, .18);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, .035);
+  padding: 17px 18px 14px;
+  border: 1px solid #e2e8f2;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(82, 106, 151, .045);
 }
 
 .ap-v13-action-head {
+  --ap-action-control-size: 28px;
+  --ap-action-control-bg: #f3f6fc;
+  --ap-action-control-border: #dce5f3;
+  --ap-action-control-color: #5c7196;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 10px 14px;
 }
 
 .ap-v13-action-head > strong {
   min-width: 0;
-  flex: 1;
-  color: #e6edff;
-  font-size: 13px;
-  line-height: 1.35;
+  flex: 1 1 220px;
+  color: #405985;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.ap-v13-action-meta {
+  flex: 0 0 auto;
+  max-width: 100%;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.action-strategy-overview .ap-v13-action-meta > .ap-owner,
+.action-strategy-overview .ap-v13-action-meta > .ap-date,
+.action-strategy-overview .ap-v13-action-meta > .ap-v13-action-more {
+  box-sizing: border-box;
+  height: var(--ap-action-control-size);
+  min-height: var(--ap-action-control-size);
+  margin: 0;
+  border: 1px solid var(--ap-action-control-border);
+  background: var(--ap-action-control-bg);
+  color: var(--ap-action-control-color);
+}
+
+.action-strategy-overview .ap-v13-action-meta > .ap-owner {
+  width: var(--ap-action-control-size);
+  min-width: var(--ap-action-control-size);
+  border-radius: 50%;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-v13-action-meta > .ap-owner,
+.task-app:not(.public-app) .action-plan-page .ap-v13-action-meta > .ap-date:not(.is-overdue) {
+  border-color: var(--ap-action-control-border);
+  background: var(--ap-action-control-bg);
+  color: var(--ap-action-control-color);
+}
+
+.action-strategy-overview .ap-v13-action-meta > .ap-date {
+  min-width: 76px;
+  justify-content: center;
+  padding: 0 8px;
+  border-radius: 6px;
+}
+
+.action-strategy-overview .ap-v13-action-meta > .ap-date.is-overdue {
+  border-color: #f2cbd0;
+  background: #fff3f4;
+  color: #b34152;
+}
+
+.action-strategy-overview .ap-v13-action-meta > .ap-v13-action-more {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  align-content: center;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  grid-template-columns: none;
+  margin: 0;
+  border-radius: 6px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.action-strategy-overview .ap-v13-action-meta > .ap-v13-action-more svg {
+  display: block;
+  flex: none;
+}
+
+.action-strategy-overview .ap-v13-action-meta > .ap-v13-action-more:hover,
+.action-strategy-overview .ap-v13-action-meta > .ap-v13-action-more:focus-visible {
+  border-color: #b9c8ff;
+  background: #eaf0ff;
+  color: #3361ff;
+  outline: 0;
 }
 
 .ap-v13-checklist {
   display: grid;
-  gap: 7px;
-  margin: 12px 0 0 35px;
-  padding: 10px 0 0;
-  border-top: 1px solid rgba(130, 150, 190, .14);
+  gap: 0;
+  margin: 15px 0 0;
+  padding: 5px 0 0 14px;
+  border-top: 1px solid #edf1f7;
+  border-left: 2px solid #e7edfa;
   list-style: none;
 }
 
 .ap-v13-checklist li {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  color: #aebbd3;
-  font-size: 11px;
+  align-items: center;
+  gap: 9px;
+  min-height: 34px;
+  padding: 5px 0;
+  color: #52698f;
+  font-size: 12px;
   line-height: 1.4;
 }
 
-.ap-v13-checklist li button {
-  display: grid;
+.action-strategy-overview .ap-v13-checklist li > .ap-v13-task-check {
+  display: inline-flex;
   flex: 0 0 auto;
-  place-items: center;
-  margin-top: 1px;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  grid-template-columns: none;
+  gap: 0;
+  margin: 0;
+  border: 1.5px solid #aebfdb;
+  border-radius: 5px;
   padding: 0;
-  border: 0;
-  background: transparent;
-  color: #7898ff;
+  background: #fff;
+  color: #3361ff;
   cursor: pointer;
+  text-align: center;
+}
+
+.action-strategy-overview .ap-v13-checklist li > .ap-v13-task-check:hover {
+  border-color: #8da9f5;
+  background: #f3f6ff;
+}
+
+.action-strategy-overview .ap-v13-checklist li > .ap-v13-task-check:focus-visible {
+  outline: 2px solid #3361ff;
+  outline-offset: 2px;
+}
+
+.action-strategy-overview .ap-v13-checklist li.is-done > .ap-v13-task-check {
+  border-color: #3361ff;
+  background: #3361ff;
+  color: #fff;
 }
 
 .ap-v13-checklist li.is-done span {
   color: #71809b;
   text-decoration: line-through;
+}
+
+.action-strategy-overview .ap-plan-list .ap-v13-add-checklist-task {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-content: center;
+  width: auto;
+  height: 32px;
+  min-width: 0;
+  min-height: 32px;
+  grid-template-columns: none;
+  gap: 7px;
+  margin: 12px 0 0 14px;
+  padding: 0 12px;
+  border: 1px solid #dce5f6;
+  border-radius: 6px;
+  background: #fff;
+  color: #526a95;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.action-strategy-overview .ap-plan-list .ap-v13-add-checklist-task:hover {
+  border-color: #b9c8ff;
+  background: #f3f6ff;
+  color: #3361ff;
+}
+
+.action-strategy-overview .ap-plan-list .ap-v13-add-checklist-task:focus-visible {
+  outline: 2px solid #3361ff;
+  outline-offset: 3px;
 }
 
 .ap-plan-task {
@@ -1776,40 +1905,43 @@
   .ap-plan-row-main strong { font-size: 13.5px; }
 }
 
-// "Adicionar tarefa" perdeu o `<header>` que o continha (o título "Tarefas" saiu — repetia o
-// título e a numeração que a linha do acordeão logo acima já mostra) e foi pro fim da lista, como
-// uma ação de "adicionar mais um item". Herdava `.action-task-register > header button` antes;
-// precisa do próprio estilo agora que não tem mais o header por perto.
-// Mesmo vazamento de `.action-strategy-overview button` de sempre (min-height:132px,
-// display:grid, width:100%, grid-template-columns:1fr auto) — este botão também é descendente.
-// Seletor de duas classes pra vencer por especificidade, igual aos outros já corrigidos nesta
-// mesma tela.
-.ap-plan-list .ap-plan-add-task {
+.action-strategy-overview .ap-plan-list .ap-plan-add-task {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  align-content: center;
   width: auto;
+  height: 36px;
   min-width: 0;
   min-height: 36px;
   grid-template-columns: none;
-  gap: 7px;
-  margin-top: 14px;
+  gap: 8px;
+  margin: 16px 0 0;
   padding: 0 14px;
-  border: 1px dashed #c9d8f0;
-  border-radius: 8px;
-  background: transparent;
-  color: #3361ff;
+  border: 1px solid #dce5f6;
+  border-radius: 6px;
+  background: #fff;
+  color: #526a95;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
+  line-height: 1;
   white-space: nowrap;
   cursor: pointer;
-  text-align: left;
-  transition: background .15s ease, border-color .15s ease;
+  text-align: center;
+  box-shadow: none;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
 }
 
-.ap-plan-add-task:hover {
-  border-style: solid;
+.action-strategy-overview .ap-plan-list .ap-plan-add-task:hover {
   border-color: #b9c8ff;
-  background: rgba(51, 97, 255, .06);
+  background: #f3f6ff;
+  color: #3361ff;
+  transform: none;
+}
+
+.action-strategy-overview .ap-plan-list .ap-plan-add-task:focus-visible {
+  outline: 2px solid #3361ff;
+  outline-offset: 3px;
 }
 
 .ap-schedule-badge {

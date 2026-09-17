@@ -52,6 +52,12 @@
   .dimLeitura { border-left: 3px solid var(--dim-color); background: color-mix(in srgb, var(--dim-color) 7%, white); color: #36517f; }
   .dimReveal { border-color: #dce5f1; }
   .dimRevealHead { color: var(--dim-color); }
+  .healthTitle { color: #7184a5; }
+  .healthItem { background: #f7f9fd; border-color: #e4ebf5; }
+  .healthLabel { color: #61749a; }
+  .healthVal { color: #273f6b; }
+  .healthVal.healthPos { color: #168249; }
+  .healthVal.healthNeg { color: #9a6400; }
 
   .audienceGrid {
     display: grid;

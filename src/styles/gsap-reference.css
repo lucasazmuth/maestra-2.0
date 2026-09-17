@@ -1865,7 +1865,6 @@
   background: #fff;
   color: #617499;
   text-align: left;
-  cursor: pointer;
   box-shadow: 0 3px 8px rgba(120, 140, 177, .05);
 }
 
@@ -1880,6 +1879,46 @@
   background: transparent;
   color: inherit;
   font-size: 11px;
+}
+
+.calendar-all-day-event-title {
+  min-width: 0;
+  flex: 1;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.calendar-all-day-checkbox {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  place-items: center;
+  padding: 0;
+  border: 1.5px solid #8e4bdf;
+  border-radius: 4px;
+  background: #fff;
+  color: #fff;
+  cursor: pointer;
+}
+
+.calendar-all-day-checkbox.is-completed {
+  background: #8e4bdf;
+}
+
+.calendar-all-day-checkbox:focus-visible,
+.calendar-all-day-event-title:focus-visible {
+  outline: 2px solid #3361ff;
+  outline-offset: 2px;
+}
+
+.calendar-all-day-checkbox:disabled {
+  cursor: wait;
+  opacity: .6;
 }
 
 .calendar-all-day-list > .calendar-all-day-empty {
@@ -7651,6 +7690,7 @@
 .method-planning-header {
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .method-planning-header > .method-planning-summary {
@@ -10561,12 +10601,32 @@ body:has(.track-detail-backdrop) .local-player-bar {
 .action-plan-page--embedded .action-plan-new-strategy:hover,
 .action-plan-page--embedded .action-plan-new-strategy:focus-visible { background: #fff; }
 .method-view-diagnostico .method-diagnostic-status button {
-  border-color: rgba(79, 111, 190, .26);
-  color: #48669c;
-  box-shadow: 0 7px 16px rgba(79, 111, 190, .08);
+  min-height: 36px;
+  gap: 8px;
+  padding: 0 14px;
+  border-color: #dce5f6;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: none;
+  color: #526a95;
+  font-size: 12px;
+  font-weight: 700;
 }
 .method-view-diagnostico .method-diagnostic-status button:hover,
-.method-view-diagnostico .method-diagnostic-status button:focus-visible { background: rgba(255,255,255,.92); }
+.method-view-diagnostico .method-diagnostic-status button:focus-visible {
+  border-color: #b9c8ff;
+  background: #f3f6ff;
+  color: #3361ff;
+}
+.method-view-diagnostico .method-diagnostic-status button:focus-visible {
+  outline: 2px solid #3361ff;
+  outline-offset: 3px;
+}
+.method-view-diagnostico .method-diagnostic-status button svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
 .method-diagnostic-header .method-diagnostic-pattern span,
 .method-planning-header .method-planning-pattern > span,
 .action-plan-page--embedded .action-plan-header-side span { color: #7286aa !important; }

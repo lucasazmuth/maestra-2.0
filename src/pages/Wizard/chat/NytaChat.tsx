@@ -24,7 +24,6 @@ import {
   seedValues,
 } from '@maestra/core/wizard/dados';
 import * as engine from '@maestra/core/wizard/motores';
-import { defaultSchedule, CRONOGRAMA_TEXTS } from '@maestra/core/services/cronograma';
 import { buildV13Actions, defaultV13Schedule } from '@maestra/core/services/cronogramaV13';
 import { SWOT_INTERNAL, SWOT_OPPORTUNITIES, SWOT_THREATS } from '@maestra/core/wizard/swot';
 import {
@@ -57,7 +56,6 @@ import type {
   Artist,
   ArtistContent,
   ArtistIdentity,
-  ActionPlanV13Schedule,
   MissionFinancialTier,
   MissionParts,
   ReferenceHorizons as ReferenceHorizonsData,
@@ -973,39 +971,24 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
         const today = new Date().toISOString().slice(0, 10);
         return (
           <ScheduleApprovalCard
-            strategies={(draft.strategies || []).filter((strategy) => strategy.tasks.length)}
-            schedule={draft.actionPlanSchedule || defaultSchedule(today)}
+            strategies={(draft.strategies || []).filter((strategy) => strategy.bankId && strategy.actions?.length)}
+            schedule={draft.actionPlanScheduleV13 || defaultV13Schedule(today)}
             onConfirm={(schedule, strategies) => {
               pushUser('Cronograma aprovado');
-              const previousV13 = draft.actionPlanScheduleV13 || defaultV13Schedule(today);
-              const v13Schedule: ActionPlanV13Schedule = {
-                ...previousV13,
-                releaseDate: schedule.releaseDate,
-                startDate: schedule.startDate,
-                strategies: Object.fromEntries(Object.entries(schedule.strategies).map(([id, state]) => [id, {
-                  ...previousV13.strategies[id],
-                  acceptedAt: state.accepted ? new Date().toISOString() : previousV13.strategies[id]?.acceptedAt,
-                  ownDate: state.ownDate,
-                  selectedPath: state.path,
-                  manualDates: state.manualDates,
-                }])),
-              };
-              const scheduledStrategies = strategies.map((strategy) => strategy.actions?.length
-                ? { ...strategy, actions: buildV13Actions(strategy, v13Schedule, { today, existing: strategy.actions }) }
-                : strategy);
-              void persist({ actionPlanSchedule: schedule, actionPlanScheduleV13: v13Schedule, strategies: scheduledStrategies }, 8).then(() => Promise.all(
-                strategies.flatMap((strategy) => strategy.tasks.map((task) => syncActionPlanTaskEvent({
+              const approvedById = new Map(strategies.map((strategy) => [strategy.id, strategy]));
+              const scheduledStrategies = (draft.strategies || []).map((strategy) => approvedById.get(strategy.id) || strategy);
+              void persist({ actionPlanScheduleV13: schedule, strategies: scheduledStrategies }, 8).then(() => Promise.all(
+                strategies.flatMap((strategy) => (strategy.actions || []).map((action) => syncActionPlanTaskEvent({
                   artistId: artist.id,
-                  taskId: task.id,
-                  title: task.description,
+                  taskId: action.id,
+                  title: action.title,
                   strategyTitle: strategy.title,
-                  deadline: task.deadline,
-                  completed: task.status === 'done',
-                  recurrence: task.schedule?.recurrence,
+                  deadline: action.date,
+                  completed: action.status === 'done',
+                  recurrence: action.cadence === 'semanal' ? 'weekly' : undefined,
                 })))
               )).catch(() => message.warning('Cronograma salvo, mas a Agenda será atualizada na próxima abertura.'));
             }}
-            texts={CRONOGRAMA_TEXTS}
           />
         );
       }

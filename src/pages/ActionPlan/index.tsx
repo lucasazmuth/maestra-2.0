@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { App, DatePicker, message } from 'antd';
 import { createPortal } from 'react-dom';
 import dayjs from 'dayjs';
-import { FiArchive, FiArrowRight, FiCheck, FiCheckCircle, FiChevronDown, FiCircle, FiLock, FiMoreVertical, FiPlus, FiX } from 'react-icons/fi';
+import { FiArchive, FiCheck, FiCheckCircle, FiChevronDown, FiCircle, FiLock, FiMoreVertical, FiPlus, FiX } from 'react-icons/fi';
 
 import { useNytaModal } from '@maestra/core/hooks/useNytaModal';
 import { buildActionPlan } from '@maestra/core/wizard/motores';
@@ -16,18 +16,20 @@ import { Spinner } from '../../components/spinner/spinner';
 import { useGlobalSearch, normalizar } from '@maestra/core/stores/globalSearchStore';
 import EnhancedEmptyState from '../../components/action-plan/EnhancedEmptyState';
 import { UpsellModal } from '../../components/UpsellModal';
+import { BotaoFlutuante } from '../../components/BotaoFlutuante';
 import { TaskDate, TaskCategory, TaskOwner, type Assignee } from './TaskControls';
 import { TaskDetailModal } from './TaskDetailModal';
+import { ActionDetailModal } from './ActionDetailModal';
 import { TASK_OWNER_SELF, isOnboardingComplete } from '@maestra/core/constants/maestra';
 import { listMembers } from '@maestra/core/services/db/members';
 import * as eventsDb from '@maestra/core/services/db/events';
 import type { ActionPlanAction, ActionTask, ArtistContent, ArtistMember, Strategy } from '@maestra/core/interfaces/maestra';
 import { migrateContentToV13 } from '@maestra/core/services/migracaoV13';
-import { buildV13Actions, defaultV13Schedule } from '@maestra/core/services/cronogramaV13';
+import { actionStatusFromChecklist, buildV13Actions, defaultV13Schedule } from '@maestra/core/services/cronogramaV13';
 import './actionPlan.scss';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-const todayStr = () => new Date().toISOString().split('T')[0];
+const todayStr = () => dayjs().format('YYYY-MM-DD');
 
 const isDone = (t: ActionTask) => t.status === 'done';
 const isActive = (t: ActionTask) => t.status !== 'archived';
@@ -38,12 +40,25 @@ const ActionPlanScheduleView: FC<{
   canEdit: boolean;
   onBlocked: () => void;
   onChange: (strategyId: string, taskId: string, deadline?: string) => void;
-}> = ({ strategies, canEdit, onBlocked, onChange }) => {
-  const rows = useMemo(
-    () => strategies.flatMap((strategy) => (strategy.tasks || []).filter(isActive).map((task, index) => ({ strategy, task, index }))),
+  onActionChange: (strategyId: string, action: ActionPlanAction, deadline?: string) => void;
+}> = ({ strategies, canEdit, onBlocked, onChange, onActionChange }) => {
+  const rows = useMemo<Array<{ strategy: Strategy; action?: ActionPlanAction; task?: ActionTask; index: number }>>(
+    () => {
+      const result: Array<{ strategy: Strategy; action?: ActionPlanAction; task?: ActionTask; index: number }> = [];
+      strategies.forEach((strategy) => {
+        if (strategy.actions?.length) {
+          strategy.actions
+            .filter((action) => action.status !== 'archived')
+            .forEach((action, index) => result.push({ strategy, action, index }));
+          return;
+        }
+        (strategy.tasks || []).filter(isActive).forEach((task, index) => result.push({ strategy, task, index }));
+      });
+      return result;
+    },
     [strategies]
   );
-  const dates = rows.map(({ task }) => task.deadline).filter(Boolean) as string[];
+  const dates = rows.map(({ action, task }) => action?.date || task?.deadline).filter(Boolean) as string[];
   const orderedDates = dates.map((date) => dayjs(date)).sort((a, b) => a.valueOf() - b.valueOf());
   const start = (orderedDates.length ? orderedDates[0] : dayjs()).startOf('month');
   const endDate = orderedDates.length ? orderedDates[orderedDates.length - 1] : start;
@@ -71,11 +86,11 @@ const ActionPlanScheduleView: FC<{
             <div className="action-plan-gantt-months" style={{ width }}>
               {months.map((month) => <span key={month.format('YYYY-MM')} style={{ width: width / monthCount }}>{month.format('MMM YYYY')}</span>)}
             </div>
-            {rows.map(({ strategy, task, index }) => (
-              <div className="action-plan-gantt-row" key={`${strategy.id}-${task.id || index}`}>
+            {rows.map(({ strategy, action, task, index }) => (
+              <div className="action-plan-gantt-row" key={`${strategy.id}-${action?.id || task?.id || index}`}>
                 <div className="action-plan-gantt-task">
                   <small>{String(index + 1).padStart(2, '0')}</small>
-                  <span><b>{strategy.title}</b>{task.description}</span>
+                  <span><b>{strategy.title}</b>{action?.title || task?.description}</span>
                 </div>
                 <div className="action-plan-gantt-timeline" style={{ width }}>
                   {months.map((month) => <i key={month.format('YYYY-MM')} style={{ width: width / monthCount }} />)}
@@ -83,13 +98,15 @@ const ActionPlanScheduleView: FC<{
                     allowClear
                     inputReadOnly
                     disabled={!canEdit}
-                    aria-label={`Início: ${task.description}`}
+                    aria-label={`Início: ${action?.title || task?.description}`}
                     className="action-plan-gantt-marker"
-                    value={task.deadline ? dayjs(task.deadline) : null}
+                    value={(action?.date || task?.deadline) ? dayjs(action?.date || task?.deadline) : null}
                     onClick={!canEdit ? onBlocked : undefined}
-                    onChange={(value) => onChange(strategy.id, task.id, value?.format('YYYY-MM-DD'))}
+                    onChange={(value) => action
+                      ? onActionChange(strategy.id, action, value?.format('YYYY-MM-DD'))
+                      : onChange(strategy.id, task!.id, value?.format('YYYY-MM-DD'))}
                     format="DD MMM"
-                    style={{ left: `${position(task.deadline)}%` }}
+                    style={{ left: `${position(action?.date || task?.deadline)}%` }}
                   />
                 </div>
               </div>
@@ -188,9 +205,16 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const [archiveOpen, setArchiveOpen] = useState(false); // modal "Arquivadas": traz estratégia pro plano
   const [proModalOpen, setProModalOpen] = useState(false);
   const [selectedTaskRef, setSelectedTaskRef] = useState<{ strategyId: string; taskId: string } | null>(null);
-  const { openWithPrompt } = useNytaModal(); // botão "Nova estratégia" abre a Nyta com o protocolo
+  const [selectedActionRef, setSelectedActionRef] = useState<{ strategyId: string; actionId: string } | null>(null);
+  const { openWithPrompt } = useNytaModal();
   const [, setSaving] = useState(false);
   const showProRequired = () => setProModalOpen(true);
+  const createStrategy = () => {
+    if (!manageTasks) { showProRequired(); return; }
+    if (!artist?.id) return;
+    const prompt = encodeURIComponent('Quero criar uma nova estratégia para o meu plano de ação.');
+    navigate(`/artists/${artist.id}/nyta?prompt=${prompt}`);
+  };
   const migrationStarted = useRef(false);
 
   // Equipe ativa do artista — alimenta o seletor de responsável das tarefas.
@@ -234,6 +258,8 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
     () => selectedStrategy?.tasks?.find((task) => task.id === selectedTaskRef?.taskId),
     [selectedStrategy, selectedTaskRef?.taskId]
   );
+  const selectedActionStrategy = strategies.find((strategy) => strategy.id === selectedActionRef?.strategyId);
+  const selectedAction = selectedActionStrategy?.actions?.find((action) => action.id === selectedActionRef?.actionId);
   const commenterName =
     user?.user_metadata?.full_name ||
     user?.user_metadata?.name ||
@@ -357,17 +383,6 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
     if (strategy && task) syncTaskEvent(strategy, task, patch);
   };
 
-  const toggleAction = (sid: string, action: ActionPlanAction) => {
-    const nextStatus = action.status === 'done' ? 'todo' : 'done';
-    void commit((ss) => ss.map((s) => s.id !== sid ? s : {
-      ...s,
-      actions: (s.actions || []).map((item) => item.id === action.id ? { ...item, status: nextStatus } : item),
-    }), editPlanning);
-    const strategy = artist?.content?.strategies?.find((s) => s.id === sid);
-    if (strategy) syncActionEvent(strategy, action, { status: nextStatus });
-    toast.success(nextStatus === 'done' ? 'Ação concluída.' : 'Ação reaberta.');
-  };
-
   const patchAction = (sid: string, action: ActionPlanAction, date?: string) => {
     void commit((ss) => ss.map((s) => s.id !== sid ? s : {
       ...s,
@@ -377,14 +392,46 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
     if (strategy) syncActionEvent(strategy, action, { date });
   };
 
+  const patchActionOwner = (sid: string, action: ActionPlanAction, owner?: string) => {
+    void commit((ss) => ss.map((s) => s.id !== sid ? s : {
+      ...s,
+      actions: (s.actions || []).map((item) => item.id === action.id ? { ...item, owner } : item),
+    }), editPlanning);
+    const strategy = artist?.content?.strategies?.find((s) => s.id === sid);
+    if (strategy) syncActionEvent(strategy, action, { owner });
+  };
+
+  const patchActionDetails = (sid: string, action: ActionPlanAction, patch: Partial<ActionPlanAction>) => {
+    if (!editPlanning) { showProRequired(); return; }
+    void commit((ss) => ss.map((strategy) => strategy.id !== sid ? strategy : {
+      ...strategy,
+      actions: (strategy.actions || []).map((item) => item.id === action.id ? { ...item, ...patch } : item),
+    }), editPlanning);
+    const strategy = artist?.content?.strategies?.find((item) => item.id === sid);
+    if (strategy) syncActionEvent(strategy, action, patch);
+    toast.success('Ação atualizada.');
+  };
+
   const toggleActionChecklist = (sid: string, actionId: string, taskId: string) => {
+    const strategy = artist?.content?.strategies?.find((s) => s.id === sid);
+    const action = strategy?.actions?.find((item) => item.id === actionId);
+    const task = action?.tasks.find((item) => item.id === taskId);
+    if (!strategy || !action || !task) return;
+    const nextTasks = action.tasks.map((item) => item.id === taskId
+      ? { ...item, status: item.status === 'done' ? 'todo' as const : 'done' as const }
+      : item);
+    const checklistWasComplete = action.tasks.length > 0 && action.tasks.every((item) => item.status === 'done');
+    const manualCompletion = action.status === 'done' && !checklistWasComplete;
+    const nextStatus = actionStatusFromChecklist(nextTasks, manualCompletion ? 'done' : undefined);
     void commit((ss) => ss.map((s) => s.id !== sid ? s : {
       ...s,
       actions: (s.actions || []).map((action) => action.id !== actionId ? action : {
         ...action,
-        tasks: action.tasks.map((task) => task.id === taskId ? { ...task, status: task.status === 'done' ? 'todo' : 'done' } : task),
+        status: nextStatus,
+        tasks: nextTasks,
       }),
     }), editPlanning);
+    syncActionEvent(strategy, action, { status: nextStatus });
   };
   // Marcar como concluída é ACOMPANHAR (não estrutural): liberado pra quem cria/acessa o plano
   // (dono do perfil ou membro com nível plan), via editPlanning em vez de manageTasks.
@@ -526,8 +573,6 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const archived = info.filter((p) => p.total === 0);
   const hasArchive = withTasks.length > 0 && archived.length > 0;
   const displayed = withTasks.length ? withTasks : info; // sem nenhuma priorizada, mostra tudo
-  const totalActions = info.reduce((sum, item) => sum + item.total, 0);
-  const completedActions = info.reduce((sum, item) => sum + item.done, 0);
   const focusIdx = displayed.findIndex((p) => p.total > 0 && !p.complete); // -1 = todas concluídas
   // `undefined` (estado inicial) e '__none__' (fechou explicitamente) NAO sao a mesma coisa —
   // antes eram tratados igual, e isso escondia um bug: fechar a PROPRIA estrategia em foco (a
@@ -552,22 +597,6 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
               </div>
             </div>
           </div>
-          <div className="action-plan-header-summary">
-            <div className="action-plan-header-status">
-              <button
-                type="button"
-                className="action-plan-new-strategy"
-                onClick={() => manageTasks ? openWithPrompt('Quero criar uma nova estratégia para o meu plano de ação.') : showProRequired()}
-              >
-                Nova estratégia
-                <FiArrowRight aria-hidden />
-              </button>
-            </div>
-            <div className="action-plan-header-side">
-              <span>AÇÕES DO CICLO</span>
-              <strong>{completedActions}/{totalActions}</strong>
-            </div>
-          </div>
         </header>
       ) : (
         <header className="module-page-heading action-plan-standalone-heading">
@@ -588,12 +617,14 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
             Cronograma
           </button>
         </nav>
-        {hasArchive && (
-          <button className="action-plan-archived-button" type="button" onClick={() => manageTasks ? setArchiveOpen(true) : showProRequired()}>
-            <FiArchive size={13} />
-            Arquivadas ({archived.length})
-          </button>
-        )}
+        <div className="action-plan-tabs-actions">
+          {hasArchive && (
+            <button className="action-plan-archived-button" type="button" onClick={() => manageTasks ? setArchiveOpen(true) : showProRequired()}>
+              <FiArchive size={13} />
+              Arquivadas ({archived.length})
+            </button>
+          )}
+        </div>
       </div>
 
       {activeView === 'strategies' ? <section className="action-strategy-overview" aria-label="Estratégias do plano">
@@ -647,33 +678,38 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
                       {p.s.actions?.length ? (
                         <ul className="ap-v13-actionlist">
                           {p.s.actions.filter((action) => action.status !== 'archived').map((action) => {
-                            const done = action.status === 'done';
-                            const checklistDone = action.tasks.filter((task) => task.status === 'done').length;
+                            const checklistStatus = actionStatusFromChecklist(action.tasks, action.status);
+                            const done = checklistStatus === 'done';
                             return (
                               <li key={action.id} className={`ap-v13-action${done ? ' is-done' : ''}`}>
                                 <div className="ap-v13-action-head">
-                                  <button type="button" className={`action-task-check${done ? ' is-done' : ''}`} title={done ? 'Reabrir ação' : 'Concluir ação'} onClick={() => editPlanning ? toggleAction(p.s.id, action) : showProRequired()}>
-                                    {done ? <FiCheckCircle size={25} /> : <FiCircle size={25} />}
-                                  </button>
                                   <strong>{action.title}</strong>
-                                  <span className="ap-plan-task-meta">
-                                    <TaskOwner className="ap-owner" value={action.owner} assignees={assignees} disabled={!editPlanning} onBlocked={showProRequired} onChange={(owner) => {
-                                      void commit((ss) => ss.map((s) => s.id !== p.s.id ? s : { ...s, actions: (s.actions || []).map((item) => item.id === action.id ? { ...item, owner } : item) }), editPlanning);
-                                    }} />
+                                  <span className="ap-v13-action-meta ap-plan-task-meta">
+                                    <TaskOwner className="ap-owner" value={action.owner} assignees={assignees} disabled={!editPlanning} onBlocked={showProRequired} onChange={(owner) => patchActionOwner(p.s.id, action, owner)} />
                                     <TaskDate className="ap-date" value={action.date} overdue={!!(action.date && action.date < today && !done)} disabled={!editPlanning} onBlocked={showProRequired} onChange={(date) => patchAction(p.s.id, action, date)} />
-                                    <span className="ap-schedule-badge">{checklistDone}/{action.tasks.length}</span>
+                                    <button type="button" className="ap-v13-action-more" aria-label={`Editar ação ${action.title}`} title="Editar ação" onClick={() => setSelectedActionRef({ strategyId: p.s.id, actionId: action.id })}><FiMoreVertical size={17} aria-hidden="true" /></button>
                                   </span>
                                 </div>
                                 <ul className="ap-v13-checklist" aria-label={`Checklist de ${action.title}`}>
                                   {action.tasks.map((task) => (
                                     <li key={task.id} className={task.status === 'done' ? 'is-done' : ''}>
-                                      <button type="button" aria-label={task.status === 'done' ? `Reabrir ${task.description}` : `Concluir ${task.description}`} onClick={() => editPlanning ? toggleActionChecklist(p.s.id, action.id, task.id) : showProRequired()}>
-                                        {task.status === 'done' ? <FiCheck size={13} /> : <FiCircle size={13} />}
+                                      <button type="button" className="ap-v13-task-check" role="checkbox" aria-checked={task.status === 'done'} aria-label={task.description} onClick={() => editPlanning ? toggleActionChecklist(p.s.id, action.id, task.id) : showProRequired()}>
+                                        {task.status === 'done' && <FiCheck size={14} aria-hidden="true" />}
                                       </button>
                                       <span>{task.description}</span>
                                     </li>
                                   ))}
                                 </ul>
+                                <button
+                                  type="button"
+                                  className="ap-btn ap-btn--ai ap-v13-add-checklist-task"
+                                  onClick={() => manageTasks
+                                    ? openWithPrompt(`Quero adicionar uma tarefa à ação "${action.title}" da estratégia "${p.s.title}". Me ajude a definir uma tarefa concreta para este checklist.`)
+                                    : showProRequired()}
+                                >
+                                  {manageTasks ? <FiPlus size={14} aria-hidden="true" /> : <FiLock size={14} aria-hidden="true" />}
+                                  Adicionar tarefa com Nyta
+                                </button>
                               </li>
                             );
                           })}
@@ -714,10 +750,11 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
                       )}
                       <button
                         type="button"
-                        className="ap-plan-add-task"
+                        className="ap-btn ap-btn--ai ap-plan-add-task"
                         onClick={() => manageTasks ? openWithPrompt(`Quero criar uma ação para a estratégia "${p.s.title}"`) : showProRequired()}
                       >
-                        {!manageTasks ? <FiLock size={14} /> : <FiPlus size={14} />} Adicionar ação
+                        {!manageTasks ? <FiLock size={14} aria-hidden="true" /> : <FiPlus size={14} aria-hidden="true" />}
+                        Adicionar ação
                       </button>
                     </section>
                   </div>
@@ -732,6 +769,7 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
           canEdit={editPlanning}
           onBlocked={showProRequired}
           onChange={(strategyId, taskId, deadline) => patchTask(strategyId, taskId, { deadline })}
+          onActionChange={patchAction}
         />
       )}
 
@@ -770,6 +808,20 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
         }}
       />
 
+      <ActionDetailModal
+        key={selectedActionRef?.actionId || 'closed'}
+        open={!!selectedActionRef}
+        action={selectedAction}
+        strategyTitle={selectedActionStrategy?.title}
+        assignees={assignees}
+        canEdit={editPlanning}
+        onClose={() => setSelectedActionRef(null)}
+        onSave={(patch) => {
+          if (!selectedActionRef || !selectedAction) return;
+          patchActionDetails(selectedActionRef.strategyId, selectedAction, patch);
+        }}
+      />
+
       {archiveOpen && (
         <ArchiveModal
           items={archived.map((p) => ({ id: p.s.id, title: p.s.title }))}
@@ -777,6 +829,7 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
           onClose={() => setArchiveOpen(false)}
         />
       )}
+      <BotaoFlutuante rotulo="Criar nova estratégia com a Nyta IA" aoClicar={createStrategy} />
       <UpsellModal open={proModalOpen} context="action-plan" onClose={() => setProModalOpen(false)} />
     </div>
   );

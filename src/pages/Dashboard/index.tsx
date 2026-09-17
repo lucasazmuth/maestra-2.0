@@ -147,7 +147,6 @@ const PainelDoMetodo: FC<{
   const chosenStrategies = orderedStrategies.filter((strategy) => (strategy.tasks || []).some((task) => task.status !== 'archived'));
   const archivedStrategies = orderedStrategies.filter((strategy) => !(strategy.tasks || []).some((task) => task.status !== 'archived'));
   const visibleStrategies = strategyFilter === 'chosen' ? chosenStrategies : archivedStrategies;
-  const tasks = strategies.flatMap((strategy) => strategy.tasks || []).filter((task) => task.status !== 'archived');
   const objectives = content.objectives || [];
   const values = content.identity?.values || [];
   const identity = content.identity || {};
@@ -204,17 +203,6 @@ const PainelDoMetodo: FC<{
                 <h1 id='method-planejamento'>Planejamento Estratégico</h1>
                   <p>{content.planMonths ? `Ciclo de ${content.planMonths} meses para transformar prioridades em ações acompanháveis.` : 'Um ciclo para transformar prioridades em ações acompanháveis.'}</p>
                 </div>
-              </div>
-            </div>
-          </div>
-          <div className='method-planning-summary'>
-            <div className='method-planning-status'>
-              <button type='button' onClick={aoAbrirPlanoAcao || aoAbrir}>Abrir plano de ação <FiArrowRight aria-hidden /></button>
-            </div>
-            <div className='method-planning-pattern' aria-label='Indicadores do ciclo'>
-              <span>INDICADORES DO CICLO</span>
-              <div>
-                <i title="Concluído"><strong>{tasks.length ? Math.round((tasks.filter((task) => task.status === 'done').length / tasks.length) * 100) : 0}%</strong></i>
               </div>
             </div>
           </div>

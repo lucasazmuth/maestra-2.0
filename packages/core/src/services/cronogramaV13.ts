@@ -3,6 +3,7 @@ import type {
   ActionPlanAction,
   ActionPlanAnchor,
   ActionPlanCadence,
+  ActionPlanChecklistItem,
   ActionPlanDateType,
   ActionPlanMilestoneType,
   ActionPlanV13Schedule,
@@ -113,11 +114,13 @@ const dateBase = (
   state: ActionPlanV13StrategyState,
   previousDate?: string
 ): string | undefined => {
+  const acceptedStart = state.acceptedAt?.slice(0, 10);
+  const planStart = acceptedStart && schedule.startDate ? maxDate(acceptedStart, schedule.startDate) : acceptedStart || schedule.startDate;
   if (action.conta_de === 'lancamento') return schedule.releaseDate;
-  if (action.conta_de === 'inicio') return state.acceptedAt?.slice(0, 10) || schedule.startDate;
+  if (action.conta_de === 'inicio') return planStart;
   if (action.conta_de === 'propria') return state.ownDate;
   if (action.conta_de === 'informada_anterior') return previousDate;
-  if (definition.ancora === 'inicio') return state.acceptedAt?.slice(0, 10) || schedule.startDate;
+  if (definition.ancora === 'inicio') return planStart;
   return definition.ancora === 'lancamento' ? schedule.releaseDate : state.ownDate;
 };
 
@@ -137,7 +140,23 @@ const calculatedDate = (
   return action.fim_de_semana ? date : nextBrazilBusinessDay(date);
 };
 
-const statusFor = (value?: string): TaskStatus => value === 'done' || value === 'archived' ? value : 'todo';
+const statusFor = (value?: string): TaskStatus => value === 'done' || value === 'in_progress' || value === 'archived' ? value : 'todo';
+
+/**
+ * A checklist drives the action status when it changes. A `done` action with open
+ * checklist items is still valid: it represents the manual completion allowed by
+ * the v1.3 contract.
+ */
+export const actionStatusFromChecklist = (
+  tasks: ActionPlanChecklistItem[],
+  currentStatus?: TaskStatus
+): TaskStatus => {
+  if (currentStatus === 'archived') return 'archived';
+  if (tasks.length > 0 && tasks.every((task) => task.status === 'done')) return 'done';
+  if (currentStatus === 'done') return 'done';
+  if (tasks.some((task) => task.status === 'done' || task.status === 'in_progress')) return 'in_progress';
+  return currentStatus === 'in_progress' ? 'in_progress' : 'todo';
+};
 
 export interface BuildV13Options {
   today: string;
@@ -164,7 +183,7 @@ export const buildV13Actions = (
       || calculatedDate(definition, action, schedule, state, previousDate);
     const tight = !!date && date < options.today;
     const effectiveDate = date ? maxDate(date, options.today) : undefined;
-    if (effectiveDate && action.tipo !== 'rotina' && action.tipo !== 'informada') previousDate = effectiveDate;
+    if (effectiveDate && action.tipo !== 'rotina') previousDate = effectiveDate;
     const existing = options.existing?.find((item) => item.number === action.n || item.sourceNumber === action.n);
     const tasks = action.tarefas.map((description, index) => ({
       id: existing?.tasks[index]?.id || `${strategy.id}-${action.n}-${index + 1}`,
@@ -182,7 +201,8 @@ export const buildV13Actions = (
       dateType: action.tipo as ActionPlanDateType,
       anchor: definition.ancora as ActionPlanAnchor,
       date: effectiveDate,
-      status: statusFor(existing?.status),
+      status: actionStatusFromChecklist(tasks, statusFor(existing?.status)),
+      owner: existing?.owner,
       tight: tight || undefined,
       milestoneType: action.marco_tipo as ActionPlanMilestoneType | undefined,
       cadence: action.cadencia as ActionPlanCadence | undefined,

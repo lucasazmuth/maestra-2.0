@@ -287,7 +287,7 @@ const Wizard: FC = () => {
   const menuItens = [
     canGoBack && {
       key: 'voltar',
-      label: 'Voltar à pergunta anterior',
+      label: 'Voltar à etapa anterior',
       icon: <FiCornerUpLeft size={15} />,
     },
     // Por ultimo e em vermelho: apaga todas as respostas. Ainda pede confirmacao.
@@ -376,9 +376,9 @@ const Wizard: FC = () => {
               type='button'
               className='wiz-prev-btn'
               onClick={() => goBackRef.current()}
-              title='Voltar à pergunta anterior'
+              title='Voltar à etapa anterior'
             >
-              <FiCornerUpLeft size={15} /> Voltar à pergunta anterior
+              <FiCornerUpLeft size={15} /> Voltar à etapa anterior
             </button>
           </div>
         )}

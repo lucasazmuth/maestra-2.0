@@ -39,7 +39,7 @@ const NYTA_SYSTEM_PROMPT = `Você é a Nyta, a inteligência da Maestra: assiste
 - create_team_member, update_team_member, remove_team_member
 - update_plan_task (muda o status de tarefas do plano de ação — as tarefas estão listadas em DADOS DO ARTISTA)
 - create_strategy (cria uma NOVA estratégia no Plano de Ação, COM tarefas — use SÓ após conduzir o protocolo abaixo)
-- create_task (cria uma NOVA tarefa dentro de uma estratégia que JÁ existe — use SÓ após conduzir o protocolo abaixo)
+- create_task (cria uma NOVA tarefa dentro de uma estratégia que JÁ existe; com action_query, adiciona ao checklist da ação — use SÓ após conduzir o protocolo abaixo)
 
 ## Roteamento de intenção e segurança (LEIA ANTES de agir)
 - NUNCA imprima a chamada de uma ferramenta como texto/JSON no balão (ex.: \`{"date":"...","type":"show"}\`). Para executar algo, CHAME a ferramenta pelo canal de function calling — o app mostra um card de confirmação. Se faltar um dado obrigatório, PERGUNTE em linguagem simples; nunca preencha com placeholder tipo "[Nome do Artista]" ou "[Local do show]". Use sempre os dados reais de DADOS DO ARTISTA (o nome do artista está lá).
@@ -57,10 +57,10 @@ const NYTA_SYSTEM_PROMPT = `Você é a Nyta, a inteligência da Maestra: assiste
 - Se a mensagem do artista for vaga, curtíssima ou sem sentido (ex.: só emoji, "e aí?", "qual a boa?"), NÃO repita a resposta anterior nem assuma o assunto de antes. Responda leve e pergunte o que ele quer agora (ex.: "Não entendi direito. Quer ver seu plano, mexer no catálogo, na agenda, ou falar de estratégia?").
 - Diagnóstico em português: ao falar do perfil R·E·A·L, use os termos em PT — Reach = Alcance, Earnings = Faturamento, Audience = Audiência, Legitimacy = Legitimidade — e explique o perfil em PT (ex.: "Beginner" = perfil iniciante). Pode citar o acrônimo R·E·A·L, mas nunca deixe os 4 nomes só em inglês.
 
-## PROTOCOLO — Criar tarefa numa estratégia (create_task)
-Quando o artista quiser criar uma tarefa para uma estratégia (ex.: 'Quero criar uma tarefa para a estratégia "X"'), a estratégia JÁ vem no pedido — não pergunte qual é. Conduza UM PASSO POR MENSAGEM:
+## PROTOCOLO — Criar tarefa numa estratégia ou ação (create_task)
+Quando o artista quiser criar uma tarefa para uma estratégia ou para o checklist de uma ação (ex.: 'Quero adicionar uma tarefa à ação "Y" da estratégia "X"'), a estratégia e a ação JÁ vêm no pedido — não pergunte quais são. Conduza UM PASSO POR MENSAGEM:
 - PASSO 1 (Ação): pergunte em UMA frase curta qual a ação concreta que ele quer adicionar. Se ele não souber, proponha de 1 a 3 opções como LISTA NUMERADA em markdown e peça pra responder o número (ou descrever a dele).
-- PASSO 2: quando a tarefa estiver clara (verbo no infinitivo), chame create_task com strategy_query (um trecho do título da estratégia citada) e description. Aparece o card de CONFIRMAÇÃO pro artista aprovar.
+- PASSO 2: quando a tarefa estiver clara (verbo no infinitivo), chame create_task com strategy_query, description e, se o pedido citar uma ação, action_query (um trecho do título dessa ação). Aparece o card de CONFIRMAÇÃO pro artista aprovar. Nunca omita action_query quando o pedido for para um checklist específico.
 NUNCA chame create_task antes de ter a ação definida. Uma pergunta por mensagem.
 
 ## PROTOCOLO — Criar nova estratégia (create_strategy)
@@ -336,13 +336,17 @@ const NYTA_TOOLS = [
     function: {
       name: "create_task",
       description:
-        "Cria uma NOVA tarefa dentro de uma estratégia que JÁ existe no Plano de Ação. Use depois de entender com o artista qual a ação concreta. Identifique a estratégia por um trecho do título (strategy_query). Aparece como card de confirmação para o artista aprovar.",
+        "Cria uma NOVA tarefa dentro de uma estratégia existente ou no checklist de uma ação existente. Use depois de entender qual a tarefa concreta. Se o pedido veio de uma ação, envie strategy_query e action_query para inserir no checklist correto. Aparece como card de confirmação.",
       parameters: {
         type: "object",
         properties: {
           strategy_query: {
             type: "string",
             description: "Trecho do título da estratégia onde a tarefa entra (ex.: 'prospecção de shows'). Deve casar com uma estratégia listada em DADOS DO ARTISTA.",
+          },
+          action_query: {
+            type: "string",
+            description: "Trecho do título da ação cujo checklist receberá a tarefa. Obrigatório quando o artista pediu uma tarefa para uma ação específica.",
           },
           description: {
             type: "string",
@@ -643,7 +647,7 @@ interface ArtistContext {
   events: Array<{ id: string; title: string; date: string; type: string }>;
   teamMembers: Array<{ id: string; name: string; email: string; status: string }>;
   // Plano de ação real do app: artists.content.strategies (blob JSON), não a tabela strategic_plans.
-  actionPlan: Array<{ strategy: string; tasks: Array<{ description: string; status: string }> }>;
+  actionPlan: Array<{ strategy: string; tasks: Array<{ description: string; status: string }>; actions: Array<{ title: string; status: string; tasks: string[] }> }>;
   // Dados de plataforma salvos no content (Chartmetric resumo+profundo, quiz, diagnóstico-base).
   chartmetric: Record<string, unknown> | null;
   quiz: Record<string, unknown> | null;
@@ -665,6 +669,7 @@ interface PlanStrategy {
   id?: string;
   title?: string;
   tasks?: PlanTask[];
+  actions?: Array<{ id?: string; title?: string; status?: string; tasks?: PlanTask[] }>;
   finalScore?: number;
 }
 
@@ -695,8 +700,8 @@ async function fetchArtistContext(artistId: string, authHeader: string): Promise
         // Ordena igual à tela do Plano de Ação: as priorizadas (com tarefa) primeiro, e por
         // finalScore desc — assim a 1ª da lista é o "Comece por aqui" que o artista vê.
         const ordered = [...c.strategies].sort((a, b) => {
-          const at = (a.tasks?.length || 0) > 0 ? 1 : 0;
-          const bt = (b.tasks?.length || 0) > 0 ? 1 : 0;
+          const at = (a.actions?.length || a.tasks?.length || 0) > 0 ? 1 : 0;
+          const bt = (b.actions?.length || b.tasks?.length || 0) > 0 ? 1 : 0;
           if (at !== bt) return bt - at;
           return (Number(b?.finalScore) || 0) - (Number(a?.finalScore) || 0);
         });
@@ -705,6 +710,11 @@ async function fetchArtistContext(artistId: string, authHeader: string): Promise
           tasks: (s.tasks || []).map((t) => ({
             description: t.description || "",
             status: t.status || "todo",
+          })),
+          actions: (s.actions || []).filter((action) => action.status !== "archived").map((action) => ({
+            title: action.title || "Ação",
+            status: action.status || "todo",
+            tasks: (action.tasks || []).map((task) => task.description || ""),
           })),
         }));
       }
@@ -977,11 +987,14 @@ function formatArtistContext(ctx: ArtistContext): string {
     t += "\n- Equipe: NENHUM membro cadastrado.";
   }
   if (ctx.actionPlan?.length) {
-    t += "\n- Plano de ação (estratégias e tarefas — use update_plan_task para mudar o status):";
+    t += "\n- Plano de ação (estratégias, ações e tarefas — use update_plan_task para mudar o status de tarefas legadas):";
     ctx.actionPlan.forEach((s) => {
       t += `\n  • Estratégia "${s.strategy}":`;
       s.tasks.forEach((task) => {
         t += `\n    - "${task.description}" (${task.status})`;
+      });
+      s.actions.forEach((action) => {
+        t += `\n    - Ação "${action.title}" (${action.status}); checklist: ${action.tasks.join("; ") || "vazio"}`;
       });
     });
   } else {
@@ -1576,9 +1589,9 @@ async function executeTool(
         return { success: true, summary: `Estratégia "${title}" criada com ${taskDescs.length} tarefa(s), prioridade ${pLabel}. Já aparece no Plano de Ação.` };
       }
       case "create_task": {
-        // Adiciona UMA tarefa a uma estratégia já existente (artists.content.strategies). A estratégia
-        // é localizada por trecho do título; a Nyta já conduziu o protocolo (ação definida).
+        // O checklist v1.3 pertence à ação; tarefas legadas continuam no nível da estratégia.
         const strategyQuery = ((args.strategy_query as string) || "").trim().toLowerCase();
+        const actionQuery = ((args.action_query as string) || "").trim().toLowerCase();
         const desc = ((args.description as string) || "").trim();
         if (!strategyQuery) return { success: false, summary: "strategy_query obrigatório." };
         if (!desc) return { success: false, summary: "description obrigatória." };
@@ -1597,11 +1610,20 @@ async function executeTool(
         }
         const uid = () => (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
         const target = matches[0];
-        target.tasks = [...(target.tasks || []), { id: uid(), description: desc, status: "todo" }];
+        let destination = `estratégia "${target.title}"`;
+        if (actionQuery) {
+          const actions = (target.actions || []).filter((action) => action.status !== "archived" && (action.title || "").toLowerCase().includes(actionQuery));
+          if (actions.length === 0) return { success: false, summary: `Nenhuma ação da estratégia "${target.title}" contém "${args.action_query}".` };
+          if (actions.length > 1) return { success: false, summary: `Mais de uma ação corresponde a "${args.action_query}". Especifique melhor.` };
+          actions[0].tasks = [...(actions[0].tasks || []), { id: uid(), description: desc, status: "todo" }];
+          destination = `ação "${actions[0].title}"`;
+        } else {
+          target.tasks = [...(target.tasks || []), { id: uid(), description: desc, status: "todo" }];
+        }
         const { error: uErr } = await admin
           .from("artists").update({ content, updated_at: new Date().toISOString() }).eq("id", artistId);
         if (uErr) return { success: false, summary: `Falha ao salvar: ${uErr.message}` };
-        return { success: true, summary: `Tarefa "${desc}" adicionada à estratégia "${target.title}".` };
+        return { success: true, summary: `Tarefa "${desc}" adicionada à ${destination}.` };
       }
       default:
         return { success: false, summary: `Ferramenta '${toolName}' desconhecida.` };

@@ -46,6 +46,7 @@ const ARG_LABELS_PT: Record<string, string> = {
   task_id: 'Tarefa',
   task_query: 'Tarefa',
   strategy_query: 'Estratégia',
+  action_query: 'Ação',
   notes: 'Notas',
   priority: 'Prioridade',
   due_date: 'Data de entrega',

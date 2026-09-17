@@ -1,9 +1,8 @@
 import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import { App, DatePicker, Input, Select } from 'antd';
 import dayjs from 'dayjs';
-import { FiCheck, FiEdit3, FiPlus, FiRefreshCw, FiTrash2, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiCheck, FiEdit3, FiPlus, FiRefreshCw, FiTrash2, FiX } from 'react-icons/fi';
 
 import { listGenres } from '@maestra/core/services/db/genres';
 import { searchCities } from '@maestra/core/services/db/cities';
@@ -27,7 +26,8 @@ import { generateObjectives } from '@maestra/core/wizard/motores';
 import { stripEmDash } from '@maestra/core/wizard/limpar';
 import type {
   ActionTask,
-  ActionPlanSchedule,
+  ActionPlanAction,
+  ActionPlanV13Schedule,
   ArtistGender,
   ArtistIdentity,
   ArtistStage,
@@ -39,7 +39,8 @@ import type {
   Strategy,
   SwotAnalysis,
 } from '@maestra/core/interfaces/maestra';
-import { scheduleBankFor, scheduleStrategy } from '@maestra/core/services/cronograma';
+import { scheduleBankFor } from '@maestra/core/services/cronograma';
+import { buildV13Actions, CRONOGRAMA_V13_PATH_QUESTIONS, strategyDefinitionV13 } from '@maestra/core/services/cronogramaV13';
 
 // Widgets interativos renderizados dentro do chat da Nyta. Cada um coleta uma resposta
 // estruturada e devolve via callback — o orquestrador (NytaChat) ecoa a resposta como
@@ -47,128 +48,163 @@ import { scheduleBankFor, scheduleStrategy } from '@maestra/core/services/cronog
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
-// O cronograma não é texto gerado pela IA: o card só coleta as âncoras e aplica o motor
-// determinístico do núcleo. Assim o mesmo resultado pode ser reproduzido no aplicativo nativo.
+const ScheduleGantt: FC<{
+  actions: ActionPlanAction[];
+  onDateChange: (action: ActionPlanAction, date?: string) => void;
+}> = ({ actions, onDateChange }) => {
+  const dates = actions.map((action) => action.date).filter((date): date is string => !!date);
+  const orderedDates = dates.map((date) => dayjs(date)).sort((a, b) => a.valueOf() - b.valueOf());
+  const start = (orderedDates[0] || dayjs()).startOf('month');
+  const end = (orderedDates[orderedDates.length - 1] || start).endOf('month');
+  const monthCount = Math.max(1, end.diff(start, 'month') + 1);
+  const width = Math.max(720, monthCount * 150);
+  const span = Math.max(1, end.diff(start, 'day'));
+  const months = Array.from({ length: monthCount }, (_, index) => start.add(index, 'month'));
+  const position = (date?: string) => date
+    ? Math.max(38, Math.min(width - 38, (dayjs(date).diff(start, 'day') / span) * width))
+    : 38;
+
+  return <div className='schedule-studio__gantt' aria-label='Gantt das ações'>
+    <div className='schedule-studio__gantt-grid' style={{ width: 220 + width }}>
+      <div className='schedule-studio__gantt-corner'>Ações</div>
+      <div className='schedule-studio__gantt-months' style={{ width }}>
+        {months.map((month) => <span key={month.format('YYYY-MM')} style={{ width: width / monthCount }}>{month.format('MMM YYYY')}</span>)}
+      </div>
+      {actions.map((action, index) => <div className='schedule-studio__gantt-row' key={action.id}>
+        <div className='schedule-studio__gantt-action'><small>{String(index + 1).padStart(2, '0')}</small><span>{action.title}{action.cadence && <em>Rotina {action.cadence}</em>}</span></div>
+        <div className='schedule-studio__gantt-timeline' style={{ width }}>
+          {months.map((month) => <i key={month.format('YYYY-MM')} style={{ width: width / monthCount }} />)}
+          <DatePicker
+            allowClear={action.dateType === 'informada'}
+            inputReadOnly
+            aria-label={`Início: ${action.title}`}
+            className='schedule-studio__gantt-marker'
+            value={action.date ? dayjs(action.date) : null}
+            onChange={(value) => onDateChange(action, value?.format('YYYY-MM-DD'))}
+            format='DD MMM'
+            placeholder='Data'
+            style={{ left: position(action.date) }}
+          />
+        </div>
+      </div>)}
+    </div>
+  </div>;
+};
+
+// A revisão usa as ações datadas do motor v1.3; tarefas são apenas o checklist de cada ação.
 export const ScheduleApprovalCard: FC<{
   strategies: Strategy[];
-  schedule: ActionPlanSchedule;
-  texts: { aceite: string; apertadas: string; continua: string; ancora_mudou: string; caminho_apoio: string };
-  onConfirm: (schedule: ActionPlanSchedule, strategies: Strategy[]) => void;
-}> = ({ strategies, schedule: initial, texts, onConfirm }) => {
+  schedule: ActionPlanV13Schedule;
+  onConfirm: (schedule: ActionPlanV13Schedule, strategies: Strategy[]) => void;
+}> = ({ strategies, schedule: initial, onConfirm }) => {
   const today = dayjs().format('YYYY-MM-DD');
-  const [schedule, setSchedule] = useState<ActionPlanSchedule>(initial);
+  const [schedule, setSchedule] = useState<ActionPlanV13Schedule>(initial);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [view, setView] = useState<'timeline' | 'list'>('timeline');
-  const [editorOpen, setEditorOpen] = useState(false);
-  const calculated = useMemo(() => strategies.map((strategy) => scheduleStrategy(strategy, schedule, today)), [strategies, schedule, today]);
-  const update = (patch: Partial<ActionPlanSchedule>) => setSchedule((current) => ({ ...current, ...patch,
-    strategies: Object.fromEntries(Object.entries(current.strategies).map(([id, state]) => {
-      const source = strategies.find(strategy => strategy.id === id);
-      const anchor = source ? scheduleBankFor(source)?.ancora : undefined;
-      const affected = (patch.releaseDate !== undefined && anchor === 'lancamento') || (patch.startDate !== undefined && anchor === 'inicio');
-      return [id, affected ? { ...state, accepted: false, manualDates: {}, adjusted: false } : state];
-    })),
+  const [view, setView] = useState<'list' | 'gantt'>('list');
+  const calculated = useMemo(() => strategies.map((strategy) => ({
+    ...strategy,
+    actions: buildV13Actions(strategy, schedule, { today, existing: strategy.actions }),
+  })), [strategies, schedule, today]);
+  const update = (patch: Partial<ActionPlanV13Schedule>) => setSchedule((current) => ({
+    ...current,
+    ...patch,
+    strategies: Object.fromEntries(Object.entries(current.strategies).map(([id, state]) => [id, { ...state, acceptedAt: undefined }])),
   }));
-  const updateState = (strategyId: string, patch: Record<string, unknown>) => setSchedule((current) => ({
+  const updateState = (strategyId: string, patch: Partial<ActionPlanV13Schedule['strategies'][string]>) => setSchedule((current) => ({
     ...current,
     strategies: { ...current.strategies, [strategyId]: { ...current.strategies[strategyId], ...patch } },
   }));
-  const moveTask = (strategyId: string, order: number, date?: string) => {
-    if (!date) return;
-    const previous = schedule.strategies[strategyId]?.manualDates || {};
-    updateState(strategyId, { manualDates: { ...previous, [order]: date }, adjusted: true, accepted: false });
-  };
-  const accepted = calculated.every((strategy) => schedule.strategies[strategy.id]?.accepted);
-  const gantt = useMemo(() => {
-    const dates = (calculated[activeIndex]?.tasks || []).map(task => task.deadline).filter(Boolean) as string[];
-    if (!dates.length) dates.push(today);
-    const ordered = dates.map((date) => dayjs(date)).sort((a, b) => a.valueOf() - b.valueOf());
-    const start = ordered[0].startOf('month');
-    const end = ordered[ordered.length - 1].endOf('month');
-    const span = Math.max(1, end.diff(start, 'day'));
-    const position = (date?: string) => date ? Math.max(0, Math.min(100, dayjs(date).diff(start, 'day') / span * 100)) : 0;
-    const monthCount = Math.max(1, end.diff(start, 'month') + 1);
+  const moveAction = (strategyId: string, action: ActionPlanAction, date?: string) => setSchedule((current) => {
+    const state = current.strategies[strategyId] || {};
+    const key = action.dateType === 'informada' ? 'informedDates' : 'manualDates';
+    const dates = { ...state[key] };
+    if (date) dates[action.number] = date;
+    else delete dates[action.number];
     return {
-      start,
-      end,
-      position,
-      months: Array.from({ length: monthCount }, (_, index) => start.add(index, 'month')),
-      width: Math.max(620, monthCount * 150),
+      ...current,
+      strategies: { ...current.strategies, [strategyId]: { ...state, [key]: dates, acceptedAt: undefined } },
     };
-  }, [calculated, activeIndex, today]);
+  });
+  const accepted = calculated.length > 0 && calculated.every((strategy) => schedule.strategies[strategy.id]?.acceptedAt);
+  const datesOutOfOrder = !!(schedule.startDate && schedule.releaseDate && dayjs(schedule.releaseDate).isBefore(dayjs(schedule.startDate), 'day'));
 
   return (
     <div className='nyta-card schedule-studio'>
       <header className='schedule-studio__intro'>
-        <div><small>Última etapa</small><h2>Monte seu cronograma</h2><p>Revise uma estratégia por vez. A Nyta já organizou as datas para você.</p></div>
-        <strong><b>{calculated.filter(strategy => schedule.strategies[strategy.id]?.accepted).length}</b><small>de {calculated.length} prontas</small></strong>
+        <div><small>Última etapa</small><h2>Monte seu cronograma</h2><p>Escolha as datas do plano e confira quando cada ação começa.</p></div>
+        <strong><b>{calculated.filter(strategy => schedule.strategies[strategy.id]?.acceptedAt).length}</b><small>de {calculated.length} aprovadas</small></strong>
       </header>
-      <details className='schedule-studio__dates'>
-      <summary><span><small>Começo do plano</small><b>{schedule.startDate ? dayjs(schedule.startDate).format('DD MMM YYYY') : 'A definir'}</b></span><i aria-hidden>→</i><span><small>Próximo lançamento</small><b>{schedule.releaseDate ? dayjs(schedule.releaseDate).format('DD MMM YYYY') : 'A definir'}</b></span><em>Editar</em></summary>
-      <div className='schedule-studio__date-fields'>
-        <label style={{ display: 'grid', gap: 6, fontWeight: 700 }}>Próximo lançamento (Dia D)
-          <DatePicker allowClear={false} value={schedule.releaseDate ? dayjs(schedule.releaseDate) : null} onChange={(value) => update({ releaseDate: value?.format('YYYY-MM-DD') })} format='DD/MM/YYYY' />
-        </label>
-        <label style={{ display: 'grid', gap: 6, fontWeight: 700 }}>Início do plano
-          <DatePicker allowClear={false} value={schedule.startDate ? dayjs(schedule.startDate) : null} onChange={(value) => update({ startDate: value?.format('YYYY-MM-DD') })} format='DD/MM/YYYY' />
-        </label>
-      </div>
-      </details>
+      <section className='schedule-studio__dates' aria-label='Datas do plano'>
+        <div className='schedule-studio__date-fields'>
+          <label>Quando o plano começa?
+            <DatePicker allowClear={false} value={schedule.startDate ? dayjs(schedule.startDate) : null} onChange={(value) => update({ startDate: value?.format('YYYY-MM-DD') })} format='DD/MM/YYYY' placeholder='Escolha a data' aria-label='Data de início do plano' />
+            <small className='schedule-studio__date-hint'>Define as ações planejadas a partir do início.</small>
+          </label>
+          <label>Quando é o próximo lançamento?
+            <DatePicker allowClear={false} value={schedule.releaseDate ? dayjs(schedule.releaseDate) : null} onChange={(value) => update({ releaseDate: value?.format('YYYY-MM-DD') })} format='DD/MM/YYYY' placeholder='Escolha a data' aria-label='Data do próximo lançamento' />
+            <small className='schedule-studio__date-hint'>Define as ações planejadas a partir do lançamento.</small>
+          </label>
+        </div>
+        {datesOutOfOrder && <p className='schedule-studio__date-error' role='alert'>O lançamento precisa ser no mesmo dia ou depois do início do plano.</p>}
+      </section>
       <div className='schedule-studio__workspace'>
       <nav className='schedule-studio__strategy-nav' aria-label='Estratégias do cronograma'>
         <span>Suas estratégias</span>
-        {calculated.map((strategy, index) => <button type='button' key={strategy.id} className={`${activeIndex === index ? 'is-active' : ''}${schedule.strategies[strategy.id]?.accepted ? ' is-done' : ''}`} onClick={() => setActiveIndex(index)}><i>{schedule.strategies[strategy.id]?.accepted ? <FiCheck size={13} /> : index + 1}</i><span>{strategy.title}</span></button>)}
+        {calculated.map((strategy, index) => <button type='button' key={strategy.id} className={`${activeIndex === index ? 'is-active' : ''}${schedule.strategies[strategy.id]?.acceptedAt ? ' is-done' : ''}`} aria-current={activeIndex === index ? 'step' : undefined} onClick={() => setActiveIndex(index)}><i>{schedule.strategies[strategy.id]?.acceptedAt ? <FiCheck size={13} /> : index + 1}</i><span>{strategy.title}</span></button>)}
       </nav>
       <main className='schedule-studio__active'>
-      <div style={{ display: 'grid', gap: 14 }}>
         {calculated.slice(activeIndex, activeIndex + 1).map((strategy) => {
-          const definition = scheduleBankFor(strategy)!;
+          const definition = strategyDefinitionV13(strategy);
+          const legacyDefinition = scheduleBankFor(strategy);
+          const pathQuestion = CRONOGRAMA_V13_PATH_QUESTIONS.find((question) => question.estrategia.replace(/^#/, '') === String(strategy.bankId || strategy.id).replace(/^#/, ''));
           const state = schedule.strategies[strategy.id] || {};
-          const tight = strategy.tasks.filter((task) => task.schedule?.tight).length;
-          const ready = !!definition && !!(definition.ancora === 'propria' ? state.ownDate : definition.ancora === 'inicio' ? schedule.startDate : schedule.releaseDate) && (!definition.caminho || !!state.path);
+          const actions = strategy.actions || [];
+          const tight = actions.filter((action) => action.tight).length;
+          const showActions = !pathQuestion || !!state.selectedPath;
+          const ready = !datesOutOfOrder && !!definition && !!(definition.ancora === 'propria' ? state.ownDate : definition.ancora === 'inicio' ? schedule.startDate : schedule.releaseDate) && (!pathQuestion || !!state.selectedPath);
           return <section key={strategy.id} className='schedule-studio__strategy'>
             <div className='schedule-studio__strategy-head'>
-              <div><small>Estratégia {activeIndex + 1} de {calculated.length}</small><strong>{strategy.title}</strong><div>{definition.ancora === 'lancamento' ? 'Planejada a partir do lançamento' : definition.ancora === 'inicio' ? 'Planejada a partir do início do plano' : 'Planejada a partir da data escolhida'}</div></div>
-              <span className='schedule-studio__status'>{state.accepted ? <><FiCheck size={14} /> Aprovada</> : `${strategy.tasks.length} tarefas`}</span>
+              <div><small>Estratégia {activeIndex + 1} de {calculated.length}</small><strong>{strategy.title}</strong><div>{definition?.ancora === 'lancamento' ? 'Planejada a partir do lançamento' : definition?.ancora === 'inicio' ? 'Planejada a partir do início do plano' : 'Planejada a partir da data escolhida'}</div></div>
+              {state.acceptedAt && <span className='schedule-studio__status'><FiCheck size={14} /> Aprovada</span>}
             </div>
-            {definition.pergunta_propria && <label style={{ display: 'grid', gap: 6, marginTop: 14, fontSize: 13, fontWeight: 700 }}>{definition.pergunta_propria}
-              <DatePicker value={state.ownDate ? dayjs(state.ownDate) : null} onChange={(value) => updateState(strategy.id, { ownDate: value?.format('YYYY-MM-DD'), accepted: false, manualDates: {}, adjusted: false })} format='DD/MM/YYYY' />
-            </label>}
-            {definition.caminho && <label style={{ display: 'grid', gap: 6, marginTop: 14, fontSize: 13, fontWeight: 700 }}>Como você quer seguir?
-              <Select value={state.path} placeholder='Escolha um caminho' options={definition.caminho.opcoes.map((option) => ({ value: option.rotulo, label: option.rotulo }))} onChange={(path) => updateState(strategy.id, { path, accepted: false, manualDates: {}, adjusted: false })} />
-              <small style={{ color: '#71809e', fontWeight: 400 }}>{texts.caminho_apoio}</small>
-            </label>}
-            {ready && <div className='schedule-studio__overview'><div><span>Primeira tarefa</span><strong>{strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort()[0] ? dayjs(strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort()[0]).format('DD MMM') : 'A definir'}</strong></div><div className='schedule-studio__overview-line' aria-hidden='true'>{strategy.tasks.map((task, index) => task.deadline && <i key={index} style={{ left: `${gantt.position(task.deadline)}%` }} />)}</div><div><span>Último início</span><strong>{strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort().at(-1) ? dayjs(strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort().at(-1)).format('DD MMM') : 'A definir'}</strong></div></div>}
-            <button type='button' className='schedule-studio__open-editor' onClick={() => setEditorOpen(true)}>Quero revisar ou ajustar as datas <span>{strategy.tasks.length} tarefas</span></button>
-            {editorOpen && createPortal(<div className='schedule-editor' role='dialog' aria-modal='true' aria-labelledby='scheduleEditorTitle'>
-            <section className='schedule-editor__panel'>
-            <header className='schedule-editor__header'><div><small>Estratégia {activeIndex + 1} de {calculated.length}</small><h2 id='scheduleEditorTitle'>{strategy.title}</h2><p>Confira quando cada tarefa começa. Clique em uma data para ajustar.</p></div><button type='button' onClick={() => setEditorOpen(false)} aria-label='Fechar cronograma' title='Fechar'><span className='schedule-editor__close-icon' aria-hidden='true' /></button></header>
-            <div className='schedule-editor__body'>
-            <div className='schedule-studio__toolbar'><span>{strategy.tasks.length} tarefas · {definition.ancora === 'lancamento' ? 'Organizadas pelo lançamento' : definition.ancora === 'inicio' ? 'Organizadas pelo início do plano' : 'Organizadas pela data escolhida'}</span><div role='group' aria-label='Visualização'><button type='button' aria-pressed={view === 'timeline'} onClick={() => setView('timeline')}>Gantt</button><button type='button' aria-pressed={view === 'list'} onClick={() => setView('list')}>Lista</button></div></div>
-            {view === 'timeline' ? <div className='schedule-gantt' aria-label='Cronograma em Gantt'>
-              <div className='schedule-gantt__content' style={{ width: 300 + gantt.width }}>
-                <div className='schedule-gantt__corner'>Tarefas</div>
-                <div className='schedule-gantt__months' style={{ width: gantt.width }}>{gantt.months.map(month => <span key={month.format('YYYY-MM')} style={{ width: gantt.width / gantt.months.length }}>{month.format('MMM YYYY')}</span>)}</div>
-                {strategy.tasks.map((task, index) => <div className='schedule-gantt__row' key={task.id}>
-                  <div className='schedule-gantt__task'><small>{String(index + 1).padStart(2, '0')}</small><span>{task.description}</span>{task.schedule?.continuous && <b>Semanal</b>}{task.schedule?.tight && <b className='is-tight'>Apertada</b>}</div>
-                  <div className='schedule-gantt__timeline' style={{ width: gantt.width }}>
-                    {gantt.months.map(month => <i key={month.format('YYYY-MM')} style={{ width: gantt.width / gantt.months.length }} />)}
-                    {task.schedule?.continuous && <span className='schedule-gantt__recurrence' style={{ left: `${gantt.position(task.deadline)}%` }} />}
-                    <DatePicker allowClear={false} inputReadOnly aria-label={`Início: ${task.description}`} className={`schedule-gantt__marker${task.schedule?.tight ? ' is-tight' : ''}`} value={task.deadline ? dayjs(task.deadline) : null} onChange={(value) => moveTask(strategy.id, task.schedule?.order || 0, value?.format('YYYY-MM-DD'))} format='DD MMM' style={{ left: `${gantt.position(task.deadline)}%` }} />
-                  </div>
-                </div>)}
-              </div>
-            </div> : <div className='schedule-list'>{strategy.tasks.map((task, index) => <label key={task.id}><span><small>{String(index + 1).padStart(2, '0')}</small>{task.description}</span><DatePicker allowClear={false} aria-label={`Início: ${task.description}`} size='small' value={task.deadline ? dayjs(task.deadline) : null} onChange={(value) => moveTask(strategy.id, task.schedule?.order || 0, value?.format('YYYY-MM-DD'))} format='DD/MM' /></label>)}</div>}
-            <p className='schedule-studio__note'>{texts.aceite}</p>
-            </div>
-            <footer className='schedule-editor__footer'><span>{tight ? `${tight} tarefa${tight === 1 ? '' : 's'} apertada${tight === 1 ? '' : 's'}` : 'Datas prontas para aprovação'}</span><button type='button' onClick={() => setEditorOpen(false)}>Concluir revisão</button></footer>
-            </section>
-            </div>, document.body)}
-            {tight > 0 && <p style={{ color: '#9a6400', margin: '12px 0 0', fontSize: 13 }}>{texts.apertadas.replace('{n}', String(tight))}</p>}
-            <footer className='schedule-studio__footer'><button type='button' disabled={activeIndex === 0} onClick={() => setActiveIndex(value => value - 1)}>Anterior</button><button type='button' className='schedule-studio__approve' disabled={!ready} onClick={() => { updateState(strategy.id, { accepted: true }); if (activeIndex + 1 < calculated.length) setActiveIndex(value => value + 1); }}>{activeIndex + 1 < calculated.length ? (state.accepted ? 'Continuar' : 'Tudo certo, continuar') : (state.accepted ? 'Concluir' : 'Tudo certo, concluir')}</button></footer>
+            {(definition?.ancora === 'propria' || pathQuestion) && <div className='schedule-studio__choices'>
+              {definition?.ancora === 'propria' && <label>{legacyDefinition?.pergunta_propria || 'Qual é a data deste evento?'}
+                <DatePicker value={state.ownDate ? dayjs(state.ownDate) : null} onChange={(value) => updateState(strategy.id, { ownDate: value?.format('YYYY-MM-DD'), acceptedAt: undefined })} format='DD/MM/YYYY' placeholder='Escolha a data' aria-label='Data do evento desta estratégia' />
+              </label>}
+              {pathQuestion && <label>{pathQuestion.pergunta}
+                <Select value={state.selectedPath} placeholder='Escolha uma opção' options={pathQuestion.opcoes.map((option) => ({ value: option.rotulo, label: option.rotulo }))} onChange={(selectedPath) => updateState(strategy.id, { selectedPath, acceptedAt: undefined, manualDates: {}, informedDates: {} })} />
+              </label>}
+            </div>}
+            {showActions && <div className='schedule-studio__task-heading'>
+              <div><h3>Ações desta estratégia</h3><p>Confira a data de cada ação. As tarefas ficam no checklist de cada uma.</p></div>
+              {ready && <div className='schedule-studio__task-controls'>
+                <span>{actions.length} ações</span>
+                <div className='schedule-studio__view-switch' role='group' aria-label='Visualização das ações'>
+                  <button type='button' aria-pressed={view === 'list'} onClick={() => setView('list')}>Lista</button>
+                  <button type='button' aria-pressed={view === 'gantt'} onClick={() => setView('gantt')}>Gantt</button>
+                </div>
+              </div>}
+            </div>}
+            {showActions && (ready ? (view === 'list' ? <ol className='schedule-studio__task-list'>
+              {actions.map((action, index) => <li key={action.id}>
+                <span className='schedule-studio__task-number'>{String(index + 1).padStart(2, '0')}</span>
+                <div className='schedule-studio__task-copy'>
+                  <strong>{action.title}</strong>
+                  {action.cadence && <small>Rotina {action.cadence}</small>}
+                  {action.dateType === 'informada' && !action.date && <small>Você pode informar a data depois</small>}
+                  {action.tight && <small className='is-tight'>Data apertada</small>}
+                  {action.tasks.length > 0 && <details className='schedule-studio__checklist'><summary>{action.tasks.length} {action.tasks.length === 1 ? 'tarefa' : 'tarefas'} no checklist</summary><ul>{action.tasks.map((task) => <li key={task.id}>{task.description}</li>)}</ul></details>}
+                </div>
+                <label>{action.dateType === 'informada' ? 'Data a confirmar' : 'Início'}
+                  <DatePicker allowClear={action.dateType === 'informada'} aria-label={`Data da ação: ${action.title}`} value={action.date ? dayjs(action.date) : null} onChange={(value) => moveAction(strategy.id, action, value?.format('YYYY-MM-DD'))} format='DD/MM/YYYY' placeholder='Escolha a data' />
+                </label>
+              </li>)}
+            </ol> : <ScheduleGantt actions={actions} onDateChange={(action, date) => moveAction(strategy.id, action, date)} />) : <p className='schedule-studio__missing-dates'>Preencha as datas acima para ver as ações.</p>)}
+            {ready && tight > 0 && <p className='schedule-studio__warning'>{tight} {tight === 1 ? 'ação ficou com a data apertada' : 'ações ficaram com datas apertadas'}. Confira antes de aprovar.</p>}
+            {ready && <p className='schedule-studio__note'>Se alguma data não funcionar, escolha outra no campo da ação antes de aprovar.</p>}
+            <footer className='schedule-studio__footer'><button type='button' disabled={activeIndex === 0} onClick={() => setActiveIndex(value => value - 1)}>Estratégia anterior</button><button type='button' className='schedule-studio__approve' disabled={!ready} onClick={() => { updateState(strategy.id, { acceptedAt: new Date().toISOString() }); if (activeIndex + 1 < calculated.length) setActiveIndex(value => value + 1); }}>{activeIndex + 1 < calculated.length ? (state.acceptedAt ? 'Próxima estratégia' : 'Aprovar e continuar') : (state.acceptedAt ? 'Concluir' : 'Aprovar esta estratégia')}</button></footer>
           </section>;
         })}
-      </div>
       </main>
       </div>
       {accepted && <button type='button' className='schedule-studio__save' onClick={() => onConfirm(schedule, calculated)}>Salvar cronograma na Agenda</button>}
@@ -1221,18 +1257,7 @@ export const SwotInternalCard: FC<{
         <span style={{ color: 'var(--wz-blue)', fontSize: 11, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase' }}>
           Diagnóstico interno
         </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          <span style={{ color: 'var(--wz-muted)', fontSize: 12, fontWeight: 600 }}>{idx + 1} de {total}</span>
-          {idx > 0 && (
-            <button
-              disabled={advancing}
-              onClick={() => setIdx((i) => Math.max(0, i - 1))}
-              style={{ background: 'none', border: 'none', color: 'var(--wz-muted)', fontSize: 12, cursor: 'pointer', padding: 0 }}
-            >
-              ← Voltar
-            </button>
-          )}
-        </span>
+        <span style={{ color: 'var(--wz-muted)', fontSize: 12, fontWeight: 600, flexShrink: 0 }}>{idx + 1} de {total}</span>
       </div>
       <div style={{ height: 3, borderRadius: 3, background: 'var(--wz-line)', marginBottom: 14, overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${barPct}%`, background: 'var(--wz-blue)', borderRadius: 3, transition: 'width .3s ease' }} />
@@ -1290,6 +1315,19 @@ export const SwotInternalCard: FC<{
           })}
         </div>
       </div>
+      {idx > 0 && (
+        <div className='swot-internal-nav'>
+          <button
+            type='button'
+            className='swot-internal-back'
+            disabled={advancing}
+            onClick={() => setIdx((i) => Math.max(0, i - 1))}
+          >
+            <FiArrowLeft size={16} aria-hidden='true' />
+            Pergunta anterior
+          </button>
+        </div>
+      )}
     </div>
   );
 };
