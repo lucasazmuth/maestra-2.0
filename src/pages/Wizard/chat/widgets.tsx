@@ -71,7 +71,7 @@ const ScheduleGantt: FC<{
         {months.map((month) => <span key={month.format('YYYY-MM')} style={{ width: width / monthCount }}>{month.format('MMM YYYY')}</span>)}
       </div>
       {actions.map((action, index) => <div className='schedule-studio__gantt-row' key={action.id}>
-        <div className='schedule-studio__gantt-action'><small>{String(index + 1).padStart(2, '0')}</small><span>{action.title}{action.cadence && <em>Rotina {action.cadence}</em>}</span></div>
+        <div className='schedule-studio__gantt-action'><small>{String(index + 1).padStart(2, '0')}</small><span>{action.title}{action.cadence && <em>Rotina {action.cadence}</em>}{action.tight && <em className='is-tight'>Data apertada</em>}</span></div>
         <div className='schedule-studio__gantt-timeline' style={{ width }}>
           {months.map((month) => <i key={month.format('YYYY-MM')} style={{ width: width / monthCount }} />)}
           <DatePicker

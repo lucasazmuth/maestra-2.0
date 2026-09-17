@@ -1604,6 +1604,7 @@
 .schedule-studio__gantt-action small { color: var(--wz-faint); font-size: 10px; font-weight: 800; }
 .schedule-studio__gantt-action span { color: var(--wz-ink); font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
 .schedule-studio__gantt-action em { display: block; margin-top: 3px; color: #27816a; font-size: 10px; font-style: normal; }
+.schedule-studio__gantt-action em.is-tight { color: #9a6400; }
 .schedule-studio__gantt-timeline { position: relative; display: flex; min-height: 66px; box-sizing: border-box; border-bottom: 1px solid var(--wz-line); background: #fff; }
 .schedule-studio__gantt-timeline > i { flex-shrink: 0; border-right: 1px solid #edf1f5; }
 .schedule-studio__gantt-marker.ant-picker { position: absolute; top: 18px; z-index: 2; width: 76px; height: 30px; padding: 0 8px; transform: translateX(-50%); border: 1px solid #aec0ff; border-radius: 15px; background: #fff; box-shadow: 0 3px 10px rgba(51, 97, 255, .12); }
