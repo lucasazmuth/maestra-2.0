@@ -48,6 +48,49 @@ import { buildV13Actions, CRONOGRAMA_V13_PATH_QUESTIONS, strategyDefinitionV13 }
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
+const ScheduleGantt: FC<{
+  actions: ActionPlanAction[];
+  onDateChange: (action: ActionPlanAction, date?: string) => void;
+}> = ({ actions, onDateChange }) => {
+  const dates = actions.map((action) => action.date).filter((date): date is string => !!date);
+  const orderedDates = dates.map((date) => dayjs(date)).sort((a, b) => a.valueOf() - b.valueOf());
+  const start = (orderedDates[0] || dayjs()).startOf('month');
+  const end = (orderedDates[orderedDates.length - 1] || start).endOf('month');
+  const monthCount = Math.max(1, end.diff(start, 'month') + 1);
+  const width = Math.max(720, monthCount * 150);
+  const span = Math.max(1, end.diff(start, 'day'));
+  const months = Array.from({ length: monthCount }, (_, index) => start.add(index, 'month'));
+  const position = (date?: string) => date
+    ? Math.max(38, Math.min(width - 38, (dayjs(date).diff(start, 'day') / span) * width))
+    : 38;
+
+  return <div className='schedule-studio__gantt' aria-label='Gantt das ações'>
+    <div className='schedule-studio__gantt-grid' style={{ width: 220 + width }}>
+      <div className='schedule-studio__gantt-corner'>Ações</div>
+      <div className='schedule-studio__gantt-months' style={{ width }}>
+        {months.map((month) => <span key={month.format('YYYY-MM')} style={{ width: width / monthCount }}>{month.format('MMM YYYY')}</span>)}
+      </div>
+      {actions.map((action, index) => <div className='schedule-studio__gantt-row' key={action.id}>
+        <div className='schedule-studio__gantt-action'><small>{String(index + 1).padStart(2, '0')}</small><span>{action.title}{action.cadence && <em>Rotina {action.cadence}</em>}</span></div>
+        <div className='schedule-studio__gantt-timeline' style={{ width }}>
+          {months.map((month) => <i key={month.format('YYYY-MM')} style={{ width: width / monthCount }} />)}
+          <DatePicker
+            allowClear={action.dateType === 'informada'}
+            inputReadOnly
+            aria-label={`Início: ${action.title}`}
+            className='schedule-studio__gantt-marker'
+            value={action.date ? dayjs(action.date) : null}
+            onChange={(value) => onDateChange(action, value?.format('YYYY-MM-DD'))}
+            format='DD MMM'
+            placeholder='Data'
+            style={{ left: position(action.date) }}
+          />
+        </div>
+      </div>)}
+    </div>
+  </div>;
+};
+
 // A revisão usa as ações datadas do motor v1.3; tarefas são apenas o checklist de cada ação.
 export const ScheduleApprovalCard: FC<{
   strategies: Strategy[];
@@ -57,6 +100,7 @@ export const ScheduleApprovalCard: FC<{
   const today = dayjs().format('YYYY-MM-DD');
   const [schedule, setSchedule] = useState<ActionPlanV13Schedule>(initial);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [view, setView] = useState<'list' | 'gantt'>('list');
   const calculated = useMemo(() => strategies.map((strategy) => ({
     ...strategy,
     actions: buildV13Actions(strategy, schedule, { today, existing: strategy.actions }),
@@ -133,9 +177,15 @@ export const ScheduleApprovalCard: FC<{
             </div>}
             {showActions && <div className='schedule-studio__task-heading'>
               <div><h3>Ações desta estratégia</h3><p>Confira a data de cada ação. As tarefas ficam no checklist de cada uma.</p></div>
-              {ready && <span>{actions.length} ações</span>}
+              {ready && <div className='schedule-studio__task-controls'>
+                <span>{actions.length} ações</span>
+                <div className='schedule-studio__view-switch' role='group' aria-label='Visualização das ações'>
+                  <button type='button' aria-pressed={view === 'list'} onClick={() => setView('list')}>Lista</button>
+                  <button type='button' aria-pressed={view === 'gantt'} onClick={() => setView('gantt')}>Gantt</button>
+                </div>
+              </div>}
             </div>}
-            {showActions && (ready ? <ol className='schedule-studio__task-list'>
+            {showActions && (ready ? (view === 'list' ? <ol className='schedule-studio__task-list'>
               {actions.map((action, index) => <li key={action.id}>
                 <span className='schedule-studio__task-number'>{String(index + 1).padStart(2, '0')}</span>
                 <div className='schedule-studio__task-copy'>
@@ -149,7 +199,7 @@ export const ScheduleApprovalCard: FC<{
                   <DatePicker allowClear={action.dateType === 'informada'} aria-label={`Data da ação: ${action.title}`} value={action.date ? dayjs(action.date) : null} onChange={(value) => moveAction(strategy.id, action, value?.format('YYYY-MM-DD'))} format='DD/MM/YYYY' placeholder='Escolha a data' />
                 </label>
               </li>)}
-            </ol> : <p className='schedule-studio__missing-dates'>Preencha as datas acima para ver as ações.</p>)}
+            </ol> : <ScheduleGantt actions={actions} onDateChange={(action, date) => moveAction(strategy.id, action, date)} />) : <p className='schedule-studio__missing-dates'>Preencha as datas acima para ver as ações.</p>)}
             {ready && tight > 0 && <p className='schedule-studio__warning'>{tight} {tight === 1 ? 'ação ficou com a data apertada' : 'ações ficaram com datas apertadas'}. Confira antes de aprovar.</p>}
             {ready && <p className='schedule-studio__note'>Se alguma data não funcionar, escolha outra no campo da ação antes de aprovar.</p>}
             <footer className='schedule-studio__footer'><button type='button' disabled={activeIndex === 0} onClick={() => setActiveIndex(value => value - 1)}>Estratégia anterior</button><button type='button' className='schedule-studio__approve' disabled={!ready} onClick={() => { updateState(strategy.id, { acceptedAt: new Date().toISOString() }); if (activeIndex + 1 < calculated.length) setActiveIndex(value => value + 1); }}>{activeIndex + 1 < calculated.length ? (state.acceptedAt ? 'Próxima estratégia' : 'Aprovar e continuar') : (state.acceptedAt ? 'Concluir' : 'Aprovar esta estratégia')}</button></footer>
