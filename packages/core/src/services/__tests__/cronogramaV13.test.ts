@@ -76,6 +76,18 @@ describe('cronograma v1.3', () => {
     expect(actions[0].date).toBe('2026-10-01');
   });
 
+  it('moves inicio actions with plan start and lancamento actions with release date', () => {
+    const base = defaultV13Schedule('2026-09-16');
+    const laterStart = { ...base, startDate: '2026-10-01' };
+    const laterRelease = { ...base, releaseDate: '2027-04-16' };
+
+    expect(buildV13Actions(strategy('3'), base, { today: '2026-09-16' })[0].date).toBe('2026-09-16');
+    expect(buildV13Actions(strategy('3'), laterStart, { today: '2026-09-16' })[0].date).toBe('2026-10-01');
+    expect(buildV13Actions(strategy('6'), base, { today: '2026-09-16' })[0].date).toBe('2026-09-23');
+    expect(buildV13Actions(strategy('6'), laterStart, { today: '2026-09-16' })[0].date).toBe('2026-09-23');
+    expect(buildV13Actions(strategy('6'), laterRelease, { today: '2026-09-16' })[0].date).toBe('2026-10-26');
+  });
+
   it('does not schedule automatic actions on weekends or national holidays', () => {
     expect(isBrazilBusinessDay('2026-09-19')).toBe(false);
     expect(nextBrazilBusinessDay('2026-09-19')).toBe('2026-09-21');

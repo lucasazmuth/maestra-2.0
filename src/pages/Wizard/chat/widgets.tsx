@@ -94,9 +94,11 @@ export const ScheduleApprovalCard: FC<{
         <div className='schedule-studio__date-fields'>
           <label>Quando o plano começa?
             <DatePicker allowClear={false} value={schedule.startDate ? dayjs(schedule.startDate) : null} onChange={(value) => update({ startDate: value?.format('YYYY-MM-DD') })} format='DD/MM/YYYY' placeholder='Escolha a data' aria-label='Data de início do plano' />
+            <small className='schedule-studio__date-hint'>Define as ações planejadas a partir do início.</small>
           </label>
           <label>Quando é o próximo lançamento?
             <DatePicker allowClear={false} value={schedule.releaseDate ? dayjs(schedule.releaseDate) : null} onChange={(value) => update({ releaseDate: value?.format('YYYY-MM-DD') })} format='DD/MM/YYYY' placeholder='Escolha a data' aria-label='Data do próximo lançamento' />
+            <small className='schedule-studio__date-hint'>Define as ações planejadas a partir do lançamento.</small>
           </label>
         </div>
         {datesOutOfOrder && <p className='schedule-studio__date-error' role='alert'>O lançamento precisa ser no mesmo dia ou depois do início do plano.</p>}
@@ -104,7 +106,7 @@ export const ScheduleApprovalCard: FC<{
       <div className='schedule-studio__workspace'>
       <nav className='schedule-studio__strategy-nav' aria-label='Estratégias do cronograma'>
         <span>Suas estratégias</span>
-        {calculated.map((strategy, index) => <button type='button' key={strategy.id} className={`${activeIndex === index ? 'is-active' : ''}${schedule.strategies[strategy.id]?.acceptedAt ? ' is-done' : ''}`} onClick={() => setActiveIndex(index)}><i>{schedule.strategies[strategy.id]?.acceptedAt ? <FiCheck size={13} /> : index + 1}</i><span>{strategy.title}</span></button>)}
+        {calculated.map((strategy, index) => <button type='button' key={strategy.id} className={`${activeIndex === index ? 'is-active' : ''}${schedule.strategies[strategy.id]?.acceptedAt ? ' is-done' : ''}`} aria-current={activeIndex === index ? 'step' : undefined} onClick={() => setActiveIndex(index)}><i>{schedule.strategies[strategy.id]?.acceptedAt ? <FiCheck size={13} /> : index + 1}</i><span>{strategy.title}</span></button>)}
       </nav>
       <main className='schedule-studio__active'>
         {calculated.slice(activeIndex, activeIndex + 1).map((strategy) => {
