@@ -702,6 +702,16 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
                                     </li>
                                   ))}
                                 </ul>
+                                <button
+                                  type="button"
+                                  className="ap-btn ap-btn--ai ap-v13-add-checklist-task"
+                                  onClick={() => manageTasks
+                                    ? openWithPrompt(`Quero adicionar uma tarefa à ação "${action.title}" da estratégia "${p.s.title}". Me ajude a definir uma tarefa concreta para este checklist.`)
+                                    : showProRequired()}
+                                >
+                                  {manageTasks ? <FiPlus size={14} aria-hidden="true" /> : <FiLock size={14} aria-hidden="true" />}
+                                  Adicionar tarefa com Nyta
+                                </button>
                               </li>
                             );
                           })}

@@ -1679,9 +1679,11 @@
 }
 
 .action-strategy-overview .ap-v13-action-meta > .ap-v13-action-more {
-  display: inline-grid;
+  display: inline-flex;
   flex: 0 0 auto;
-  place-items: center;
+  align-items: center;
+  justify-content: center;
+  align-content: center;
   width: 28px;
   height: 28px;
   min-width: 28px;
@@ -1694,6 +1696,11 @@
   background: transparent;
   color: #8d9db7;
   cursor: pointer;
+}
+
+.action-strategy-overview .ap-v13-action-meta > .ap-v13-action-more svg {
+  display: block;
+  flex: none;
 }
 
 .action-strategy-overview .ap-v13-action-meta > .ap-v13-action-more:hover,
@@ -1764,6 +1771,42 @@
 .ap-v13-checklist li.is-done span {
   color: #71809b;
   text-decoration: line-through;
+}
+
+.action-strategy-overview .ap-plan-list .ap-v13-add-checklist-task {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-content: center;
+  width: auto;
+  height: 32px;
+  min-width: 0;
+  min-height: 32px;
+  grid-template-columns: none;
+  gap: 7px;
+  margin: 12px 0 0 14px;
+  padding: 0 12px;
+  border: 1px solid #dce5f6;
+  border-radius: 6px;
+  background: #fff;
+  color: #526a95;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.action-strategy-overview .ap-plan-list .ap-v13-add-checklist-task:hover {
+  border-color: #b9c8ff;
+  background: #f3f6ff;
+  color: #3361ff;
+}
+
+.action-strategy-overview .ap-plan-list .ap-v13-add-checklist-task:focus-visible {
+  outline: 2px solid #3361ff;
+  outline-offset: 3px;
 }
 
 .ap-plan-task {
