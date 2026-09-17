@@ -680,7 +680,6 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
                           {p.s.actions.filter((action) => action.status !== 'archived').map((action) => {
                             const checklistStatus = actionStatusFromChecklist(action.tasks, action.status);
                             const done = checklistStatus === 'done';
-                            const checklistDone = action.tasks.filter((task) => task.status === 'done').length;
                             return (
                               <li key={action.id} className={`ap-v13-action${done ? ' is-done' : ''}`}>
                                 <div className="ap-v13-action-head">
@@ -688,7 +687,6 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
                                   <span className="ap-v13-action-meta ap-plan-task-meta">
                                     <TaskOwner className="ap-owner" value={action.owner} assignees={assignees} disabled={!editPlanning} onBlocked={showProRequired} onChange={(owner) => patchActionOwner(p.s.id, action, owner)} />
                                     <TaskDate className="ap-date" value={action.date} overdue={!!(action.date && action.date < today && !done)} disabled={!editPlanning} onBlocked={showProRequired} onChange={(date) => patchAction(p.s.id, action, date)} />
-                                    <span className="ap-schedule-badge">{checklistDone}/{action.tasks.length}</span>
                                     <button type="button" className="ap-v13-action-more" aria-label={`Editar ação ${action.title}`} title="Editar ação" onClick={() => setSelectedActionRef({ strategyId: p.s.id, actionId: action.id })}><FiMoreVertical size={17} aria-hidden="true" /></button>
                                   </span>
                                 </div>

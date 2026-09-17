@@ -1686,7 +1686,6 @@
 
 .action-strategy-overview .ap-v13-action-meta > .ap-owner,
 .action-strategy-overview .ap-v13-action-meta > .ap-date,
-.action-strategy-overview .ap-v13-action-meta > .ap-schedule-badge,
 .action-strategy-overview .ap-v13-action-meta > .ap-v13-action-more {
   box-sizing: border-box;
   height: var(--ap-action-control-size);
@@ -1721,13 +1720,6 @@
   border-color: #f2cbd0;
   background: #fff3f4;
   color: #b34152;
-}
-
-.action-strategy-overview .ap-v13-action-meta > .ap-schedule-badge {
-  min-width: 40px;
-  justify-content: center;
-  padding: 0 7px;
-  border-radius: 6px;
 }
 
 .action-strategy-overview .ap-v13-action-meta > .ap-v13-action-more {
