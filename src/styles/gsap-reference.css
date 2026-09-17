@@ -1865,7 +1865,6 @@
   background: #fff;
   color: #617499;
   text-align: left;
-  cursor: pointer;
   box-shadow: 0 3px 8px rgba(120, 140, 177, .05);
 }
 
@@ -1880,6 +1879,46 @@
   background: transparent;
   color: inherit;
   font-size: 11px;
+}
+
+.calendar-all-day-event-title {
+  min-width: 0;
+  flex: 1;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.calendar-all-day-checkbox {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  place-items: center;
+  padding: 0;
+  border: 1.5px solid #8e4bdf;
+  border-radius: 4px;
+  background: #fff;
+  color: #fff;
+  cursor: pointer;
+}
+
+.calendar-all-day-checkbox.is-completed {
+  background: #8e4bdf;
+}
+
+.calendar-all-day-checkbox:focus-visible,
+.calendar-all-day-event-title:focus-visible {
+  outline: 2px solid #3361ff;
+  outline-offset: 2px;
+}
+
+.calendar-all-day-checkbox:disabled {
+  cursor: wait;
+  opacity: .6;
 }
 
 .calendar-all-day-list > .calendar-all-day-empty {

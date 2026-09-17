@@ -46,6 +46,7 @@ const Agenda: FC = () => {
   const [cursor, setCursor] = useState<Dayjs>(dayjs());
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<AgendaEvent | null>(null);
+  const [savingEventId, setSavingEventId] = useState<string | null>(null);
   const [defaultDate, setDefaultDate] = useState<string | undefined>();
   const [defaultTime, setDefaultTime] = useState<string | undefined>();
   const [resizeState, setResizeState] = useState<{ event: AgendaEvent; startY: number; originalEnd: number } | null>(null);
@@ -153,6 +154,59 @@ const Agenda: FC = () => {
 
   const onDeleted = (id: string) => {
     setEvents((prev) => prev.filter((x) => x.id !== id));
+  };
+
+  const toggleActionEvent = async (event: AgendaEvent) => {
+    if (!artist || !event.task_id || event.source !== 'action_plan' || savingEventId) return;
+    if (!editPlanning) {
+      message.error('Você não tem permissão para editar o Plano de Ação deste artista.');
+      return;
+    }
+
+    const completed = event.status !== 'completed';
+    let found = false;
+    let nextCompleted = completed;
+    const content: ArtistContent = {
+      ...artist.content,
+      strategies: (artist.content.strategies || []).map((strategy) => ({
+        ...strategy,
+        actions: (strategy.actions || []).map((action) => {
+          if (action.id !== event.task_id) return action;
+          found = true;
+          const status = completed ? 'done' : actionStatusFromChecklist(action.tasks);
+          nextCompleted = status === 'done';
+          return { ...action, status };
+        }),
+        tasks: (strategy.tasks || []).map((task) => {
+          if (task.id !== event.task_id) return task;
+          found = true;
+          return { ...task, status: completed ? 'done' as const : 'todo' as const };
+        }),
+      })),
+    };
+    if (!found) {
+      message.error('Não encontrei a ação vinculada a este evento.');
+      return;
+    }
+    if (!completed && nextCompleted) {
+      message.info('Esta ação continua concluída porque todas as tarefas estão concluídas.');
+      return;
+    }
+
+    setSavingEventId(event.id);
+    try {
+      await dispatch(artistsActions.updateArtistContent({ id: artist.id, content })).unwrap();
+      try {
+        onSaved(await eventsDb.updateEvent(event.id, { status: nextCompleted ? 'completed' : 'scheduled' }));
+        message.success(nextCompleted ? 'Ação concluída.' : 'Ação reaberta.');
+      } catch (error: any) {
+        message.error(error?.message || 'A ação foi salva, mas a Agenda não foi sincronizada.');
+      }
+    } catch (error: any) {
+      message.error(error?.message || 'Não foi possível atualizar a ação.');
+    } finally {
+      setSavingEventId(null);
+    }
   };
 
   const deleteAgendaEvent = async (event: AgendaEvent) => {
@@ -316,10 +370,23 @@ const Agenda: FC = () => {
           <span>Dia todo</span>
           <div className="calendar-all-day-list">
             {dayAllDayEvents.length > 0 ? dayAllDayEvents.map((event) => (
-              <button type="button" className="calendar-all-day-event" key={event.id} onClick={() => openEdit(event)}>
-                {isTaskEvent(event) && <i className={event.status === 'completed' ? 'is-completed' : ''} aria-hidden="true">{event.status === 'completed' ? <FiCheck size={11} /> : null}</i>}
-                <strong>{calendarTitle(event.title, 72)}</strong>
-              </button>
+              <div className="calendar-all-day-event" key={event.id}>
+                {event.source === 'action_plan' && event.task_id ? (
+                  <button
+                    type="button"
+                    className={`calendar-all-day-checkbox${event.status === 'completed' ? ' is-completed' : ''}`}
+                    aria-label={`${event.status === 'completed' ? 'Reabrir' : 'Concluir'} ação: ${event.title}`}
+                    aria-pressed={event.status === 'completed'}
+                    disabled={savingEventId === event.id}
+                    onClick={() => void toggleActionEvent(event)}
+                  >{event.status === 'completed' ? <FiCheck size={11} /> : null}</button>
+                ) : isTaskEvent(event) ? (
+                  <i className={event.status === 'completed' ? 'is-completed' : ''} aria-hidden="true">{event.status === 'completed' ? <FiCheck size={11} /> : null}</i>
+                ) : null}
+                <button type="button" className="calendar-all-day-event-title" onClick={() => openEdit(event)}>
+                  <strong>{calendarTitle(event.title, 72)}</strong>
+                </button>
+              </div>
             )) : <strong className="calendar-all-day-empty">Planeje sua semana</strong>}
           </div>
         </div>
