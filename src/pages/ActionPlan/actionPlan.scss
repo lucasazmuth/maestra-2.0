@@ -1339,18 +1339,68 @@
   text-transform: capitalize;
 }
 
+.action-plan-gantt-group,
 .action-plan-gantt-row { display: contents; }
+
+.action-plan-gantt-strategy,
+.action-plan-gantt-strategy-timeline {
+  min-height: 54px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #dce5f4;
+  background: #f4f7fd;
+}
+
+.action-plan-gantt-strategy {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-right: 1px solid #e1e8f3;
+  color: #344969;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.action-plan-gantt-strategy strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.action-plan-gantt-strategy-number {
+  display: grid;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  background: #3361ff;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.action-plan-gantt-strategy-timeline {
+  display: flex;
+}
+
+.action-plan-gantt-strategy-timeline > i {
+  flex-shrink: 0;
+  border-right: 1px solid rgba(225, 232, 243, .72);
+}
 
 .action-plan-gantt-task {
   position: sticky;
   left: 0;
   z-index: 2;
   display: grid;
-  grid-template-columns: 30px minmax(0, 1fr);
+  grid-template-columns: 36px minmax(0, 1fr);
   align-content: center;
   min-height: 66px;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 10px 16px 10px 26px;
   box-sizing: border-box;
   border-right: 1px solid #e1e8f3;
   border-bottom: 1px solid #edf1f5;
@@ -1369,15 +1419,15 @@
   color: #52688f;
   font-size: 12px;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .action-plan-gantt-task b {
   overflow: hidden;
-  color: #91a5c7;
-  font-size: 9px;
-  font-weight: 800;
+  color: #7185a6;
+  font-size: 10px;
+  font-weight: 700;
   text-overflow: ellipsis;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -1412,6 +1462,24 @@
 .action-plan-gantt-marker.ant-picker:hover { border-color: #3361ff; }
 .action-plan-gantt-marker .ant-picker-input input { color: #3361ff; font-size: 11px; font-weight: 800; text-align: center; }
 .action-plan-gantt-marker .ant-picker-suffix { display: none; }
+
+.action-plan-gantt-marker.is-empty.ant-picker {
+  width: 34px;
+  transform: translateX(-17px);
+  padding: 0 8px;
+}
+
+.action-plan-gantt-marker.is-empty .ant-picker-input input {
+  width: 0;
+  min-width: 0;
+  opacity: 0;
+}
+
+.action-plan-gantt-marker.is-empty .ant-picker-suffix {
+  display: inline-flex;
+  margin-left: 0;
+  color: #3361ff;
+}
 
 .action-plan-schedule-empty {
   padding: 42px 24px;
