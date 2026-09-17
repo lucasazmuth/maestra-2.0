@@ -1913,40 +1913,43 @@
   .ap-plan-row-main strong { font-size: 13.5px; }
 }
 
-// "Adicionar tarefa" perdeu o `<header>` que o continha (o título "Tarefas" saiu — repetia o
-// título e a numeração que a linha do acordeão logo acima já mostra) e foi pro fim da lista, como
-// uma ação de "adicionar mais um item". Herdava `.action-task-register > header button` antes;
-// precisa do próprio estilo agora que não tem mais o header por perto.
-// Mesmo vazamento de `.action-strategy-overview button` de sempre (min-height:132px,
-// display:grid, width:100%, grid-template-columns:1fr auto) — este botão também é descendente.
-// Seletor de duas classes pra vencer por especificidade, igual aos outros já corrigidos nesta
-// mesma tela.
-.ap-plan-list .ap-plan-add-task {
+.action-strategy-overview .ap-plan-list .ap-plan-add-task {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  align-content: center;
   width: auto;
+  height: 36px;
   min-width: 0;
   min-height: 36px;
   grid-template-columns: none;
-  gap: 7px;
-  margin-top: 14px;
+  gap: 8px;
+  margin: 16px 0 0;
   padding: 0 14px;
-  border: 1px dashed #c9d8f0;
-  border-radius: 8px;
-  background: transparent;
-  color: #3361ff;
+  border: 1px solid #dce5f6;
+  border-radius: 6px;
+  background: #fff;
+  color: #526a95;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
+  line-height: 1;
   white-space: nowrap;
   cursor: pointer;
-  text-align: left;
-  transition: background .15s ease, border-color .15s ease;
+  text-align: center;
+  box-shadow: none;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
 }
 
-.ap-plan-add-task:hover {
-  border-style: solid;
+.action-strategy-overview .ap-plan-list .ap-plan-add-task:hover {
   border-color: #b9c8ff;
-  background: rgba(51, 97, 255, .06);
+  background: #f3f6ff;
+  color: #3361ff;
+  transform: none;
+}
+
+.action-strategy-overview .ap-plan-list .ap-plan-add-task:focus-visible {
+  outline: 2px solid #3361ff;
+  outline-offset: 3px;
 }
 
 .ap-schedule-badge {

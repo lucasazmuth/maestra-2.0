@@ -752,10 +752,11 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
                       )}
                       <button
                         type="button"
-                        className="ap-plan-add-task"
+                        className="ap-btn ap-btn--ai ap-plan-add-task"
                         onClick={() => manageTasks ? openWithPrompt(`Quero criar uma ação para a estratégia "${p.s.title}"`) : showProRequired()}
                       >
-                        {!manageTasks ? <FiLock size={14} /> : <FiPlus size={14} />} Adicionar ação
+                        {!manageTasks ? <FiLock size={14} aria-hidden="true" /> : <FiPlus size={14} aria-hidden="true" />}
+                        Adicionar ação
                       </button>
                     </section>
                   </div>
