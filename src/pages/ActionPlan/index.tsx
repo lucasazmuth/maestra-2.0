@@ -19,6 +19,7 @@ import { UpsellModal } from '../../components/UpsellModal';
 import { BotaoFlutuante } from '../../components/BotaoFlutuante';
 import { TaskDate, TaskCategory, TaskOwner, type Assignee } from './TaskControls';
 import { TaskDetailModal } from './TaskDetailModal';
+import { ActionDetailModal } from './ActionDetailModal';
 import { TASK_OWNER_SELF, isOnboardingComplete } from '@maestra/core/constants/maestra';
 import { listMembers } from '@maestra/core/services/db/members';
 import * as eventsDb from '@maestra/core/services/db/events';
@@ -204,6 +205,7 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const [archiveOpen, setArchiveOpen] = useState(false); // modal "Arquivadas": traz estratégia pro plano
   const [proModalOpen, setProModalOpen] = useState(false);
   const [selectedTaskRef, setSelectedTaskRef] = useState<{ strategyId: string; taskId: string } | null>(null);
+  const [selectedActionRef, setSelectedActionRef] = useState<{ strategyId: string; actionId: string } | null>(null);
   const { openWithPrompt } = useNytaModal();
   const [, setSaving] = useState(false);
   const showProRequired = () => setProModalOpen(true);
@@ -256,6 +258,8 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
     () => selectedStrategy?.tasks?.find((task) => task.id === selectedTaskRef?.taskId),
     [selectedStrategy, selectedTaskRef?.taskId]
   );
+  const selectedActionStrategy = strategies.find((strategy) => strategy.id === selectedActionRef?.strategyId);
+  const selectedAction = selectedActionStrategy?.actions?.find((action) => action.id === selectedActionRef?.actionId);
   const commenterName =
     user?.user_metadata?.full_name ||
     user?.user_metadata?.name ||
@@ -395,6 +399,17 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
     }), editPlanning);
     const strategy = artist?.content?.strategies?.find((s) => s.id === sid);
     if (strategy) syncActionEvent(strategy, action, { owner });
+  };
+
+  const patchActionDetails = (sid: string, action: ActionPlanAction, patch: Partial<ActionPlanAction>) => {
+    if (!editPlanning) { showProRequired(); return; }
+    void commit((ss) => ss.map((strategy) => strategy.id !== sid ? strategy : {
+      ...strategy,
+      actions: (strategy.actions || []).map((item) => item.id === action.id ? { ...item, ...patch } : item),
+    }), editPlanning);
+    const strategy = artist?.content?.strategies?.find((item) => item.id === sid);
+    if (strategy) syncActionEvent(strategy, action, patch);
+    toast.success('Ação atualizada.');
   };
 
   const toggleActionChecklist = (sid: string, actionId: string, taskId: string) => {
@@ -674,6 +689,7 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
                                     <TaskOwner className="ap-owner" value={action.owner} assignees={assignees} disabled={!editPlanning} onBlocked={showProRequired} onChange={(owner) => patchActionOwner(p.s.id, action, owner)} />
                                     <TaskDate className="ap-date" value={action.date} overdue={!!(action.date && action.date < today && !done)} disabled={!editPlanning} onBlocked={showProRequired} onChange={(date) => patchAction(p.s.id, action, date)} />
                                     <span className="ap-schedule-badge">{checklistDone}/{action.tasks.length}</span>
+                                    <button type="button" className="ap-v13-action-more" aria-label={`Editar ação ${action.title}`} title="Editar ação" onClick={() => setSelectedActionRef({ strategyId: p.s.id, actionId: action.id })}><FiMoreVertical size={17} aria-hidden="true" /></button>
                                   </span>
                                 </div>
                                 <ul className="ap-v13-checklist" aria-label={`Checklist de ${action.title}`}>
@@ -780,6 +796,20 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
         onDelete={() => {
           if (!selectedTaskRef) return;
           delTask(selectedTaskRef.strategyId, selectedTaskRef.taskId);
+        }}
+      />
+
+      <ActionDetailModal
+        key={selectedActionRef?.actionId || 'closed'}
+        open={!!selectedActionRef}
+        action={selectedAction}
+        strategyTitle={selectedActionStrategy?.title}
+        assignees={assignees}
+        canEdit={editPlanning}
+        onClose={() => setSelectedActionRef(null)}
+        onSave={(patch) => {
+          if (!selectedActionRef || !selectedAction) return;
+          patchActionDetails(selectedActionRef.strategyId, selectedAction, patch);
         }}
       />
 

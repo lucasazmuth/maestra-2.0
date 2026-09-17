@@ -1678,6 +1678,31 @@
   justify-content: flex-end;
 }
 
+.action-strategy-overview .ap-v13-action-meta > .ap-v13-action-more {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  grid-template-columns: none;
+  margin: 0;
+  border: 0;
+  border-radius: 5px;
+  padding: 0;
+  background: transparent;
+  color: #8d9db7;
+  cursor: pointer;
+}
+
+.action-strategy-overview .ap-v13-action-meta > .ap-v13-action-more:hover,
+.action-strategy-overview .ap-v13-action-meta > .ap-v13-action-more:focus-visible {
+  background: #eef3ff;
+  color: #3361ff;
+  outline: 0;
+}
+
 .ap-v13-checklist {
   display: grid;
   gap: 0;
