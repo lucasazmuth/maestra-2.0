@@ -26,7 +26,8 @@ import { generateObjectives } from '@maestra/core/wizard/motores';
 import { stripEmDash } from '@maestra/core/wizard/limpar';
 import type {
   ActionTask,
-  ActionPlanSchedule,
+  ActionPlanAction,
+  ActionPlanV13Schedule,
   ArtistGender,
   ArtistIdentity,
   ArtistStage,
@@ -38,7 +39,8 @@ import type {
   Strategy,
   SwotAnalysis,
 } from '@maestra/core/interfaces/maestra';
-import { scheduleBankFor, scheduleStrategy } from '@maestra/core/services/cronograma';
+import { scheduleBankFor } from '@maestra/core/services/cronograma';
+import { buildV13Actions, CRONOGRAMA_V13_PATH_QUESTIONS, strategyDefinitionV13 } from '@maestra/core/services/cronogramaV13';
 
 // Widgets interativos renderizados dentro do chat da Nyta. Cada um coleta uma resposta
 // estruturada e devolve via callback — o orquestrador (NytaChat) ecoa a resposta como
@@ -46,43 +48,47 @@ import { scheduleBankFor, scheduleStrategy } from '@maestra/core/services/cronog
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
-// O cronograma não é texto gerado pela IA: o card só coleta as âncoras e aplica o motor
-// determinístico do núcleo. Assim o mesmo resultado pode ser reproduzido no aplicativo nativo.
+// A revisão usa as ações datadas do motor v1.3; tarefas são apenas o checklist de cada ação.
 export const ScheduleApprovalCard: FC<{
   strategies: Strategy[];
-  schedule: ActionPlanSchedule;
-  texts: { aceite: string; apertadas: string; continua: string; ancora_mudou: string; caminho_apoio: string };
-  onConfirm: (schedule: ActionPlanSchedule, strategies: Strategy[]) => void;
-}> = ({ strategies, schedule: initial, texts, onConfirm }) => {
+  schedule: ActionPlanV13Schedule;
+  onConfirm: (schedule: ActionPlanV13Schedule, strategies: Strategy[]) => void;
+}> = ({ strategies, schedule: initial, onConfirm }) => {
   const today = dayjs().format('YYYY-MM-DD');
-  const [schedule, setSchedule] = useState<ActionPlanSchedule>(initial);
+  const [schedule, setSchedule] = useState<ActionPlanV13Schedule>(initial);
   const [activeIndex, setActiveIndex] = useState(0);
-  const calculated = useMemo(() => strategies.map((strategy) => scheduleStrategy(strategy, schedule, today)), [strategies, schedule, today]);
-  const update = (patch: Partial<ActionPlanSchedule>) => setSchedule((current) => ({ ...current, ...patch,
-    strategies: Object.fromEntries(Object.entries(current.strategies).map(([id, state]) => {
-      const source = strategies.find(strategy => strategy.id === id);
-      const anchor = source ? scheduleBankFor(source)?.ancora : undefined;
-      const affected = (patch.releaseDate !== undefined && anchor === 'lancamento') || (patch.startDate !== undefined && anchor === 'inicio');
-      return [id, affected ? { ...state, accepted: false, manualDates: {}, adjusted: false } : state];
-    })),
+  const calculated = useMemo(() => strategies.map((strategy) => ({
+    ...strategy,
+    actions: buildV13Actions(strategy, schedule, { today, existing: strategy.actions }),
+  })), [strategies, schedule, today]);
+  const update = (patch: Partial<ActionPlanV13Schedule>) => setSchedule((current) => ({
+    ...current,
+    ...patch,
+    strategies: Object.fromEntries(Object.entries(current.strategies).map(([id, state]) => [id, { ...state, acceptedAt: undefined }])),
   }));
-  const updateState = (strategyId: string, patch: Record<string, unknown>) => setSchedule((current) => ({
+  const updateState = (strategyId: string, patch: Partial<ActionPlanV13Schedule['strategies'][string]>) => setSchedule((current) => ({
     ...current,
     strategies: { ...current.strategies, [strategyId]: { ...current.strategies[strategyId], ...patch } },
   }));
-  const moveTask = (strategyId: string, order: number, date?: string) => {
-    if (!date) return;
-    const previous = schedule.strategies[strategyId]?.manualDates || {};
-    updateState(strategyId, { manualDates: { ...previous, [order]: date }, adjusted: true, accepted: false });
-  };
-  const accepted = calculated.length > 0 && calculated.every((strategy) => schedule.strategies[strategy.id]?.accepted);
+  const moveAction = (strategyId: string, action: ActionPlanAction, date?: string) => setSchedule((current) => {
+    const state = current.strategies[strategyId] || {};
+    const key = action.dateType === 'informada' ? 'informedDates' : 'manualDates';
+    const dates = { ...state[key] };
+    if (date) dates[action.number] = date;
+    else delete dates[action.number];
+    return {
+      ...current,
+      strategies: { ...current.strategies, [strategyId]: { ...state, [key]: dates, acceptedAt: undefined } },
+    };
+  });
+  const accepted = calculated.length > 0 && calculated.every((strategy) => schedule.strategies[strategy.id]?.acceptedAt);
   const datesOutOfOrder = !!(schedule.startDate && schedule.releaseDate && dayjs(schedule.releaseDate).isBefore(dayjs(schedule.startDate), 'day'));
 
   return (
     <div className='nyta-card schedule-studio'>
       <header className='schedule-studio__intro'>
-        <div><small>Última etapa</small><h2>Monte seu cronograma</h2><p>Escolha as datas do plano e confira os prazos de cada tarefa.</p></div>
-        <strong><b>{calculated.filter(strategy => schedule.strategies[strategy.id]?.accepted).length}</b><small>de {calculated.length} aprovadas</small></strong>
+        <div><small>Última etapa</small><h2>Monte seu cronograma</h2><p>Escolha as datas do plano e confira quando cada ação começa.</p></div>
+        <strong><b>{calculated.filter(strategy => schedule.strategies[strategy.id]?.acceptedAt).length}</b><small>de {calculated.length} aprovadas</small></strong>
       </header>
       <section className='schedule-studio__dates' aria-label='Datas do plano'>
         <div className='schedule-studio__date-fields'>
@@ -98,44 +104,52 @@ export const ScheduleApprovalCard: FC<{
       <div className='schedule-studio__workspace'>
       <nav className='schedule-studio__strategy-nav' aria-label='Estratégias do cronograma'>
         <span>Suas estratégias</span>
-        {calculated.map((strategy, index) => <button type='button' key={strategy.id} className={`${activeIndex === index ? 'is-active' : ''}${schedule.strategies[strategy.id]?.accepted ? ' is-done' : ''}`} onClick={() => setActiveIndex(index)}><i>{schedule.strategies[strategy.id]?.accepted ? <FiCheck size={13} /> : index + 1}</i><span>{strategy.title}</span></button>)}
+        {calculated.map((strategy, index) => <button type='button' key={strategy.id} className={`${activeIndex === index ? 'is-active' : ''}${schedule.strategies[strategy.id]?.acceptedAt ? ' is-done' : ''}`} onClick={() => setActiveIndex(index)}><i>{schedule.strategies[strategy.id]?.acceptedAt ? <FiCheck size={13} /> : index + 1}</i><span>{strategy.title}</span></button>)}
       </nav>
       <main className='schedule-studio__active'>
         {calculated.slice(activeIndex, activeIndex + 1).map((strategy) => {
-          const definition = scheduleBankFor(strategy)!;
+          const definition = strategyDefinitionV13(strategy);
+          const legacyDefinition = scheduleBankFor(strategy);
+          const pathQuestion = CRONOGRAMA_V13_PATH_QUESTIONS.find((question) => question.estrategia.replace(/^#/, '') === String(strategy.bankId || strategy.id).replace(/^#/, ''));
           const state = schedule.strategies[strategy.id] || {};
-          const tight = strategy.tasks.filter((task) => task.schedule?.tight).length;
-          const ready = !datesOutOfOrder && !!definition && !!(definition.ancora === 'propria' ? state.ownDate : definition.ancora === 'inicio' ? schedule.startDate : schedule.releaseDate) && (!definition.caminho || !!state.path);
+          const actions = strategy.actions || [];
+          const tight = actions.filter((action) => action.tight).length;
+          const ready = !datesOutOfOrder && !!definition && !!(definition.ancora === 'propria' ? state.ownDate : definition.ancora === 'inicio' ? schedule.startDate : schedule.releaseDate) && (!pathQuestion || !!state.selectedPath);
           return <section key={strategy.id} className='schedule-studio__strategy'>
             <div className='schedule-studio__strategy-head'>
-              <div><small>Estratégia {activeIndex + 1} de {calculated.length}</small><strong>{strategy.title}</strong><div>{definition.ancora === 'lancamento' ? 'Planejada a partir do lançamento' : definition.ancora === 'inicio' ? 'Planejada a partir do início do plano' : 'Planejada a partir da data escolhida'}</div></div>
-              {state.accepted && <span className='schedule-studio__status'><FiCheck size={14} /> Aprovada</span>}
+              <div><small>Estratégia {activeIndex + 1} de {calculated.length}</small><strong>{strategy.title}</strong><div>{definition?.ancora === 'lancamento' ? 'Planejada a partir do lançamento' : definition?.ancora === 'inicio' ? 'Planejada a partir do início do plano' : 'Planejada a partir da data escolhida'}</div></div>
+              {state.acceptedAt && <span className='schedule-studio__status'><FiCheck size={14} /> Aprovada</span>}
             </div>
-            {(definition.pergunta_propria || definition.caminho) && <div className='schedule-studio__choices'>
-              {definition.pergunta_propria && <label>{definition.pergunta_propria}
-                <DatePicker value={state.ownDate ? dayjs(state.ownDate) : null} onChange={(value) => updateState(strategy.id, { ownDate: value?.format('YYYY-MM-DD'), accepted: false, manualDates: {}, adjusted: false })} format='DD/MM/YYYY' placeholder='Escolha a data' aria-label={definition.pergunta_propria} />
+            {(definition?.ancora === 'propria' || pathQuestion) && <div className='schedule-studio__choices'>
+              {definition?.ancora === 'propria' && <label>{legacyDefinition?.pergunta_propria || 'Qual é a data deste evento?'}
+                <DatePicker value={state.ownDate ? dayjs(state.ownDate) : null} onChange={(value) => updateState(strategy.id, { ownDate: value?.format('YYYY-MM-DD'), acceptedAt: undefined })} format='DD/MM/YYYY' placeholder='Escolha a data' aria-label='Data do evento desta estratégia' />
               </label>}
-              {definition.caminho && <label>Como você quer seguir?
-                <Select value={state.path} placeholder='Escolha uma opção' options={definition.caminho.opcoes.map((option) => ({ value: option.rotulo, label: option.rotulo }))} onChange={(path) => updateState(strategy.id, { path, accepted: false, manualDates: {}, adjusted: false })} />
-                <small>{texts.caminho_apoio}</small>
+              {pathQuestion && <label>{pathQuestion.pergunta}
+                <Select value={state.selectedPath} placeholder='Escolha uma opção' options={pathQuestion.opcoes.map((option) => ({ value: option.rotulo, label: option.rotulo }))} onChange={(selectedPath) => updateState(strategy.id, { selectedPath, acceptedAt: undefined, manualDates: {}, informedDates: {} })} />
               </label>}
             </div>}
             <div className='schedule-studio__task-heading'>
-              <div><h3>Tarefas desta estratégia</h3><p>Ao alterar um prazo, os próximos acompanham.</p></div>
-              <span>{strategy.tasks.length} tarefas</span>
+              <div><h3>Ações desta estratégia</h3><p>Confira a data de cada ação. As tarefas ficam no checklist de cada uma.</p></div>
+              {ready && <span>{actions.length} ações</span>}
             </div>
             {ready ? <ol className='schedule-studio__task-list'>
-              {strategy.tasks.map((task, index) => <li key={task.id}>
+              {actions.map((action, index) => <li key={action.id}>
                 <span className='schedule-studio__task-number'>{String(index + 1).padStart(2, '0')}</span>
-                <div className='schedule-studio__task-copy'><strong>{task.description}</strong>{task.schedule?.continuous && <small>Repete toda semana</small>}{task.schedule?.tight && <small className='is-tight'>Prazo curto</small>}</div>
-                <label>Prazo
-                  <DatePicker allowClear={false} aria-label={`Prazo: ${task.description}`} value={task.deadline ? dayjs(task.deadline) : null} onChange={(value) => moveTask(strategy.id, task.schedule?.order || 0, value?.format('YYYY-MM-DD'))} format='DD/MM/YYYY' placeholder='Escolha a data' />
+                <div className='schedule-studio__task-copy'>
+                  <strong>{action.title}</strong>
+                  {action.cadence && <small>Rotina {action.cadence}</small>}
+                  {action.dateType === 'informada' && !action.date && <small>Você pode informar a data depois</small>}
+                  {action.tight && <small className='is-tight'>Data apertada</small>}
+                  {action.tasks.length > 0 && <details className='schedule-studio__checklist'><summary>{action.tasks.length} {action.tasks.length === 1 ? 'tarefa' : 'tarefas'} no checklist</summary><ul>{action.tasks.map((task) => <li key={task.id}>{task.description}</li>)}</ul></details>}
+                </div>
+                <label>{action.dateType === 'informada' ? 'Data a confirmar' : 'Início'}
+                  <DatePicker allowClear={action.dateType === 'informada'} aria-label={`Data da ação: ${action.title}`} value={action.date ? dayjs(action.date) : null} onChange={(value) => moveAction(strategy.id, action, value?.format('YYYY-MM-DD'))} format='DD/MM/YYYY' placeholder='Escolha a data' />
                 </label>
               </li>)}
-            </ol> : <p className='schedule-studio__missing-dates'>Preencha as datas acima{definition.caminho ? ' e escolha uma opção' : ''} para ver as tarefas.</p>}
-            {tight > 0 && <p className='schedule-studio__warning'>{texts.apertadas.replace('{n}', String(tight))}</p>}
-            <p className='schedule-studio__note'>Confira os prazos. Se algum não funcionar, escolha outra data no campo da tarefa antes de aprovar.</p>
-            <footer className='schedule-studio__footer'><button type='button' disabled={activeIndex === 0} onClick={() => setActiveIndex(value => value - 1)}>Estratégia anterior</button><button type='button' className='schedule-studio__approve' disabled={!ready} onClick={() => { updateState(strategy.id, { accepted: true }); if (activeIndex + 1 < calculated.length) setActiveIndex(value => value + 1); }}>{activeIndex + 1 < calculated.length ? (state.accepted ? 'Próxima estratégia' : 'Aprovar e continuar') : (state.accepted ? 'Concluir' : 'Aprovar esta estratégia')}</button></footer>
+            </ol> : <p className='schedule-studio__missing-dates'>{pathQuestion && !state.selectedPath ? 'Escolha uma opção acima para ver as ações deste caminho.' : 'Preencha as datas acima para ver as ações.'}</p>}
+            {ready && tight > 0 && <p className='schedule-studio__warning'>{tight} {tight === 1 ? 'ação ficou com a data apertada' : 'ações ficaram com datas apertadas'}. Confira antes de aprovar.</p>}
+            {ready && <p className='schedule-studio__note'>Se alguma data não funcionar, escolha outra no campo da ação antes de aprovar.</p>}
+            <footer className='schedule-studio__footer'><button type='button' disabled={activeIndex === 0} onClick={() => setActiveIndex(value => value - 1)}>Estratégia anterior</button><button type='button' className='schedule-studio__approve' disabled={!ready} onClick={() => { updateState(strategy.id, { acceptedAt: new Date().toISOString() }); if (activeIndex + 1 < calculated.length) setActiveIndex(value => value + 1); }}>{activeIndex + 1 < calculated.length ? (state.acceptedAt ? 'Próxima estratégia' : 'Aprovar e continuar') : (state.acceptedAt ? 'Concluir' : 'Aprovar esta estratégia')}</button></footer>
           </section>;
         })}
       </main>

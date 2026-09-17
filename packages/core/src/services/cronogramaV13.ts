@@ -114,11 +114,13 @@ const dateBase = (
   state: ActionPlanV13StrategyState,
   previousDate?: string
 ): string | undefined => {
+  const acceptedStart = state.acceptedAt?.slice(0, 10);
+  const planStart = acceptedStart && schedule.startDate ? maxDate(acceptedStart, schedule.startDate) : acceptedStart || schedule.startDate;
   if (action.conta_de === 'lancamento') return schedule.releaseDate;
-  if (action.conta_de === 'inicio') return state.acceptedAt?.slice(0, 10) || schedule.startDate;
+  if (action.conta_de === 'inicio') return planStart;
   if (action.conta_de === 'propria') return state.ownDate;
   if (action.conta_de === 'informada_anterior') return previousDate;
-  if (definition.ancora === 'inicio') return state.acceptedAt?.slice(0, 10) || schedule.startDate;
+  if (definition.ancora === 'inicio') return planStart;
   return definition.ancora === 'lancamento' ? schedule.releaseDate : state.ownDate;
 };
 
@@ -181,7 +183,7 @@ export const buildV13Actions = (
       || calculatedDate(definition, action, schedule, state, previousDate);
     const tight = !!date && date < options.today;
     const effectiveDate = date ? maxDate(date, options.today) : undefined;
-    if (effectiveDate && action.tipo !== 'rotina' && action.tipo !== 'informada') previousDate = effectiveDate;
+    if (effectiveDate && action.tipo !== 'rotina') previousDate = effectiveDate;
     const existing = options.existing?.find((item) => item.number === action.n || item.sourceNumber === action.n);
     const tasks = action.tarefas.map((description, index) => ({
       id: existing?.tasks[index]?.id || `${strategy.id}-${action.n}-${index + 1}`,
