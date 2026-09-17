@@ -666,7 +666,6 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
                             const checklistStatus = actionStatusFromChecklist(action.tasks, action.status);
                             const done = checklistStatus === 'done';
                             const checklistDone = action.tasks.filter((task) => task.status === 'done').length;
-                            const manuallyDone = done && checklistDone < action.tasks.length;
                             return (
                               <li key={action.id} className={`ap-v13-action${done ? ' is-done' : ''}`}>
                                 <div className="ap-v13-action-head">
@@ -674,7 +673,6 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
                                   <span className="ap-v13-action-meta ap-plan-task-meta">
                                     <TaskOwner className="ap-owner" value={action.owner} assignees={assignees} disabled={!editPlanning} onBlocked={showProRequired} onChange={(owner) => patchActionOwner(p.s.id, action, owner)} />
                                     <TaskDate className="ap-date" value={action.date} overdue={!!(action.date && action.date < today && !done)} disabled={!editPlanning} onBlocked={showProRequired} onChange={(date) => patchAction(p.s.id, action, date)} />
-                                    {manuallyDone && <span className="ap-action-status">Concluída manualmente</span>}
                                     <span className="ap-schedule-badge">{checklistDone}/{action.tasks.length}</span>
                                   </span>
                                 </div>
