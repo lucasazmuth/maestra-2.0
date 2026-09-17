@@ -551,8 +551,6 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const archived = info.filter((p) => p.total === 0);
   const hasArchive = withTasks.length > 0 && archived.length > 0;
   const displayed = withTasks.length ? withTasks : info; // sem nenhuma priorizada, mostra tudo
-  const totalActions = info.reduce((sum, item) => sum + item.total, 0);
-  const completedActions = info.reduce((sum, item) => sum + item.done, 0);
   const focusIdx = displayed.findIndex((p) => p.total > 0 && !p.complete); // -1 = todas concluídas
   // `undefined` (estado inicial) e '__none__' (fechou explicitamente) NAO sao a mesma coisa —
   // antes eram tratados igual, e isso escondia um bug: fechar a PROPRIA estrategia em foco (a
@@ -575,12 +573,6 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
                 <h1>Plano de Ação</h1>
                 <span>Execute suas estratégias em ações, conclua cada etapa e acompanhe o avanço do seu plano.</span>
               </div>
-            </div>
-          </div>
-          <div className="action-plan-header-summary">
-            <div className="action-plan-header-side">
-              <span>AÇÕES DO CICLO</span>
-              <strong>{completedActions}/{totalActions}</strong>
             </div>
           </div>
         </header>
