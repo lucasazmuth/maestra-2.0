@@ -1777,10 +1777,9 @@
     "side chat";
 }
 
-// Largura da coluna de contexto. Os 320px do antigo cartão de resultados dariam ~180px de vídeo
-// 16:9 — apertado demais para assistir.
+// Deixa a conversa e os widgets com mais espaço no desktop.
 :root {
-  --wiz-side-w: clamp(340px, 30vw, 460px);
+  --wiz-side-w: 300px;
 }
 
 .wizard--fullpage > .wiz-chat-head {
