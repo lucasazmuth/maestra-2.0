@@ -2,7 +2,7 @@ import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { App, DatePicker, Input, Select } from 'antd';
 import dayjs from 'dayjs';
-import { FiArrowLeft, FiCheck, FiEdit3, FiPlus, FiRefreshCw, FiTrash2, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiCheck, FiChevronLeft, FiChevronRight, FiEdit3, FiPlus, FiRefreshCw, FiTrash2, FiX } from 'react-icons/fi';
 
 import { listGenres } from '@maestra/core/services/db/genres';
 import { searchCities } from '@maestra/core/services/db/cities';
@@ -71,7 +71,7 @@ const ScheduleGantt: FC<{
         {months.map((month) => <span key={month.format('YYYY-MM')} style={{ width: width / monthCount }}>{month.format('MMM YYYY')}</span>)}
       </div>
       {actions.map((action, index) => <div className='schedule-studio__gantt-row' key={action.id}>
-        <div className='schedule-studio__gantt-action'><small>{String(index + 1).padStart(2, '0')}</small><span>{action.title}{action.cadence && <em>Rotina {action.cadence}</em>}</span></div>
+        <div className='schedule-studio__gantt-action'><small>{String(index + 1).padStart(2, '0')}</small><span>{action.title}{action.cadence && <em>Rotina {action.cadence}</em>}{action.tight && <em className='is-tight'>Data apertada</em>}</span></div>
         <div className='schedule-studio__gantt-timeline' style={{ width }}>
           {months.map((month) => <i key={month.format('YYYY-MM')} style={{ width: width / monthCount }} />)}
           <DatePicker
@@ -100,7 +100,7 @@ export const ScheduleApprovalCard: FC<{
   const today = dayjs().format('YYYY-MM-DD');
   const [schedule, setSchedule] = useState<ActionPlanV13Schedule>(initial);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [view, setView] = useState<'list' | 'gantt'>('list');
+  const [view, setView] = useState<'list' | 'gantt'>('gantt');
   const calculated = useMemo(() => strategies.map((strategy) => ({
     ...strategy,
     actions: buildV13Actions(strategy, schedule, { today, existing: strategy.actions }),
@@ -148,10 +148,6 @@ export const ScheduleApprovalCard: FC<{
         {datesOutOfOrder && <p className='schedule-studio__date-error' role='alert'>O lançamento precisa ser no mesmo dia ou depois do início do plano.</p>}
       </section>
       <div className='schedule-studio__workspace'>
-      <nav className='schedule-studio__strategy-nav' aria-label='Estratégias do cronograma'>
-        <span>Suas estratégias</span>
-        {calculated.map((strategy, index) => <button type='button' key={strategy.id} className={`${activeIndex === index ? 'is-active' : ''}${schedule.strategies[strategy.id]?.acceptedAt ? ' is-done' : ''}`} aria-current={activeIndex === index ? 'step' : undefined} onClick={() => setActiveIndex(index)}><i>{schedule.strategies[strategy.id]?.acceptedAt ? <FiCheck size={13} /> : index + 1}</i><span>{strategy.title}</span></button>)}
-      </nav>
       <main className='schedule-studio__active'>
         {calculated.slice(activeIndex, activeIndex + 1).map((strategy) => {
           const definition = strategyDefinitionV13(strategy);
@@ -165,7 +161,13 @@ export const ScheduleApprovalCard: FC<{
           return <section key={strategy.id} className='schedule-studio__strategy'>
             <div className='schedule-studio__strategy-head'>
               <div><small>Estratégia {activeIndex + 1} de {calculated.length}</small><strong>{strategy.title}</strong><div>{definition?.ancora === 'lancamento' ? 'Planejada a partir do lançamento' : definition?.ancora === 'inicio' ? 'Planejada a partir do início do plano' : 'Planejada a partir da data escolhida'}</div></div>
-              {state.acceptedAt && <span className='schedule-studio__status'><FiCheck size={14} /> Aprovada</span>}
+              <div className='schedule-studio__strategy-actions'>
+                {state.acceptedAt && <span className='schedule-studio__status'><FiCheck size={14} /> Aprovada</span>}
+                <div className='schedule-studio__strategy-pager' role='group' aria-label='Navegar entre estratégias'>
+                  <button type='button' aria-label='Estratégia anterior' title='Estratégia anterior' disabled={activeIndex === 0} onClick={() => setActiveIndex((index) => index - 1)}><FiChevronLeft size={17} aria-hidden='true' /></button>
+                  <button type='button' aria-label='Próxima estratégia' title='Próxima estratégia' disabled={activeIndex === calculated.length - 1} onClick={() => setActiveIndex((index) => index + 1)}><FiChevronRight size={17} aria-hidden='true' /></button>
+                </div>
+              </div>
             </div>
             {(definition?.ancora === 'propria' || pathQuestion) && <div className='schedule-studio__choices'>
               {definition?.ancora === 'propria' && <label>{legacyDefinition?.pergunta_propria || 'Qual é a data deste evento?'}
