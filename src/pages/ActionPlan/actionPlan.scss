@@ -1115,30 +1115,6 @@
 .action-plan-page--embedded .action-plan-header-result small { display: block; color: rgba(255,255,255,.6); font-size: 10px; font-weight: 800; text-transform: uppercase; }
 .action-plan-page--embedded .action-plan-header-result h1 { margin: 3px 0 4px; color: #344b73 !important; font-size: 31px; line-height: 1.05; }
 .action-plan-page--embedded .action-plan-header-result span { display: block; max-width: 660px; margin: 0; color: #6f82a4 !important; font-size: 13px; line-height: 1.4; }
-.action-plan-page--embedded .action-plan-new-strategy {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 38px;
-  margin: 0;
-  padding: 0 15px;
-  border: 1px solid rgba(51, 97, 255, .22);
-  border-radius: 999px;
-  background: rgba(255,255,255,.76);
-  box-shadow: 0 7px 16px rgba(51,97,255,.1);
-  color: #3361ff;
-  cursor: pointer;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 900;
-  white-space: nowrap;
-  transition: background-color .15s ease;
-}
-.action-plan-page--embedded .action-plan-new-strategy:hover,
-.action-plan-page--embedded .action-plan-new-strategy:focus-visible {
-  background: #fff;
-  outline: 0;
-}
 .action-plan-page--embedded .ap-plan-row:nth-child(2) { animation-delay: .08s; }
 .action-plan-page--embedded .ap-plan-row:nth-child(3) { animation-delay: .16s; }
 .action-plan-page--embedded .ap-plan-row:nth-child(4) { animation-delay: .24s; }
@@ -1163,33 +1139,6 @@
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 9px;
-}
-
-.action-plan-tabs-actions .action-plan-new-strategy {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 34px;
-  padding: 0 14px;
-  border: 1px solid rgba(51, 97, 255, .22);
-  border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 5px 12px rgba(51, 97, 255, .08);
-  color: #3361ff;
-  cursor: pointer;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
-  transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
-}
-
-.action-plan-tabs-actions .action-plan-new-strategy:hover,
-.action-plan-tabs-actions .action-plan-new-strategy:focus-visible {
-  border-color: #b9c9ff;
-  background: #f8faff;
-  box-shadow: 0 7px 16px rgba(51, 97, 255, .12);
-  outline: 0;
 }
 
 .action-plan-view-tabs {

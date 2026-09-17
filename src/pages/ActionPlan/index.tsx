@@ -16,6 +16,7 @@ import { Spinner } from '../../components/spinner/spinner';
 import { useGlobalSearch, normalizar } from '@maestra/core/stores/globalSearchStore';
 import EnhancedEmptyState from '../../components/action-plan/EnhancedEmptyState';
 import { UpsellModal } from '../../components/UpsellModal';
+import { BotaoFlutuante } from '../../components/BotaoFlutuante';
 import { TaskDate, TaskCategory, TaskOwner, type Assignee } from './TaskControls';
 import { TaskDetailModal } from './TaskDetailModal';
 import { TASK_OWNER_SELF, isOnboardingComplete } from '@maestra/core/constants/maestra';
@@ -203,9 +204,15 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const [archiveOpen, setArchiveOpen] = useState(false); // modal "Arquivadas": traz estratégia pro plano
   const [proModalOpen, setProModalOpen] = useState(false);
   const [selectedTaskRef, setSelectedTaskRef] = useState<{ strategyId: string; taskId: string } | null>(null);
-  const { openWithPrompt } = useNytaModal(); // botão "Nova estratégia" abre a Nyta com o protocolo
+  const { openWithPrompt } = useNytaModal();
   const [, setSaving] = useState(false);
   const showProRequired = () => setProModalOpen(true);
+  const createStrategy = () => {
+    if (!manageTasks) { showProRequired(); return; }
+    if (!artist?.id) return;
+    const prompt = encodeURIComponent('Quero criar uma nova estratégia para o meu plano de ação.');
+    navigate(`/artists/${artist.id}/nyta?prompt=${prompt}`);
+  };
   const migrationStarted = useRef(false);
 
   // Equipe ativa do artista — alimenta o seletor de responsável das tarefas.
@@ -596,16 +603,6 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
           </button>
         </nav>
         <div className="action-plan-tabs-actions">
-          {activeView === 'strategies' && (
-            <button
-              type="button"
-              className="action-plan-new-strategy"
-              onClick={() => manageTasks ? openWithPrompt('Quero criar uma nova estratégia para o meu plano de ação.') : showProRequired()}
-            >
-              <FiPlus aria-hidden />
-              Nova estratégia
-            </button>
-          )}
           {hasArchive && (
             <button className="action-plan-archived-button" type="button" onClick={() => manageTasks ? setArchiveOpen(true) : showProRequired()}>
               <FiArchive size={13} />
@@ -795,6 +792,7 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
           onClose={() => setArchiveOpen(false)}
         />
       )}
+      <BotaoFlutuante rotulo="Criar nova estratégia com a Nyta IA" aoClicar={createStrategy} />
       <UpsellModal open={proModalOpen} context="action-plan" onClose={() => setProModalOpen(false)} />
     </div>
   );
