@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import { App, DatePicker, Input, Select } from 'antd';
 import dayjs from 'dayjs';
-import { FiCheck, FiEdit3, FiPlus, FiRefreshCw, FiTrash2, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiCheck, FiEdit3, FiPlus, FiRefreshCw, FiTrash2, FiX } from 'react-icons/fi';
 
 import { listGenres } from '@maestra/core/services/db/genres';
 import { searchCities } from '@maestra/core/services/db/cities';
@@ -1221,18 +1221,7 @@ export const SwotInternalCard: FC<{
         <span style={{ color: 'var(--wz-blue)', fontSize: 11, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase' }}>
           Diagnóstico interno
         </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          <span style={{ color: 'var(--wz-muted)', fontSize: 12, fontWeight: 600 }}>{idx + 1} de {total}</span>
-          {idx > 0 && (
-            <button
-              disabled={advancing}
-              onClick={() => setIdx((i) => Math.max(0, i - 1))}
-              style={{ background: 'none', border: 'none', color: 'var(--wz-muted)', fontSize: 12, cursor: 'pointer', padding: 0 }}
-            >
-              ← Voltar
-            </button>
-          )}
-        </span>
+        <span style={{ color: 'var(--wz-muted)', fontSize: 12, fontWeight: 600, flexShrink: 0 }}>{idx + 1} de {total}</span>
       </div>
       <div style={{ height: 3, borderRadius: 3, background: 'var(--wz-line)', marginBottom: 14, overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${barPct}%`, background: 'var(--wz-blue)', borderRadius: 3, transition: 'width .3s ease' }} />
@@ -1290,6 +1279,19 @@ export const SwotInternalCard: FC<{
           })}
         </div>
       </div>
+      {idx > 0 && (
+        <div className='swot-internal-nav'>
+          <button
+            type='button'
+            className='swot-internal-back'
+            disabled={advancing}
+            onClick={() => setIdx((i) => Math.max(0, i - 1))}
+          >
+            <FiArrowLeft size={16} aria-hidden='true' />
+            Pergunta anterior
+          </button>
+        </div>
+      )}
     </div>
   );
 };

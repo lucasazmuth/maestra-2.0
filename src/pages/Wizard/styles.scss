@@ -1657,6 +1657,35 @@
   margin-top: 14px;
 }
 
+.swot-internal-nav {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--wz-line);
+}
+
+.swot-internal-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--wz-line-2);
+  border-radius: 6px;
+  background: var(--wz-surface);
+  color: var(--wz-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover:not(:disabled) { border-color: var(--wz-blue); background: var(--wz-blue-soft); color: var(--wz-blue); }
+  &:focus-visible { outline: 2px solid var(--wz-blue); outline-offset: 2px; }
+  &:disabled { opacity: .5; cursor: default; }
+}
+
 // Hero compacto do artista dentro do chat. Ao contrário dos cards de widget (que ganham com a
 // largura da coluna — grade de gêneros, quadro SWOT), este é só um avatar + nome: sem teto, ele
 // esparramava por 1100px numa tela larga e lia como um card vazio.
