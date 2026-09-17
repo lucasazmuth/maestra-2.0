@@ -332,7 +332,7 @@ const Dashboard: FC = () => {
 
   return (
     <div className='board-content page-view music-dashboard'>
-      {secao === 'visao-geral' && <VisaoGeralDoArtista artist={artist} onSelect={setSecao} />}
+      <VisaoGeralDoArtista artist={artist} onSelect={setSecao} />
       <PillarCards artist={artist} ativa={secao} onSelect={setSecao} />
 
       {pilarAtivo ? (
