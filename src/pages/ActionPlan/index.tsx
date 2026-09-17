@@ -29,7 +29,7 @@ import { actionStatusFromChecklist, buildV13Actions, defaultV13Schedule } from '
 import './actionPlan.scss';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-const todayStr = () => new Date().toISOString().split('T')[0];
+const todayStr = () => dayjs().format('YYYY-MM-DD');
 
 const isDone = (t: ActionTask) => t.status === 'done';
 const isActive = (t: ActionTask) => t.status !== 'archived';

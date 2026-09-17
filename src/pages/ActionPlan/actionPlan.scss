@@ -1658,6 +1658,10 @@
 }
 
 .ap-v13-action-head {
+  --ap-action-control-size: 28px;
+  --ap-action-control-bg: #f3f6fc;
+  --ap-action-control-border: #dce5f3;
+  --ap-action-control-color: #5c7196;
   display: flex;
   align-items: flex-start;
   flex-wrap: wrap;
@@ -1666,7 +1670,7 @@
 
 .ap-v13-action-head > strong {
   min-width: 0;
-  flex: 1;
+  flex: 1 1 220px;
   color: #405985;
   font-size: 14px;
   font-weight: 800;
@@ -1675,7 +1679,55 @@
 
 .ap-v13-action-meta {
   flex: 0 0 auto;
+  max-width: 100%;
+  gap: 6px;
   justify-content: flex-end;
+}
+
+.action-strategy-overview .ap-v13-action-meta > .ap-owner,
+.action-strategy-overview .ap-v13-action-meta > .ap-date,
+.action-strategy-overview .ap-v13-action-meta > .ap-schedule-badge,
+.action-strategy-overview .ap-v13-action-meta > .ap-v13-action-more {
+  box-sizing: border-box;
+  height: var(--ap-action-control-size);
+  min-height: var(--ap-action-control-size);
+  margin: 0;
+  border: 1px solid var(--ap-action-control-border);
+  background: var(--ap-action-control-bg);
+  color: var(--ap-action-control-color);
+}
+
+.action-strategy-overview .ap-v13-action-meta > .ap-owner {
+  width: var(--ap-action-control-size);
+  min-width: var(--ap-action-control-size);
+  border-radius: 50%;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-v13-action-meta > .ap-owner,
+.task-app:not(.public-app) .action-plan-page .ap-v13-action-meta > .ap-date:not(.is-overdue) {
+  border-color: var(--ap-action-control-border);
+  background: var(--ap-action-control-bg);
+  color: var(--ap-action-control-color);
+}
+
+.action-strategy-overview .ap-v13-action-meta > .ap-date {
+  min-width: 76px;
+  justify-content: center;
+  padding: 0 8px;
+  border-radius: 6px;
+}
+
+.action-strategy-overview .ap-v13-action-meta > .ap-date.is-overdue {
+  border-color: #f2cbd0;
+  background: #fff3f4;
+  color: #b34152;
+}
+
+.action-strategy-overview .ap-v13-action-meta > .ap-schedule-badge {
+  min-width: 40px;
+  justify-content: center;
+  padding: 0 7px;
+  border-radius: 6px;
 }
 
 .action-strategy-overview .ap-v13-action-meta > .ap-v13-action-more {
@@ -1690,11 +1742,8 @@
   min-height: 28px;
   grid-template-columns: none;
   margin: 0;
-  border: 0;
-  border-radius: 5px;
+  border-radius: 6px;
   padding: 0;
-  background: transparent;
-  color: #8d9db7;
   cursor: pointer;
 }
 
@@ -1705,7 +1754,8 @@
 
 .action-strategy-overview .ap-v13-action-meta > .ap-v13-action-more:hover,
 .action-strategy-overview .ap-v13-action-meta > .ap-v13-action-more:focus-visible {
-  background: #eef3ff;
+  border-color: #b9c8ff;
+  background: #eaf0ff;
   color: #3361ff;
   outline: 0;
 }
