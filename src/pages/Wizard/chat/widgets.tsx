@@ -100,7 +100,7 @@ export const ScheduleApprovalCard: FC<{
   const today = dayjs().format('YYYY-MM-DD');
   const [schedule, setSchedule] = useState<ActionPlanV13Schedule>(initial);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [view, setView] = useState<'list' | 'gantt'>('list');
+  const [view, setView] = useState<'list' | 'gantt'>('gantt');
   const calculated = useMemo(() => strategies.map((strategy) => ({
     ...strategy,
     actions: buildV13Actions(strategy, schedule, { today, existing: strategy.actions }),
