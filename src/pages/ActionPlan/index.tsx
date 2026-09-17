@@ -42,23 +42,21 @@ const ActionPlanScheduleView: FC<{
   onChange: (strategyId: string, taskId: string, deadline?: string) => void;
   onActionChange: (strategyId: string, action: ActionPlanAction, deadline?: string) => void;
 }> = ({ strategies, canEdit, onBlocked, onChange, onActionChange }) => {
-  const rows = useMemo<Array<{ strategy: Strategy; action?: ActionPlanAction; task?: ActionTask; index: number }>>(
+  const groups = useMemo<Array<{ strategy: Strategy; actions: ActionPlanAction[]; tasks: ActionTask[] }>>(
     () => {
-      const result: Array<{ strategy: Strategy; action?: ActionPlanAction; task?: ActionTask; index: number }> = [];
-      strategies.forEach((strategy) => {
-        if (strategy.actions?.length) {
-          strategy.actions
-            .filter((action) => action.status !== 'archived')
-            .forEach((action, index) => result.push({ strategy, action, index }));
-          return;
-        }
-        (strategy.tasks || []).filter(isActive).forEach((task, index) => result.push({ strategy, task, index }));
-      });
-      return result;
+      return strategies.map((strategy) => ({
+        strategy,
+        actions: (strategy.actions || []).filter((action) => action.status !== 'archived'),
+        tasks: strategy.actions?.length ? [] : (strategy.tasks || []).filter(isActive),
+      })).filter((group) => group.actions.length || group.tasks.length);
     },
     [strategies]
   );
-  const dates = rows.map(({ action, task }) => action?.date || task?.deadline).filter(Boolean) as string[];
+  const actionCount = groups.reduce((total, group) => total + group.actions.length + group.tasks.length, 0);
+  const dates = groups.flatMap(({ actions, tasks }) => [
+    ...actions.map((action) => action.date),
+    ...tasks.map((task) => task.deadline),
+  ]).filter((date): date is string => !!date);
   const orderedDates = dates.map((date) => dayjs(date)).sort((a, b) => a.valueOf() - b.valueOf());
   const start = (orderedDates.length ? orderedDates[0] : dayjs()).startOf('month');
   const endDate = orderedDates.length ? orderedDates[orderedDates.length - 1] : start;
@@ -67,7 +65,11 @@ const ActionPlanScheduleView: FC<{
   const width = Math.max(720, monthCount * 150);
   const span = Math.max(1, end.diff(start, 'day'));
   const months = Array.from({ length: monthCount }, (_, index) => start.add(index, 'month'));
-  const position = (date?: string) => date ? Math.max(0, Math.min(100, (dayjs(date).diff(start, 'day') / span) * 100)) : 0;
+  const position = (date?: string) => {
+    const edge = (36 / width) * 100;
+    const value = date ? (dayjs(date).diff(start, 'day') / span) * 100 : edge;
+    return Math.max(edge, Math.min(100 - edge, value));
+  };
 
   return (
     <section className="action-plan-schedule" aria-label="Cronograma do plano de ação">
@@ -75,40 +77,56 @@ const ActionPlanScheduleView: FC<{
         <div>
           <span>CRONOGRAMA</span>
           <h2>Organize as ações do seu plano</h2>
-          <p>Edite o início de cada ação diretamente no Gantt e acompanhe a distribuição do trabalho.</p>
+          <p>Edite o prazo de cada ação diretamente no Gantt e acompanhe a distribuição do trabalho.</p>
         </div>
-        <strong>{rows.length}<small>ações</small></strong>
+        <strong>{actionCount}<small>ações</small></strong>
       </header>
-      {rows.length ? (
+      {actionCount ? (
         <div className="action-plan-gantt" aria-label="Gantt editável">
           <div className="action-plan-gantt-content" style={{ width: 300 + width }}>
-            <div className="action-plan-gantt-corner">Ações</div>
+            <div className="action-plan-gantt-corner">Estratégias e ações</div>
             <div className="action-plan-gantt-months" style={{ width }}>
               {months.map((month) => <span key={month.format('YYYY-MM')} style={{ width: width / monthCount }}>{month.format('MMM YYYY')}</span>)}
             </div>
-            {rows.map(({ strategy, action, task, index }) => (
-              <div className="action-plan-gantt-row" key={`${strategy.id}-${action?.id || task?.id || index}`}>
-                <div className="action-plan-gantt-task">
-                  <small>{String(index + 1).padStart(2, '0')}</small>
-                  <span><b>{strategy.title}</b>{action?.title || task?.description}</span>
+            {groups.map(({ strategy, actions, tasks }, strategyIndex) => (
+              <div className="action-plan-gantt-group" key={strategy.id}>
+                <div className="action-plan-gantt-strategy">
+                  <span className="action-plan-gantt-strategy-number">{strategyIndex + 1}</span>
+                  <strong>{strategy.title}</strong>
                 </div>
-                <div className="action-plan-gantt-timeline" style={{ width }}>
+                <div className="action-plan-gantt-strategy-timeline" style={{ width }}>
                   {months.map((month) => <i key={month.format('YYYY-MM')} style={{ width: width / monthCount }} />)}
-                  <DatePicker
-                    allowClear
-                    inputReadOnly
-                    disabled={!canEdit}
-                    aria-label={`Início: ${action?.title || task?.description}`}
-                    className="action-plan-gantt-marker"
-                    value={(action?.date || task?.deadline) ? dayjs(action?.date || task?.deadline) : null}
-                    onClick={!canEdit ? onBlocked : undefined}
-                    onChange={(value) => action
-                      ? onActionChange(strategy.id, action, value?.format('YYYY-MM-DD'))
-                      : onChange(strategy.id, task!.id, value?.format('YYYY-MM-DD'))}
-                    format="DD MMM"
-                    style={{ left: `${position(action?.date || task?.deadline)}%` }}
-                  />
                 </div>
+                {(actions.length ? actions.map((action) => ({ action, task: undefined as ActionTask | undefined })) : tasks.map((task) => ({ action: undefined as ActionPlanAction | undefined, task }))).map(({ action, task }, actionIndex) => {
+                  const date = action?.date || task?.deadline;
+                  const title = action?.title || task?.description;
+                  return (
+                    <div className="action-plan-gantt-row" key={action?.id || task!.id}>
+                      <div className="action-plan-gantt-task">
+                        <small>{strategyIndex + 1}.{actionIndex + 1}</small>
+                        <span>{title}<b>{date ? `Prazo: ${dayjs(date).format('DD MMM YYYY')}` : 'Sem prazo'}</b></span>
+                      </div>
+                      <div className="action-plan-gantt-timeline" style={{ width }}>
+                        {months.map((month) => <i key={month.format('YYYY-MM')} style={{ width: width / monthCount }} />)}
+                        <DatePicker
+                          allowClear
+                          inputReadOnly
+                          disabled={!canEdit}
+                          aria-label={`Prazo: ${title}`}
+                          className={`action-plan-gantt-marker${date ? '' : ' is-empty'}`}
+                          title={date ? `Prazo: ${dayjs(date).format('DD/MM/YYYY')}` : `Definir prazo: ${title}`}
+                          value={date ? dayjs(date) : null}
+                          onClick={!canEdit ? onBlocked : undefined}
+                          onChange={(value) => action
+                            ? onActionChange(strategy.id, action, value?.format('YYYY-MM-DD'))
+                            : onChange(strategy.id, task!.id, value?.format('YYYY-MM-DD'))}
+                          format="DD MMM"
+                          style={{ left: `${position(date)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </div>
