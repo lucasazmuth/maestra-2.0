@@ -16,7 +16,8 @@ const identificador = (): string => Math.random().toString(36).slice(2, 10);
 
 export const buildActionPlan = (strategy: Strategy): ActionTask[] => {
   if (strategy.tasks?.length) return strategy.tasks.map(task => ({ ...task }));
-  const bank = strategy.bankVersion === '4.0' ? STRATEGY_BY_ID : LEGACY_STRATEGY_BY_ID;
+  const bank = strategy.bankVersion === '4.0' || strategy.bankVersion === '4.2'
+    ? STRATEGY_BY_ID : LEGACY_STRATEGY_BY_ID;
   const doBanco = strategy.bankId ? bank[strategy.bankId] : undefined;
   return (doBanco?.tasks || []).map((description) => ({
     id: identificador(),

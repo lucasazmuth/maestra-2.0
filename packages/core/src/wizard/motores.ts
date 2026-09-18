@@ -112,7 +112,7 @@ const personalizeName = (title: string, name?: string, gender?: ArtistIdentity['
 };
 
 
-// A oportunidade obrigatoria permite a entrada; o gatilho justifica a sugestao.
+// Uma fraqueza ou oportunidade dispara; uma força marcada pode bloquear a estratégia.
 export const generateStrategies = (
   swot: NonNullable<ArtistContent['swotInputs']>,
   identity: ArtistIdentity
@@ -120,24 +120,20 @@ export const generateStrategies = (
   const internal = swot.internal || {};
   const opportunities = swot.opportunities || [];
   return STRATEGY_BANK.filter(s => {
-    const allowed = !s.requires_any_opportunity.length
-      || s.requires_any_opportunity.some(id => opportunities.includes(id));
-    const triggered = (!s.triggers.weaknesses.length && !s.triggers.opportunities.length)
-      || s.triggers.weaknesses.some(id => internal[id] === 'melhorar')
+    const triggered = s.triggers.weaknesses.some(id => internal[id] === 'melhorar')
       || s.triggers.opportunities.some(id => opportunities.includes(id));
-    return allowed && triggered;
+    return triggered && (s.blocked_by_strength == null || internal[s.blocked_by_strength] !== 'forte');
   }).map(s => ({
     id: uid(),
     bankId: s.id,
-    bankVersion: '4.0',
+    bankVersion: '4.2',
     type: 'WO',
     title: personalizeName(s.title, identity.name, identity.gender),
     description: personalizeName(s.subtitle, identity.name, identity.gender),
     swotRefs: {
       weaknesses: s.triggers.weaknesses.filter(id => internal[id] === 'melhorar').map(internalLabel),
-      opportunities: Array.from(new Set([...s.requires_any_opportunity, ...s.triggers.opportunities]))
-        .filter(id => opportunities.includes(id)).map(opportunityLabel),
-      strengths: s.info.strengths.filter(id => internal[id] === 'forte').map(internalLabel),
+      opportunities: s.triggers.opportunities.filter(id => opportunities.includes(id)).map(opportunityLabel),
+      strengths: [],
     },
     tasks: [],
     score: 0,

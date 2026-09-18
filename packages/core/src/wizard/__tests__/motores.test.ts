@@ -1,5 +1,7 @@
 import { generateObjectives, generateStrategies, prioritizeStrategies, seedScheduledPlan } from '../motores';
 import { STRATEGY_BANK } from '../../constants/strategyBank';
+import bancoV411 from '../../constants/motor_v4_banco_v4_1_1.json';
+import bancoV42 from '../../constants/motor_v4_banco.json';
 import { PRIORITY, PRIORITY_INFO } from '../prioridade';
 import { buildActionPlan } from '../../services/planoDeAcao';
 import type { ArtistIdentity, Strategy } from '../../interfaces/maestra';
@@ -54,35 +56,59 @@ describe('generateObjectives (Nyta_Etapa_Objetivos_v2)', () => {
   });
 });
 
-describe('motor v4', () => {
-  const cases: [number[], number[], number][] = [
-    [[17], [15], 2],
-    [[4,6,7,8,12,13,15,16,17,20], [1,3,8,13], 17],
-    [[10,13,15,16,17], [3,5,6,9,14], 18],
-    [[14,16,19], [4,6,16,21,22], 13],
-    [[6,7,9,10,14,19], [9,10,11,13,18], 21],
-    [[4,5,6,7,17], [3,8,15,17,19,20], 14],
+describe('motor v4.2', () => {
+  const cases: [string, number[], number[], number[], number][] = [
+    ['minimo', [17], [15], [], 2],
+    ['iniciante', [4,6,7,8,12,13,15,16,17,20], [1,3,8,13], [], 17],
+    ['consolidado', [14,16,19], [4,6,16,21,22], [4,5,12,13,15], 12],
+    ['digital sem shows', [4,5,6,7,17], [3,8,15,17,19,20], [12,13,15], 17],
+    ['branding', [6,7], [3,9], [12,13], 7],
+    ['artista real 18/09', [6,7,8,14,16,17,18,19], [1,3,4,5,6,7,8,9,11,13,14,15,16,17,20,21,22], [1,2,3,4,5,9,10,11,12,13,15,20], 31],
   ];
-  it.each(cases)('reproduz F=%j O=%j: %i estrategias', (weaknesses, opportunities, count) => {
-    const internal = Object.fromEntries(weaknesses.map(id => [id, 'melhorar' as const]));
+  it.each(cases)('%s: F=%j O=%j forcas=%j gera %i estrategias', (_, weaknesses, opportunities, strengths, count) => {
+    const internal = Object.fromEntries([
+      ...weaknesses.map(id => [id, 'melhorar' as const] as const),
+      ...strengths.map(id => [id, 'forte' as const] as const),
+    ]);
     const result = generateStrategies({ internal, opportunities }, {});
     expect(result).toHaveLength(count);
-    expect(result.every(s => s.bankVersion === '4.0' && s.description)).toBe(true);
+    expect(result.every(s => s.bankVersion === '4.2' && s.description)).toBe(true);
   });
   it('caso minimo retorna apenas 34 e 43', () => {
     expect(generateStrategies({ internal: {17: 'melhorar'}, opportunities: [15] }, {})
       .map(s => s.bankId).sort()).toEqual(['34', '43']);
   });
+  it('perfil real preserva exatamente as 31 estrategias do simulador', () => {
+    const internal = Object.fromEntries([
+      ...[6,7,8,14,16,17,18,19].map(id => [id, 'melhorar'] as const),
+      ...[1,2,3,4,5,9,10,11,12,13,15,20].map(id => [id, 'forte'] as const),
+    ]);
+    expect(generateStrategies({ internal, opportunities: [1,3,4,5,6,7,8,9,11,13,14,15,16,17,20,21,22] }, {})
+      .map(s => s.bankId)).toEqual([
+        '1','3','4','9','12','14','15','17','18','19','20','22','48','49','29','32',
+        '33','N5','34','35','37','38','40','42','43','54','55','50','51','53','N6',
+      ]);
+  });
   it('nao gera universais ou estrategias apenas por forcas e ameacas', () => {
     expect(generateStrategies({}, {})).toEqual([]);
     expect(generateStrategies({internal: {1: 'forte'}, threats: [1]}, {})).toEqual([]);
   });
-  it('projeto incentivado exige oportunidade e fraqueza', () => {
+  it('oportunidade dispara apenas a estrategia correspondente; responds_to nao dispara', () => {
     const ids = (internal: any, opportunities: number[]) => generateStrategies({internal, opportunities}, {}).map(s=>s.bankId);
     expect(ids({17:'melhorar'}, [])).not.toContain('38');
-    expect(ids({}, [2])).not.toContain('38');
-    expect(ids({17:'melhorar'}, [2])).toContain('38');
+    expect(ids({}, [2])).toContain('38');
     expect(ids({17:'melhorar'}, [4])).toContain('38');
+    expect(ids({}, [15])).toEqual(['43']);
+  });
+  it('forca bloqueia mesmo quando outro gatilho da estrategia foi marcado', () => {
+    const ids = (internal: Record<number, 'melhorar' | 'forte'>) =>
+      generateStrategies({ internal }, {}).map(s => s.bankId);
+    expect(ids({17: 'melhorar'})).toContain('34');
+    expect(ids({17: 'melhorar', 8: 'forte'})).not.toContain('34');
+    expect(ids({18: 'melhorar'})).toContain('3');
+    expect(ids({18: 'forte'})).not.toContain('3');
+    expect(generateStrategies({ internal: {18: 'forte'}, opportunities: [9] }, {})
+      .map(s => s.bankId)).not.toContain('3');
   });
 });
 
@@ -122,14 +148,26 @@ describe('seedScheduledPlan (Plano de Ação — início + duração, cascata po
 });
 
 describe('integridade das tabelas', () => {
-  it('45 estrategias e 449 tarefas com cobertura completa', () => {
+  it('mantem as acoes e checklists da 4.1.1 intactos', () => {
+    const previous = Object.fromEntries(bancoV411.strategies.map(s => [s.id, s.actions]));
+    for (const strategy of bancoV42.strategies) {
+      expect(strategy.actions).toEqual(previous[strategy.id]);
+    }
+  });
+  it('45 estrategias e cobertura completa sem gatilhos impossiveis', () => {
     expect(STRATEGY_BANK).toHaveLength(45);
     expect(STRATEGY_BANK.reduce((n, s) => n + s.tasks.length, 0)).toBe(449);
     expect(new Set(STRATEGY_BANK.map(s => s.id)).size).toBe(45);
     for (let id = 1; id <= 20; id++) expect(STRATEGY_BANK.some(s => s.triggers.weaknesses.includes(id))).toBe(true);
-    for (let id = 1; id <= 22; id++) expect(STRATEGY_BANK.some(s => [...s.requires_any_opportunity, ...s.triggers.opportunities].includes(id))).toBe(true);
+    for (let id = 1; id <= 22; id++) expect(STRATEGY_BANK.some(s => s.triggers.opportunities.includes(id))).toBe(true);
+    expect(STRATEGY_BANK.filter(s => s.blocked_by_strength != null)).toHaveLength(10);
     for (const s of STRATEGY_BANK) {
       expect(s.tasks.length).toBeGreaterThan(0);
+      expect(s.triggers.weaknesses.length + s.triggers.opportunities.length).toBeGreaterThan(0);
+      if (s.blocked_by_strength != null) {
+        expect(s.blocked_by_strength).toBeGreaterThanOrEqual(1);
+        expect(s.blocked_by_strength).toBeLessThanOrEqual(20);
+      }
       expect(PRIORITY[s.id]).toBeDefined();
       expect(PRIORITY[s.id]).toHaveLength(8);
       expect(PRIORITY[s.id].every(n => Number.isInteger(n) && n >= 1 && n <= 10)).toBe(true);
