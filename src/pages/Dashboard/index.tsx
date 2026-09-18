@@ -192,23 +192,8 @@ const PainelDoMetodo: FC<{
   }
 
   return (
-    <section className={`method-view method-view-${pilar.chave}`} aria-labelledby={`method-${pilar.chave}`}>
-      {pilar.chave === 'planejamento' ? (
-        <header className='method-planning-header'>
-          <div className='method-planning-header-top'>
-            <div className='method-planning-result'>
-            <span>PARA ONDE IR</span>
-            <div className='method-planning-result-main'>
-              <div>
-                <h1 id='method-planejamento'>Planejamento Estratégico</h1>
-                  <p>{content.planMonths ? `Ciclo de ${content.planMonths} meses para transformar prioridades em ações acompanháveis.` : 'Um ciclo para transformar prioridades em ações acompanháveis.'}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-      ) : <CabecalhoDoMetodo pilar={pilar} aoAbrir={aoAbrir} />}
-
+    <section className={`method-view method-view-${pilar.chave}`} aria-label={pilar.chave === 'planejamento' ? 'Planejamento Estratégico' : undefined} aria-labelledby={pilar.chave !== 'planejamento' ? `method-${pilar.chave}` : undefined}>
+      {pilar.chave !== 'planejamento' && <CabecalhoDoMetodo pilar={pilar} aoAbrir={aoAbrir} />}
       {pilar.chave === 'diagnostico' && (
         <div className='method-diagnostic-grid'>
           <article className='method-primary-card'>

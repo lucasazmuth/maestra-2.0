@@ -604,19 +604,7 @@ const ActionPlan: FC<{ embedded?: boolean }> = ({ embedded = false }) => {
 
   return (
     <div className={`ap action-plan-page${embedded ? ' action-plan-page--embedded' : ''}`}>
-      {embedded ? (
-        <header className="module-page-heading action-plan-method-header">
-          <div className="action-plan-header-top">
-            <div className="action-plan-header-copy">
-              <p>EXECUÇÃO DIÁRIA</p>
-              <div className="action-plan-header-result">
-                <h1>Plano de Ação</h1>
-                <span>Execute suas estratégias em ações, conclua cada etapa e acompanhe o avanço do seu plano.</span>
-              </div>
-            </div>
-          </div>
-        </header>
-      ) : (
+      {!embedded && (
         <header className="module-page-heading action-plan-standalone-heading">
           <div>
             <p>EXECUÇÃO DIÁRIA</p>
