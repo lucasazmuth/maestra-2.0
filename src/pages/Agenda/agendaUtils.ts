@@ -30,6 +30,9 @@ export const timeFromMinutes = (minutes: number): string => {
   return `${String(Math.floor(snapped / 60)).padStart(2, '0')}:${String(snapped % 60).padStart(2, '0')}:00`;
 };
 
+export const slotEndTime = (time: string): string =>
+  timeFromMinutes((minutesFromTime(time) ?? 0) + SNAP_MINUTES);
+
 export const eventDurationMinutes = (event: AgendaEvent): number => {
   const start = minutesFromTime(event.start_time);
   const end = minutesFromTime(event.end_time);

@@ -470,6 +470,7 @@ const Agenda: FC = () => {
             </div>
           </section>
         </div> : calendarView === 'week' ? <section className="agenda-week-board" aria-label="Calendário semanal">
+          <div className="agenda-week-scroll">
           <div className="agenda-week-head">
             <span className="agenda-week-gutter" />
             {weekDays.map((day) => <button type="button" key={day.format('YYYY-MM-DD')} className={day.isSame(dayjs(), 'day') ? 'is-today' : ''} onClick={() => { setCursor(day); setCalendarView('day'); }}>
@@ -489,12 +490,15 @@ const Agenda: FC = () => {
               const key = day.format('YYYY-MM-DD');
               const eventsForDay = (byDate[key] || []).filter((event) => event.start_time);
               const columns = getOverlapColumns(eventsForDay);
-              return <div className="agenda-week-column" key={key} onClick={(clickEvent) => {
-                if (!canEdit || (clickEvent.target as HTMLElement).closest('.calendar-event')) return;
-                const target = dateForPointer(clickEvent.clientY, clickEvent.currentTarget.getBoundingClientRect(), day);
-                openCreate(target.date, target.start_time);
-              }}>
-                {quarterSlots.map((time, index) => <span className="agenda-week-slot" key={time} style={{ top: index * SLOT_HEIGHT }} />)}
+              return <div className="agenda-week-column" key={key}>
+                {canEdit && quarterSlots.map((time, index) => <button
+                  type="button"
+                  className="calendar-slot agenda-week-slot"
+                  key={time}
+                  aria-label={`Novo compromisso em ${day.format('DD/MM')} às ${time}`}
+                  onClick={() => openCreate(key, `${time}:00`)}
+                  style={{ top: index * SLOT_HEIGHT, height: SLOT_HEIGHT }}
+                />)}
                 {eventsForDay.map((event) => {
                   const layout = columns.get(event.id) || { column: 0, columns: 1 };
                   const style = getEventStyle(event);
@@ -504,6 +508,7 @@ const Agenda: FC = () => {
                 })}
               </div>;
             })}
+          </div>
           </div>
         </section> : calendarView === 'month' ? <section className="agenda-month-board" aria-label="Calendário mensal">
           <div className="agenda-month-weekdays">{WEEKDAYS.map((weekday) => <span key={weekday}>{weekday}</span>)}</div>

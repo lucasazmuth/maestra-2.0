@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
 import type { AgendaEvent } from '@maestra/core/interfaces/maestra';
-import { eventMatchesAssignee, getEventStyle, getOverlapColumns, snapMinutes, timeFromMinutes } from './agendaUtils';
+import { eventMatchesAssignee, getEventStyle, getOverlapColumns, slotEndTime, snapMinutes, timeFromMinutes } from './agendaUtils';
 
 const event = (id: string, start_time: string, end_time: string): AgendaEvent => ({
   id,
@@ -19,6 +19,12 @@ describe('agenda scheduler helpers', () => {
     expect(snapMinutes(8)).toBe(15);
     expect(snapMinutes(23)).toBe(30);
     expect(timeFromMinutes(91)).toBe('01:30:00');
+  });
+
+  it('preenche o fim de um novo evento com a duração da faixa selecionada', () => {
+    expect(slotEndTime('00:00:00')).toBe('00:15:00');
+    expect(slotEndTime('09:30:00')).toBe('09:45:00');
+    expect(slotEndTime('23:45:00')).toBe('23:59:00');
   });
 
   it('calcula posição e altura de um evento', () => {
