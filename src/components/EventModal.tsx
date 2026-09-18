@@ -5,7 +5,7 @@ import { FiTrash2 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
 import type { AgendaEvent } from '@maestra/core/interfaces/maestra';
-import type { AgendaAssigneeKind } from '../pages/Agenda/agendaUtils';
+import { slotEndTime, type AgendaAssigneeKind } from '../pages/Agenda/agendaUtils';
 import { EVENT_TYPE_OPTIONS, EVENT_STATUS } from '@maestra/core/constants/maestra';
 import * as eventsDb from '@maestra/core/services/db/events';
 import modalStyles from './StandardModal.module.scss';
@@ -37,9 +37,7 @@ const empty = (date?: string, time?: string): DraftEvent => ({
   type: 'other',
   date: date || dayjs().format('YYYY-MM-DD'),
   start_time: time || null,
-  // Uma hora de duração como palpite: vindo de uma faixa da agenda, o fim em branco obrigaria a
-  // abrir mais um seletor para o caso mais comum. Continua editável.
-  end_time: time ? dayjs(time, 'HH:mm:ss').add(1, 'hour').format('HH:mm:ss') : null,
+  end_time: time ? slotEndTime(time) : null,
   status: 'scheduled',
   assignee_kind: 'owner',
   assignee_member_id: null,
