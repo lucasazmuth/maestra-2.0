@@ -4,7 +4,6 @@ import { FiArrowUpRight } from 'react-icons/fi';
 
 import { NYTA_SUGGESTIONS } from '@maestra/core/constants/maestra';
 import { saudacaoDaNyta } from '@maestra/core/constants/nytaChat';
-import { NytaAvatar } from '../../pages/Wizard/chat/nytaPersona';
 import { InputBar } from '../../pages/NytaChat/components/InputBar';
 import '../../pages/NytaChat/components/nytaChatUI.scss';
 import styles from './NytaDashboardHero.module.scss';
@@ -60,7 +59,6 @@ export const NytaDashboardHero: FC<{ artistName?: string }> = ({ artistName }) =
     <section className={`nyta-surface ${styles.hero}`} aria-label="Nyta">
       <div className={styles.inner}>
         <div className={styles.greeting}>
-          <NytaAvatar size={48} />
           <h2 className={styles.title}>{greeting}</h2>
         </div>
         <InputBar
