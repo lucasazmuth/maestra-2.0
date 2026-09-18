@@ -24,7 +24,7 @@ const NytaChatPage: FC = () => {
   const entitlements = useEntitlements();
   const { id: artistId } = useParams<{ id: string }>();
   const { conversations, refresh, rename, remove } = useNytaConversations(artistId);
-  // Só tem efeito abaixo de 900px, onde a coluna de conversas vira gaveta.
+  // Só tem efeito até 1300px, onde a coluna de conversas vira gaveta.
   const [historyOpen, setHistoryOpen] = useState(false);
 
   // A lista de conversas só ganha a linha nova quando o servidor a cria (na primeira mensagem),

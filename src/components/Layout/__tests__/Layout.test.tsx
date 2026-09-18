@@ -343,3 +343,21 @@ describe('AppLayout - lista de perfis do rail', () => {
     expect(screen.getByRole('button', { name: 'Criar novo perfil de artista' })).toBeInTheDocument();
   });
 });
+
+describe('AppLayout - pagina da Nyta', () => {
+  it('mantem o menu do artista ao lado do conteudo no layout web', () => {
+    const artist = { id: 'artista-0', name: 'Artista 0', content: {} };
+
+    render(
+      <Provider store={createTestStore('user-123', [artist])}>
+        <MemoryRouter initialEntries={['/artists/artista-0/nyta']}>
+          <AppLayout />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    const menu = screen.getByRole('complementary', { name: 'Detalhes do artista' });
+    expect(within(menu).getByText('Artista 0')).toBeInTheDocument();
+    expect(document.querySelector('.app-layout')).not.toHaveClass('module-layout');
+  });
+});

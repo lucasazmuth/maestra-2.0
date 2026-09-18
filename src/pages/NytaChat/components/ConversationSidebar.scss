@@ -224,7 +224,7 @@
   display: none;
 }
 
-// ACIMA DE 900px A SETA SAI E ENTRA A FOTO DO PERFIL.
+// Acima de 1300px a lista cabe ao lado do chat, mesmo com o menu do artista.
 //
 // É a mesma quebra em que esta coluna deixa de ser gaveta e passa a ficar fixa ao lado do chat.
 // Não é coincidência: a seta existe porque, como gaveta, ela cobre o chat inteiro e é a única
@@ -232,7 +232,7 @@
 // Maestra e o rail — e uma terceira porta para o mesmo lugar só faz procurar em três.
 //
 // A foto ocupa o lugar dizendo o que a seta não dizia: de qual perfil é esta conversa.
-@media (min-width: 901px) {
+@media (min-width: 1301px) {
   .nyta-conversations__back {
     display: none;
   }
@@ -264,7 +264,7 @@
 // em qualquer app de mensagem. A lista cobre a área do chat (não a barra do app nem a navbar),
 // o "voltar" do cabeçalho traz ela de volta e tocar numa conversa abre o chat. Antes ela
 // simplesmente sumia — e no mobile não havia como ver ou trocar de conversa.
-@media (max-width: 900px) {
+@media (max-width: 1300px) {
   .nyta-conversations {
     position: absolute;
     z-index: 5;
