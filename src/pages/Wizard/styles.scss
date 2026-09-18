@@ -1627,6 +1627,8 @@
 .schedule-studio__task-list .ant-picker input { font-size: 12px; }
 .schedule-studio__missing-dates { margin: 14px 0 0; padding: 18px 0; border-top: 1px solid var(--wz-line); border-bottom: 1px solid var(--wz-line); color: var(--wz-muted); font-size: 12px; }
 .schedule-studio__warning { margin: 12px 0 0; color: #9a6400; font-size: 12px; line-height: 1.5; }
+.schedule-studio__note { margin: 14px 0 0; }
+.schedule-studio__warning + .schedule-studio__note { margin-top: 4px; }
 .schedule-studio__strategy-head strong { display: block; font-size: 17px; line-height: 1.5; overflow-wrap: anywhere; }
 .schedule-studio__status { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; padding-top: 4px; color: #27816a; font-size: 12px; }
 .schedule-studio__footer button { border: 1px solid var(--wz-line); background: var(--wz-surface); color: var(--wz-ink); padding: 9px 12px; border-radius: 6px; cursor: pointer; }
