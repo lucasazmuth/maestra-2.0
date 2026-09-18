@@ -977,7 +977,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
               pushUser('Cronograma aprovado');
               const approvedById = new Map(strategies.map((strategy) => [strategy.id, strategy]));
               const scheduledStrategies = (draft.strategies || []).map((strategy) => approvedById.get(strategy.id) || strategy);
-              void persist({ actionPlanScheduleV13: schedule, strategies: scheduledStrategies }, 8).then(() => Promise.all(
+              void persist({ actionPlanScheduleV13: { ...schedule, savedAt: new Date().toISOString() }, strategies: scheduledStrategies }, 8).then(() => Promise.all(
                 strategies.flatMap((strategy) => (strategy.actions || []).map((action) => syncActionPlanTaskEvent({
                   artistId: artist.id,
                   taskId: action.id,
@@ -1014,8 +1014,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
                 }
                 message.success('Planejamento concluído! Painel liberado.');
               }
-              // Vai direto pro Plano de Ação (com o plano já exibido), não pro dashboard.
-              navigate(`/artists/${artist.id}/action-plan`);
+              navigate(`/artists/${artist.id}`);
             }}
           />
         );

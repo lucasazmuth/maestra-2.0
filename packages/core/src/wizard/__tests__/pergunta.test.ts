@@ -3,6 +3,27 @@ import { GUIDED_OPENTEXT, SAY } from '../../constants/nytaPersona';
 import { nextBeat } from '../script';
 import type { ArtistContent, ArtistGender } from '../../interfaces/maestra';
 
+describe('transição do cronograma para o resumo', () => {
+  const schedule: NonNullable<ArtistContent['actionPlanScheduleV13']> = {
+    version: 'v1.3',
+    startDate: '2026-09-18',
+    releaseDate: '2027-03-18',
+    strategies: { first: { acceptedAt: '2026-09-18T12:00:00.000Z' } },
+  };
+
+  it('mantém o cronograma aberto até o salvamento, mesmo com estratégias aprovadas', () => {
+    expect(nextBeat({ step: 8, actionPlanScheduleV13: schedule } as ArtistContent).stage).toBe('schedule');
+  });
+
+  it('prepara o resumo após salvar o cronograma v1.3', () => {
+    expect(nextBeat({ step: 8, actionPlanScheduleV13: { ...schedule, savedAt: '2026-09-18T13:00:00.000Z' } } as ArtistContent).stage).toBe('final.prepare');
+  });
+
+  it('exibe o resumo quando ele já existe', () => {
+    expect(nextBeat({ step: 8, actionPlanScheduleV13: schedule, executiveSummary: 'Resumo pronto' } as ArtistContent).stage).toBe('final');
+  });
+});
+
 describe('perguntaEmDestaque', () => {
   it('devolve o trecho em negrito da fala', () => {
     expect(perguntaEmDestaque('Vamos comecar. **Quais artistas te inspiram?** (contexto)'))
