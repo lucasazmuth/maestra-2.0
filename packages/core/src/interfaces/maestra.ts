@@ -135,6 +135,7 @@ export interface ActionPlanV13Schedule {
   version: 'v1.3';
   releaseDate?: string;
   startDate?: string;
+  savedAt?: string;
   strategies: Record<string, ActionPlanV13StrategyState>;
 }
 

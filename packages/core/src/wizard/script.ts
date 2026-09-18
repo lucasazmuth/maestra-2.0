@@ -284,7 +284,7 @@ export function nextBeat(draft: ArtistContent): Beat {
 
   // STEP 8 — Cronograma v1. Só planos ainda não concluídos passam por este portão;
   // planejamentos antigos já persistidos no passo 9 continuam abrindo o resumo normalmente.
-  if (step === 8 && !draft.actionPlanSchedule)
+  if (step === 8 && !draft.executiveSummary && !draft.actionPlanSchedule && !draft.actionPlanScheduleV13?.savedAt)
     return {
       stage: 'schedule',
       say: ['Agora vamos colocar o seu plano no tempo. Eu preparo as datas, e você aprova cada estratégia antes de ela entrar na sua agenda.'],
