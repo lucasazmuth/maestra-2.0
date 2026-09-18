@@ -1,7 +1,7 @@
 import { FC, useEffect, useMemo, useState } from 'react';
-import { message } from 'antd';
+import { Dropdown, message } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
-import { FiCheck, FiChevronLeft, FiChevronRight, FiClock, FiUser } from 'react-icons/fi';
+import { FiCheck, FiChevronDown, FiChevronLeft, FiChevronRight, FiClock, FiUser, FiUsers, FiUserX } from 'react-icons/fi';
 import { useSearchParams } from 'react-router-dom';
 
 import { BotaoFlutuante } from '../../components/BotaoFlutuante';
@@ -9,7 +9,7 @@ import { BotaoFlutuante } from '../../components/BotaoFlutuante';
 import { useArtist } from '@maestra/core/hooks/useArtist';
 import { useGlobalSearch, normalizar } from '@maestra/core/stores/globalSearchStore';
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
-import { useAppDispatch } from '@maestra/core/store/store';
+import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 import { artistsActions } from '@maestra/core/store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
 import { EventModal } from '../../components/EventModal';
@@ -32,9 +32,20 @@ const isTaskEvent = (e: AgendaEvent) => e.type === 'task' || e.source === 'actio
 const calendarTitle = (title: string, maxLength = 28) =>
   title.length > maxLength ? `${title.slice(0, maxLength).trimEnd()}…` : title;
 
+const allAssignees = { value: 'all', label: 'Todos', kind: 'all' } as const;
+
+const AssigneeAvatar: FC<{ option: AgendaAssigneeOption | typeof allAssignees; image?: string | null }> = ({ option, image }) => {
+  const [imageFailed, setImageFailed] = useState(false);
+  useEffect(() => setImageFailed(false), [image]);
+  return <span className={`calendar-assignee-avatar is-${option.kind}`} aria-hidden="true">
+    {image && !imageFailed ? <img src={image} alt="" onError={() => setImageFailed(true)} /> : option.kind === 'all' ? <FiUsers /> : option.kind === 'unassigned' ? <FiUserX /> : option.kind === 'owner' ? <FiUser /> : option.label.charAt(0).toUpperCase()}
+  </span>;
+};
+
 const Agenda: FC = () => {
   const { artist } = useArtist();
   const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
   const artistId = artist?.id;
   const { canEditAgenda: canEdit, editPlanning } = useArtistCapabilities(artist);
 
@@ -262,6 +273,14 @@ const Agenda: FC = () => {
   };
 
   const assigneeOptions = useMemo<AgendaAssigneeOption[]>(() => buildAssigneeOptions(members), [members]);
+  const selectedAssignee = assigneeOptions.find((option) => option.value === assigneeFilter) || allAssignees;
+  const userImage = (user?.user_metadata?.avatar_url || user?.user_metadata?.picture) as string | undefined;
+  const assigneeImage = (option: AgendaAssigneeOption | typeof allAssignees): string | undefined => {
+    if (!userImage || !user) return undefined;
+    if (option.kind === 'owner' && artist?.user_id === user.id) return userImage;
+    if (option.kind === 'member' && members.some((member) => member.id === option.value && (member.user_id === user.id || member.email.toLowerCase() === user.email?.toLowerCase()))) return userImage;
+    return undefined;
+  };
   const setAssigneeFilter = (value: string) => {
     const next = new URLSearchParams(searchParams);
     if (value === 'all') next.delete('member');
@@ -339,6 +358,25 @@ const Agenda: FC = () => {
             como o do topo. Dois campos na mesma tela, nenhum funcionando; quem busca agora usa o
             do cabeçalho, que filtra de verdade. */}
         <div>
+          <Dropdown
+            trigger={['click']}
+            placement="bottomLeft"
+            overlayClassName="calendar-assignee-menu"
+            menu={{
+              selectedKeys: [assigneeFilter],
+              items: [allAssignees, ...assigneeOptions].map((option) => ({
+                key: option.value,
+                label: <span className="calendar-assignee-option"><AssigneeAvatar option={option} image={assigneeImage(option)} /><span>{option.label}</span></span>,
+              })),
+              onClick: ({ key }) => setAssigneeFilter(key),
+            }}
+          >
+            <button type="button" className="calendar-assignee-trigger" aria-label={`Filtrar por responsável: ${selectedAssignee.label}`}>
+              <AssigneeAvatar option={selectedAssignee} image={assigneeImage(selectedAssignee)} />
+              <span className="calendar-assignee-trigger-label">{selectedAssignee.label}</span>
+              <FiChevronDown className="calendar-assignee-chevron" aria-hidden="true" />
+            </button>
+          </Dropdown>
           <button type="button" className="calendar-today" onClick={() => setCursor(dayjs())}>Hoje</button>
           {/* `calendar-nav-step` existe para escapar da regra base de `.calendar-tools > div
               button`, que dá font-size 11px e padding 0. Como o ícone do react-icons mede 1em, o
@@ -349,14 +387,6 @@ const Agenda: FC = () => {
             <span className="calendar-label-full">{calendarLabel}</span>
             <span className="calendar-label-compact">{calendarLabelCompact}</span>
           </strong>
-          <label className="calendar-assignee-filter">
-            <FiUser aria-hidden="true" />
-            <span className="sr-only">Filtrar por responsável</span>
-            <select value={assigneeFilter} onChange={(event) => setAssigneeFilter(event.target.value)} aria-label="Filtrar por responsável">
-              <option value="all">Todos os responsáveis</option>
-              {assigneeOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
-            </select>
-          </label>
           <nav aria-label="Visualização da agenda">
             <button className={calendarView === 'day' ? 'calendar-active' : ''} type="button" onClick={() => setCalendarView('day')}>Dia</button>
             <button className={calendarView === 'week' ? 'calendar-active' : ''} type="button" onClick={() => setCalendarView('week')}>Semana</button>
