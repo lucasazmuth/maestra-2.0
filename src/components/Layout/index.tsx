@@ -419,12 +419,10 @@ export const AppLayout: FC = memo(() => {
         ) : (
           <>
         {topNavigation()}
-        {/* `module-layout` encosta a página no rail (margin-left ~130px) porque significa "sem
-            coluna de perfil". O wizard NÃO é esse caso: ele mantém o perfil à esquerda e só ganha
-            a coluna de resultados à direita — com a classe, o card ficava embaixo do perfil.
-            A folga da coluna de resultados vem do `.wiz-artifacts` (pages/Wizard/styles.scss). */}
+        {/* `module-layout` encosta a página no rail porque significa "sem coluna de perfil".
+            A Nyta mantém a coluna do artista no desktop; só Notificações usa esse layout. */}
         <div
-          className={`app-layout${isNytaPage || isNotificationsPage ? ' module-layout' : ''}${!currentArtist ? ' app-layout-no-profile' : ''}${imersivo ? ' app-layout-imersivo' : ''}`}
+          className={`app-layout${isNotificationsPage ? ' module-layout' : ''}${!currentArtist ? ' app-layout-no-profile' : ''}${imersivo ? ' app-layout-imersivo' : ''}`}
           style={{ bottom: bottomReserve ? `${bottomReserve}px` : 0 }}
         >
           {/* O rail (Início/Notificações/Nyta/trocar de artista) fica sempre visível: é o
@@ -481,7 +479,7 @@ export const AppLayout: FC = memo(() => {
             </div>
           </aside>
 
-          {currentArtist && !isNytaPage && !isNotificationsPage && (
+          {currentArtist && !isNotificationsPage && (
             <aside className='profile-panel' aria-label='Detalhes do artista'>
               {/* O retrato também oferece acesso ao início do artista. */}
               <div

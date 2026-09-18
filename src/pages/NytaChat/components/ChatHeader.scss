@@ -53,16 +53,16 @@
   }
 }
 
-// Acima de 900px a lista de conversas está à esquerda, e ela tem o voltar dela, o título e o
+// Acima de 1300px a lista de conversas está à esquerda, e ela tem o voltar dela, o título e o
 // "+". Os três botões desta faixa viram cópias do que já está na tela: duas setas lado a lado
 // apontando para o mesmo lugar, um botão que abre uma gaveta que não existe, e um segundo "nova
-// conversa" a 900px do primeiro. No desktop a faixa fica só com o nome do artista, e a lista é
+// conversa" do primeiro. Em telas largas a faixa fica só com o nome do artista, e a lista é
 // quem navega.
 //
 // É o espelho do que a lista faz (ConversationSidebar.scss): ela esconde o voltar dela abaixo de
-// 900px, onde vira gaveta e quem sai é esta faixa. As duas regras precisam continuar opostas,
+// 1300px, onde vira gaveta e quem sai é esta faixa. As duas regras precisam continuar opostas,
 // senão a tela fica com dois botões de voltar ou com nenhum.
-@media (min-width: 901px) {
+@media (min-width: 1301px) {
   .chat-header__icone {
     display: none;
   }

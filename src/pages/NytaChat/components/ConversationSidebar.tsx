@@ -22,7 +22,7 @@ interface ConversationSidebarProps {
   onNew: () => void;
   onRename: (id: string, title: string) => void;
   onDelete: (id: string) => void;
-  // Abaixo de 900px esta coluna deixa de ficar ao lado e vira o nível de trás da tela do chat.
+  // Ate 1300px esta coluna deixa de ficar ao lado e vira o nivel de tras da tela do chat.
   // `open` só tem efeito nessa faixa: no desktop a coluna é fixa e o ignora.
   open?: boolean;
 }
@@ -35,7 +35,7 @@ export const ConversationSidebar: FC<ConversationSidebarProps> = ({
   // Autoria na lista: um perfil pode ter várias pessoas da equipe conversando com a Nyta, e sem
   // o rosto de quem abriu, o histórico não diz de quem é cada conversa.
   const user = useAppSelector((s) => s.auth.user);
-  // O perfil de quem a conversa trata. Acima de 900px ele ocupa o lugar do "voltar" (ver o
+  // O perfil de quem a conversa trata. Acima de 1300px ele ocupa o lugar do "voltar" (ver o
   // comentário do cabeçalho abaixo), e é o que diz de quem a Nyta está falando sem gastar uma
   // linha de texto.
   const artistas = useAppSelector((s) => s.artists.items);
@@ -62,7 +62,7 @@ export const ConversationSidebar: FC<ConversationSidebarProps> = ({
       <header className='nyta-conversations__head'>
         {/* DOIS OCUPANTES PARA O MESMO CANTO, e quem escolhe é a largura (ver o SCSS).
 
-            Abaixo de 900px esta coluna deixa de ficar ao lado e vira um nível por cima do chat.
+            Ate 1300px esta coluna deixa de ficar ao lado e vira um nivel por cima do chat.
             Ali o "voltar" é a saída, e sem ele a pessoa fica presa na lista.
 
             Acima disso a coluna é fixa, o chat mora no quadro da página, e a barra da Maestra e

@@ -22,16 +22,16 @@ import './ChatHeader.scss';
 // sistema). Eles foram ícones sem casca por um tempo, e aí a única faixa da tela usava um
 // controle que não existe em nenhuma outra — o chat parecia de outro produto.
 //
-// E o VOLTAR só existe no mobile. Acima de 900px a lista de conversas está à esquerda, com o
+// O VOLTAR aparece quando o histórico vira gaveta. Acima de 1300px a lista fica à esquerda, com o
 // voltar dela, e a tela ficava com duas setas lado a lado apontando para o mesmo lugar. É o
-// espelho exato do que a lista faz: ela esconde o voltar dela abaixo de 900px, onde vira gaveta
+// espelho exato do que a lista faz: ela esconde o voltar dela até 1300px, onde vira gaveta
 // e quem sai é esta faixa.
 
 interface ChatHeaderProps {
   artistName: string;
   /** Sai do chat e volta ao perfil. */
   onBack: () => void;
-  /** Abre a gaveta de conversas. Só aparece abaixo de 900px, onde a coluna vira gaveta. */
+  /** Abre a gaveta de conversas. Aparece ate 1300px, onde a coluna vira gaveta. */
   onOpenHistory: () => void;
 }
 

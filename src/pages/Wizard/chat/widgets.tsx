@@ -158,6 +158,7 @@ export const ScheduleApprovalCard: FC<{
           const tight = actions.filter((action) => action.tight).length;
           const showActions = !pathQuestion || !!state.selectedPath;
           const ready = !datesOutOfOrder && !!definition && !!(definition.ancora === 'propria' ? state.ownDate : definition.ancora === 'inicio' ? schedule.startDate : schedule.releaseDate) && (!pathQuestion || !!state.selectedPath);
+          const isLastStrategy = activeIndex === calculated.length - 1;
           return <section key={strategy.id} className='schedule-studio__strategy'>
             <div className='schedule-studio__strategy-head'>
               <div><small>Estratégia {activeIndex + 1} de {calculated.length}</small><strong>{strategy.title}</strong><div>{definition?.ancora === 'lancamento' ? 'Planejada a partir do lançamento' : definition?.ancora === 'inicio' ? 'Planejada a partir do início do plano' : 'Planejada a partir da data escolhida'}</div></div>
@@ -204,7 +205,18 @@ export const ScheduleApprovalCard: FC<{
             </ol> : <ScheduleGantt actions={actions} onDateChange={(action, date) => moveAction(strategy.id, action, date)} />) : <p className='schedule-studio__missing-dates'>Preencha as datas acima para ver as ações.</p>)}
             {ready && tight > 0 && <p className='schedule-studio__warning'>{tight} {tight === 1 ? 'ação ficou com a data apertada' : 'ações ficaram com datas apertadas'}. Confira antes de aprovar.</p>}
             {ready && <p className='schedule-studio__note'>Se alguma data não funcionar, escolha outra no campo da ação antes de aprovar.</p>}
-            <footer className='schedule-studio__footer'><button type='button' disabled={activeIndex === 0} onClick={() => setActiveIndex(value => value - 1)}>Estratégia anterior</button><button type='button' className='schedule-studio__approve' disabled={!ready} onClick={() => { updateState(strategy.id, { acceptedAt: new Date().toISOString() }); if (activeIndex + 1 < calculated.length) setActiveIndex(value => value + 1); }}>{activeIndex + 1 < calculated.length ? (state.acceptedAt ? 'Próxima estratégia' : 'Aprovar e continuar') : (state.acceptedAt ? 'Concluir' : 'Aprovar esta estratégia')}</button></footer>
+            <footer className='schedule-studio__footer'>
+              <button type='button' disabled={activeIndex === 0} onClick={() => setActiveIndex(value => value - 1)}>Estratégia anterior</button>
+              {(!isLastStrategy || !state.acceptedAt) && <button
+                type='button'
+                className='schedule-studio__approve'
+                disabled={!ready}
+                onClick={() => {
+                  updateState(strategy.id, { acceptedAt: new Date().toISOString() });
+                  if (!isLastStrategy) setActiveIndex(value => value + 1);
+                }}
+              >{isLastStrategy ? 'Aprovar esta estratégia' : (state.acceptedAt ? 'Próxima estratégia' : 'Aprovar e continuar')}</button>}
+            </footer>
           </section>;
         })}
       </main>
