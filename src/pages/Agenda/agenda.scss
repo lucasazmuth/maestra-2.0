@@ -499,38 +499,78 @@
     height: auto;
   }
 
-  // O filtro ocupa a primeira linha; a data fica entre as setas e os modos abaixo.
+  // Data e navegação na primeira linha; filtro, Hoje e modos na segunda.
   .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: 46px 48px minmax(0, 1fr) 44px;
     grid-template-areas:
-      "filter filter filter"
-      "voltar data  avancar"
-      "hoje   modos modos";
+      "voltar data data avancar"
+      "filter hoje modos modos";
     align-items: center;
-    gap: 2px 10px;
+    gap: 6px;
     min-height: 0;
-    padding: 6px 14px;
+    padding: 8px 10px;
   }
 
   .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > strong {
     min-width: 0;
     overflow: hidden;
+    padding: 0;
     text-align: center;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > nav {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
     margin-left: 0;
-    padding: 0;
-    border-top: 0;
+    padding: 2px;
+    border: 1px solid #dfe6f1;
+    border-radius: 7px;
+    background: #f2f5fa;
   }
 
-  .task-app:not(.public-app) .agenda-reference-page .calendar-assignee-trigger { grid-area: filter; justify-self: start; }
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > nav button {
+    width: 100%;
+    min-width: 0;
+    height: 30px;
+    padding: 0 2px;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > .calendar-assignee-trigger {
+    grid-area: filter;
+    width: 46px;
+    min-width: 0;
+    height: 36px;
+    gap: 1px;
+    padding: 3px;
+    justify-self: start;
+  }
+
+  .calendar-assignee-trigger-label { display: none; }
+  .calendar-assignee-avatar { width: 24px; height: 24px; flex-basis: 24px; }
+  .calendar-assignee-chevron { font-size: 12px; }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > .calendar-today {
+    width: 48px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid #dfe6f1;
+    border-radius: 7px;
+    background: #fff;
+    color: #53698f;
+    text-align: center;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-nav-step {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-nav-step svg { width: 18px; height: 18px; }
 }
 
 // Fallback para o bundle antigo da Agenda ainda visto em algumas sessões locais.
@@ -692,16 +732,12 @@
     padding-top: 16px !important;
   }
 
-  // O cabeçalho tem altura FIXA de 56px (regra do desktop, mais abaixo no arquivo, que vence a
-  // do bloco de 700px por vir depois). No mobile a data quebra para uma segunda linha e o
-  // conteúdo passa a precisar de ~90px: os 34px que sobravam vazavam para fora e caíam por cima
-  // da faixa "Dia todo". Altura automática resolve o transbordo.
+  // As duas linhas do cabeçalho mobile precisam crescer sem invadir "Dia todo".
   .task-app:not(.public-app) .agenda-reference-page .calendar-tools {
     height: auto;
     grid-template-rows: auto;
   }
 
-  // A data quebra para baixo; sem folga vertical ela encostava na faixa seguinte.
   .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > strong {
     width: 100%;
     padding: 6px 0 4px;
